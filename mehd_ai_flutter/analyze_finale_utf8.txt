@@ -1,0 +1,7 @@
+﻿Analyzing mehd_ai_flutter...                                    
+
+   info - Statements in an if should be enclosed in a block - lib\widgets\protection_score.dart:19:22 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\widgets\protection_score.dart:20:27 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\widgets\protection_score.dart:21:27 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\widgets\protection_score.dart:22:10 - curly_braces_in_flow_control_structures
+

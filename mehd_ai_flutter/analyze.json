@@ -1,0 +1,2 @@
+[warning] 'unused_import' is not a recognized lint rule (C:\Mehd ai\mehd_ai_flutter\analysis_options.yaml:9:5)
+[warning] Unused import: 'package:fl_chart/fl_chart.dart' (C:\Mehd ai\mehd_ai_flutter\lib\widgets\zen_chart.dart:2:8)

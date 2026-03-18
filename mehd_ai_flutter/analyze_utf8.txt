@@ -1,0 +1,5 @@
+﻿Analyzing mehd_ai_flutter...                                    
+
+  error - Target of URI doesn't exist: 'package:mehd_ai_flutter/widgets/mehd_loading_indicator.dart' - lib\screens\auth\login_screen.dart:17:8 - uri_does_not_exist
+warning - Unused import: 'package:mehd_ai_flutter/services/auth_service.dart' - lib\screens\home_screen.dart:15:8 - unused_import
+

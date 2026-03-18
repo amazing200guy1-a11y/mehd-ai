@@ -1,0 +1,111 @@
+import 'package:flutter/material.dart';
+import 'package:mehd_ai_flutter/core/theme.dart';
+import 'package:intl/intl.dart';
+
+class Trade {
+  final String symbol;
+  final String direction;
+  final double entryPrice;
+  final double latestPrice;
+  final DateTime timestamp;
+  final double consensusScore;
+  
+  // Calculate PnL based on generic lots (10,000 units for this standard mock)
+  double get pnl {
+    final diff = latestPrice - entryPrice;
+    if (direction == 'BUY') {
+      return diff * 10000; 
+    } else {
+      return (entryPrice - latestPrice) * 10000;
+    }
+  }
+
+  Trade({
+    required this.symbol,
+    required this.direction,
+    required this.entryPrice,
+    required this.latestPrice,
+    required this.timestamp,
+    required this.consensusScore,
+  });
+}
+
+class TradeHistoryItem extends StatelessWidget {
+  final Trade trade;
+
+  const TradeHistoryItem({super.key, required this.trade});
+
+  @override
+  Widget build(BuildContext context) {
+    final isProfit = trade.pnl >= 0;
+    final pnlColor = isProfit ? MehdAiTheme.green : MehdAiTheme.red;
+    final pnlText = isProfit 
+        ? '+\$${trade.pnl.toStringAsFixed(2)}' 
+        : '-\$${trade.pnl.abs().toStringAsFixed(2)}';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8.0),
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: MehdAiTheme.bgSecondary,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: MehdAiTheme.borderColor),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Left: Symbol and Time
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: trade.direction == 'BUY' ? MehdAiTheme.green : MehdAiTheme.red,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(trade.symbol, style: MehdAiTheme.terminalStyle.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 8),
+                  Text(trade.direction, style: MehdAiTheme.labelStyle),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                DateFormat('MMM d, HH:mm:ss').format(trade.timestamp), 
+                style: MehdAiTheme.labelStyle.copyWith(fontSize: 10),
+              ),
+            ],
+          ),
+          
+          // Middle: Consensus Score (Hidden on very small screens if needed)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: MehdAiTheme.blue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              'AI: ${trade.consensusScore.toStringAsFixed(1)}%',
+              style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.blue, fontSize: 10),
+            ),
+          ),
+          
+          // Right: PnL
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(pnlText, style: MehdAiTheme.priceStyle.copyWith(color: pnlColor, fontSize: 14)),
+              const SizedBox(height: 4),
+              Text('@ ${trade.entryPrice.toStringAsFixed(4)}', style: MehdAiTheme.labelStyle.copyWith(fontSize: 10)),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+}

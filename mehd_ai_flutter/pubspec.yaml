@@ -1,0 +1,43 @@
+name: mehd_ai_flutter
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  fl_chart: ^0.68.0
+  http: ^1.6.0
+  firebase_core: ^4.5.0
+  cloud_firestore: ^6.1.3
+  firebase_auth: ^6.2.0
+  provider: ^6.1.5+1
+  google_fonts: ^6.3.0
+  animated_text_kit: ^4.3.0
+  flutter_secure_storage: ^9.2.4
+  google_sign_in: ^6.2.2
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_icons:
+  android: true
+  ios: true
+  web:
+    generate: true
+    image_path: "assets/images/mehd_logo.png"
+  image_path: "assets/images/mehd_logo.png"
+  adaptive_icon_background: "#0D1117"
+  adaptive_icon_foreground: "assets/images/mehd_logo.png"
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/mehd_logo.png

@@ -1,0 +1,272 @@
+[
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-16T23:22:57.020924+00:00",
+      "session_id": "ccc25b30-af4b-4c8b-bdd7-8004865208c7",
+      "model_versions": [
+        "grok",
+        "perplexity",
+        "gemini",
+        "claude",
+        "gpt-4",
+        "llama",
+        "deepseek",
+        "openai-o3",
+        "codestral"
+      ],
+      "symbol": "EURUSD",
+      "final_direction": "BUY",
+      "consensus_percentage": 44.44,
+      "proceed": false,
+      "rejection_reason": "INSUFFICIENT_CONSENSUS: Only 4/9 models agreed (44.4%). Need 78%+.",
+      "votes": [
+        {
+          "model_name": "grok",
+          "direction": "BUY",
+          "confidence": 69.16,
+          "reasoning": "Social sentiment for EURUSD is trending bullish based on X post volume and news tone."
+        },
+        {
+          "model_name": "perplexity",
+          "direction": "BUY",
+          "confidence": 79.18,
+          "reasoning": "Aggregated web sources show mixed but slightly positive outlook for EURUSD."
+        },
+        {
+          "model_name": "gemini",
+          "direction": "HOLD",
+          "confidence": 74.21,
+          "reasoning": "Multimodal analysis of EURUSD charts and news indicates moderate confidence."
+        },
+        {
+          "model_name": "claude",
+          "direction": "SELL",
+          "confidence": 74.45,
+          "reasoning": "Technical analysis of EURUSD: RSI near 45, MACD showing bullish crossover potential."
+        },
+        {
+          "model_name": "gpt-4",
+          "direction": "SELL",
+          "confidence": 67.31,
+          "reasoning": "Price action on EURUSD shows a pennant formation suggesting continuation."
+        },
+        {
+          "model_name": "llama",
+          "direction": "BUY",
+          "confidence": 81.09,
+          "reasoning": "Support/resistance analysis for EURUSD: key support at 1.08300."
+        },
+        {
+          "model_name": "deepseek",
+          "direction": "HOLD",
+          "confidence": 66.0,
+          "reasoning": "Monte Carlo simulation on EURUSD: 67% probability of upward move in next 4H."
+        },
+        {
+          "model_name": "openai-o3",
+          "direction": "HOLD",
+          "confidence": 66.82,
+          "reasoning": "Statistical analysis of EURUSD: Bollinger Band squeeze detected, breakout imminent."
+        },
+        {
+          "model_name": "codestral",
+          "direction": "BUY",
+          "confidence": 76.49,
+          "reasoning": "Algorithmic scan of EURUSD: EMA crossover on 1H and 4H timeframes aligns."
+        }
+      ]
+    },
+    "failed_at": "2026-03-16T23:22:57.020924+00:00"
+  },
+  {
+    "target_collection": "trade_logs",
+    "document": {
+      "timestamp": "2026-03-16T23:23:16.777933+00:00",
+      "session_id": "ccc25b30-af4b-4c8b-bdd7-8004865208c7",
+      "model_versions": [],
+      "decision_id": "142f23b4-cf86-438e-9bab-ba23698936c0",
+      "order": {
+        "symbol": "EURUSD",
+        "direction": "BUY",
+        "lot_size": 0.1,
+        "stop_loss": null,
+        "take_profit": null,
+        "risk_percentage": 1.0
+      },
+      "risk_decision": {
+        "approved": false,
+        "calculated_lot_size": 0.0,
+        "stop_loss": 0.0001,
+        "take_profit": null,
+        "rejection_reason": "REJECTED: No stop-loss provided. Every trade in Mehd AI must have a stop-loss. This is non-negotiable."
+      }
+    },
+    "failed_at": "2026-03-16T23:23:16.777933+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-16T23:41:37.449899+00:00",
+      "session_id": "b90cc0ed-0857-4054-a526-ad3ad5d8461f",
+      "model_versions": [],
+      "symbol": "EURUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "ALL_MODELS_FAILED_OR_NO_API_KEYS",
+      "votes": []
+    },
+    "failed_at": "2026-03-16T23:41:37.449899+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-17T00:25:10.936998+00:00",
+      "session_id": "b90cc0ed-0857-4054-a526-ad3ad5d8461f",
+      "model_versions": [],
+      "symbol": "EURUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "ALL_MODELS_FAILED_OR_NO_API_KEYS",
+      "votes": []
+    },
+    "failed_at": "2026-03-17T00:25:10.936998+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-17T00:25:24.168646+00:00",
+      "session_id": "b90cc0ed-0857-4054-a526-ad3ad5d8461f",
+      "model_versions": [],
+      "symbol": "XAUUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "ALL_MODELS_FAILED_OR_NO_API_KEYS",
+      "votes": []
+    },
+    "failed_at": "2026-03-17T00:25:24.168646+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-17T00:25:26.220664+00:00",
+      "session_id": "b90cc0ed-0857-4054-a526-ad3ad5d8461f",
+      "model_versions": [],
+      "symbol": "AUDUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "ALL_MODELS_FAILED_OR_NO_API_KEYS",
+      "votes": []
+    },
+    "failed_at": "2026-03-17T00:25:26.220664+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-17T00:25:50.905443+00:00",
+      "session_id": "b90cc0ed-0857-4054-a526-ad3ad5d8461f",
+      "model_versions": [],
+      "symbol": "GBPUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "ALL_MODELS_FAILED_OR_NO_API_KEYS",
+      "votes": []
+    },
+    "failed_at": "2026-03-17T00:25:50.905443+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-17T00:25:52.142109+00:00",
+      "session_id": "b90cc0ed-0857-4054-a526-ad3ad5d8461f",
+      "model_versions": [],
+      "symbol": "EURUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "ALL_MODELS_FAILED_OR_NO_API_KEYS",
+      "votes": []
+    },
+    "failed_at": "2026-03-17T00:25:52.142109+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-17T00:27:30.993134+00:00",
+      "session_id": "b90cc0ed-0857-4054-a526-ad3ad5d8461f",
+      "model_versions": [],
+      "symbol": "GBPUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "ALL_MODELS_FAILED_OR_NO_API_KEYS",
+      "votes": []
+    },
+    "failed_at": "2026-03-17T00:27:30.993134+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-17T00:27:32.323816+00:00",
+      "session_id": "b90cc0ed-0857-4054-a526-ad3ad5d8461f",
+      "model_versions": [],
+      "symbol": "USDJPY",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "ALL_MODELS_FAILED_OR_NO_API_KEYS",
+      "votes": []
+    },
+    "failed_at": "2026-03-17T00:27:32.323816+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-17T00:27:33.955582+00:00",
+      "session_id": "b90cc0ed-0857-4054-a526-ad3ad5d8461f",
+      "model_versions": [],
+      "symbol": "AUDUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "ALL_MODELS_FAILED_OR_NO_API_KEYS",
+      "votes": []
+    },
+    "failed_at": "2026-03-17T00:27:33.955582+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-17T00:27:35.241772+00:00",
+      "session_id": "b90cc0ed-0857-4054-a526-ad3ad5d8461f",
+      "model_versions": [],
+      "symbol": "XAUUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "ALL_MODELS_FAILED_OR_NO_API_KEYS",
+      "votes": []
+    },
+    "failed_at": "2026-03-17T00:27:35.241772+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-17T00:27:36.298599+00:00",
+      "session_id": "b90cc0ed-0857-4054-a526-ad3ad5d8461f",
+      "model_versions": [],
+      "symbol": "OILUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "ALL_MODELS_FAILED_OR_NO_API_KEYS",
+      "votes": []
+    },
+    "failed_at": "2026-03-17T00:27:36.298599+00:00"
+  }
+]

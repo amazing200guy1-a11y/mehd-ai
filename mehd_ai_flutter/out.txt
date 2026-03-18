@@ -1,0 +1,14 @@
+﻿Analyzing mehd_ai_flutter...                                    
+
+   info - Dangling library doc comment - lib\core\constants.dart:1:1 - dangling_library_doc_comments
+  error - The method 'jetbrainsMono' isn't defined for the type 'GoogleFonts' - lib\core\theme.dart:35:50 - undefined_method
+  error - The method 'jetbrainsMono' isn't defined for the type 'GoogleFonts' - lib\core\theme.dart:47:53 - undefined_method
+warning - Unused import: 'package:firebase_core/firebase_core.dart' - lib\main.dart:6:8 - unused_import
+   info - Dangling library doc comment - lib\models\account_health.dart:1:1 - dangling_library_doc_comments
+   info - Dangling library doc comment - lib\models\consensus_result.dart:1:1 - dangling_library_doc_comments
+   info - Dangling library doc comment - lib\models\market_snapshot.dart:1:1 - dangling_library_doc_comments
+warning - The value of the field '_isBackendOnline' isn't used - lib\screens\home_screen.dart:40:8 - unused_field
+   info - Use 'const' with the constructor to improve performance - lib\widgets\consensus_bar.dart:97:11 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\widgets\zen_chart.dart:76:19 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\widgets\zen_chart.dart:117:14 - prefer_const_constructors
+

@@ -1,0 +1,6 @@
+﻿Analyzing mehd_ai_flutter...                                    
+
+  error - The getter 'bodyStyle' isn't defined for the type 'MehdAiTheme' - lib\screens\den\math_room.dart:150:32 - undefined_getter
+  error - The getter 'bodyStyle' isn't defined for the type 'MehdAiTheme' - lib\screens\den\research_room.dart:140:32 - undefined_getter
+  error - The getter 'bodyStyle' isn't defined for the type 'MehdAiTheme' - lib\screens\den\strategy_room.dart:140:32 - undefined_getter
+
