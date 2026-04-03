@@ -39,6 +39,7 @@ class ProtectionScore extends StatelessWidget {
           Text(
             'PROTECTION SCORE',
             style: MehdAiTheme.labelStyle.copyWith(letterSpacing: 2, fontSize: 11),
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 12),
           Stack(
@@ -63,10 +64,12 @@ class ProtectionScore extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                       color: scoreColor,
                     ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                   Text(
                     '/ 100',
                     style: MehdAiTheme.labelStyle.copyWith(fontSize: 10),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
@@ -77,6 +80,7 @@ class ProtectionScore extends StatelessWidget {
             _getScoreMessage(),
             textAlign: TextAlign.center,
             style: MehdAiTheme.terminalStyle.copyWith(fontSize: 12, color: MehdAiTheme.textSecondary),
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -84,9 +88,9 @@ class ProtectionScore extends StatelessWidget {
   }
 
   String _getScoreMessage() {
-    if (score >= 90) return 'Elite Discipline. The Den is proud.';
-    if (score >= 70) return 'Solid execution. Minor deviations detected.';
-    if (score >= 40) return 'Warning: Emotional trading observed.';
-    return 'CRITICAL: HardRisk kernel intervention likely.';
+    if (score >= 90) return 'The Don protects you completely.';
+    if (score >= 70) return 'Solid execution. The Empire acknowledges.';
+    if (score >= 40) return 'Warning: Emotional trading. Sentinel watching.';
+    return 'CRITICAL: The Den has locked your capital.';
   }
 }

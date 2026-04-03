@@ -29,11 +29,10 @@ class AccountHealthWidget extends StatelessWidget {
 
     return Container(
       color: MehdAiTheme.bgPrimary,
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: ListView(
+        padding: const EdgeInsets.all(24.0),
         children: [
-          Text('ACCOUNT STATUS', style: MehdAiTheme.headingStyle),
+          Text('ACCOUNT STATUS', style: MehdAiTheme.headingStyle, overflow: TextOverflow.ellipsis),
           const SizedBox(height: 24),
           
           _buildStatRow('Balance', '\$${health!.balance.toStringAsFixed(2)}'),
@@ -41,7 +40,7 @@ class AccountHealthWidget extends StatelessWidget {
           _buildStatRow('Equity', '\$${health!.equity.toStringAsFixed(2)}'),
           
           const SizedBox(height: 32),
-          Text('DAILY DRAWDOWN', style: MehdAiTheme.labelStyle),
+          Text('DAILY DRAWDOWN', style: MehdAiTheme.labelStyle, overflow: TextOverflow.ellipsis),
           const SizedBox(height: 8),
           
           _buildDrawdownBar(),
@@ -63,8 +62,8 @@ class AccountHealthWidget extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('KILL-SWITCH ACTIVATED', style: MehdAiTheme.headingStyle.copyWith(color: MehdAiTheme.red, fontSize: 14)),
-                        Text(health!.lockReason ?? '3% daily drawdown exceeded. Trading locked.', style: MehdAiTheme.labelStyle.copyWith(color: MehdAiTheme.red)),
+                        Text('KILL-SWITCH ACTIVATED', style: MehdAiTheme.headingStyle.copyWith(color: MehdAiTheme.red, fontSize: 14), overflow: TextOverflow.ellipsis),
+                        Text(health!.lockReason ?? '3% daily drawdown exceeded. Trading locked.', style: MehdAiTheme.labelStyle.copyWith(color: MehdAiTheme.red), overflow: TextOverflow.ellipsis),
                       ],
                     ),
                   ),
@@ -75,27 +74,54 @@ class AccountHealthWidget extends StatelessWidget {
           
           // Trade Ledger Section
           const SizedBox(height: 32),
-          Text('TRADE LEDGER', style: MehdAiTheme.headingStyle),
+          Text('TRADE LEDGER', style: MehdAiTheme.headingStyle, overflow: TextOverflow.ellipsis),
           const SizedBox(height: 16),
           
-          Expanded(
-            child: recentTrades.isEmpty
-                ? Center(
+          // UPGRADE 2: AI Stop Guardian Badge
+          if (recentTrades.isNotEmpty) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: MehdAiTheme.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: MehdAiTheme.blue.withOpacity(0.3)),
+                boxShadow: MehdAiTheme.blueGlow,
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.security, color: MehdAiTheme.blue, size: 18),
+                  const SizedBox(width: 12),
+                  Expanded(
                     child: Text(
-                      'No trades executed yet.\nAwaiting kernel instructions.',
-                      textAlign: TextAlign.center,
-                      style: MehdAiTheme.labelStyle.copyWith(color: MehdAiTheme.textSecondary),
+                      '🛡️ Stop Guardian Active — 4 Agents watching EUR/USD',
+                      style: MehdAiTheme.labelStyle.copyWith(color: MehdAiTheme.blue, fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  )
-                : ListView.builder(
-                    itemCount: recentTrades.length,
-                    itemBuilder: (context, index) {
-                      // Reverse list to show newest at top by default
-                      final trade = recentTrades[recentTrades.length - 1 - index];
-                      return TradeHistoryItem(trade: trade);
-                    },
                   ),
-          ),
+                  const SizedBox(width: 8),
+                  const SizedBox(
+                    width: 12, height: 12,
+                    child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(MehdAiTheme.blue)),
+                  )
+                ],
+              ),
+            ),
+          ],
+          
+          if (recentTrades.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Center(
+                child: Text(
+                  'No trades executed yet.\nAwaiting kernel instructions.',
+                  textAlign: TextAlign.center,
+                  style: MehdAiTheme.labelStyle.copyWith(color: MehdAiTheme.textSecondary),
+                ),
+              ),
+            )
+          else
+            ...recentTrades.reversed.map((trade) => TradeHistoryItem(trade: trade)),
         ],
       ),
     );
@@ -105,8 +131,15 @@ class AccountHealthWidget extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: MehdAiTheme.labelStyle.copyWith(fontSize: 14)),
-        Text(value, style: MehdAiTheme.priceStyle.copyWith(fontSize: 16)),
+        Expanded(
+          child: Text(
+            label, 
+            style: MehdAiTheme.labelStyle.copyWith(fontSize: 14),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Flexible(child: Text(value, style: MehdAiTheme.priceStyle.copyWith(fontSize: 16), overflow: TextOverflow.ellipsis)),
       ],
     );
   }
@@ -128,7 +161,7 @@ class AccountHealthWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(4),
         ),
         const SizedBox(height: 4),
-        Text('${pct.toStringAsFixed(1)}% / 3.0% Max', style: MehdAiTheme.labelStyle),
+        Text('${pct.toStringAsFixed(1)}% / 3.0% Max', style: MehdAiTheme.labelStyle, overflow: TextOverflow.ellipsis),
       ],
     );
   }

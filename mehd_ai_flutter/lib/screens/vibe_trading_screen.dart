@@ -15,7 +15,7 @@ import 'package:mehd_ai_flutter/widgets/den_verdict_card.dart';
 /// Core Features Built:
 /// 1. Emotion Firewall: Explicit checks for tilt words (scared, revenge, angry).
 ///    Returns an empathetic, protective response without triggering a live trade.
-/// 2. Generative Stream UI: Simulates Claude/GPT token-by-token streaming
+/// 2. Generative Stream UI: Simulates The Don token-by-token streaming
 ///    for the companion feel.
 /// 3. Contextual UI Rendering: When the Den successfully finds a pair, it
 ///    injects the DenVerdictCard directly into the chat stream for 1-tap execution.
@@ -107,7 +107,19 @@ class _VibeTradingScreenState extends State<VibeTradingScreen> {
         proceed: consensusData['proceed'] ?? false,
         timestamp: DateTime.now(),
         rejectionReason: consensusData['rejection_reason'],
-        votes: [], // Mocking votes for UI
+        votes: [
+          AIVote(modelName: 'The Don (Risk Executive)', snapshotId: 'mock', direction: 'HOLD', confidence: 0.85, reasoning: 'Analyzing risk parameters.'),
+          AIVote(modelName: 'The Quant (Math & Stats)', snapshotId: 'mock', direction: 'BUY', confidence: 0.90, reasoning: 'Statistical edge identified.'),
+          AIVote(modelName: 'The Prophecy (Time Cycles)', snapshotId: 'mock', direction: 'BUY', confidence: 0.75, reasoning: 'Cycle alignment favorable.'),
+          AIVote(modelName: 'The General (Macro)', snapshotId: 'mock', direction: 'HOLD', confidence: 0.80, reasoning: 'Awaiting macro prints.'),
+          AIVote(modelName: 'The Sniper (Execution)', snapshotId: 'mock', direction: 'BUY', confidence: 0.95, reasoning: 'Entry trigger met.'),
+          AIVote(modelName: 'The Shadow (Dark Pools)', snapshotId: 'mock', direction: 'SELL', confidence: 0.60, reasoning: 'Minor outflow detected.'),
+          AIVote(modelName: 'The Psychologist (Sentiment)', snapshotId: 'mock', direction: 'BUY', confidence: 0.88, reasoning: 'Retail shorting heavily.'),
+          AIVote(modelName: 'The Architect (Structure)', snapshotId: 'mock', direction: 'BUY', confidence: 0.92, reasoning: 'Market structure bullish.'),
+          AIVote(modelName: 'The Auditor (Compliance)', snapshotId: 'mock', direction: 'HOLD', confidence: 0.99, reasoning: 'Within risk limits.'),
+          AIVote(modelName: 'The Detective (On-Chain)', snapshotId: 'mock', direction: 'BUY', confidence: 0.70, reasoning: 'Accumulation visible.'),
+          AIVote(modelName: 'The Historian (Backtester)', snapshotId: 'mock', direction: 'HOLD', confidence: 0.82, reasoning: 'Similar patterns mixed.'),
+        ], 
       );
     }
 

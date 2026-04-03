@@ -11,7 +11,7 @@ import 'package:mehd_ai_flutter/core/constants.dart';
 /// for a pro trader. The pulsing risk indicator at the bottom serves as a constant 
 /// psychological reminder that the Hard Risk Kernel is active and guarding the account.
 
-class SymbolSidebar extends StatelessWidget {
+class SymbolSidebar extends StatefulWidget {
   final String activeSymbol;
   final Function(String) onSymbolSelected;
 
@@ -20,6 +20,77 @@ class SymbolSidebar extends StatelessWidget {
     required this.activeSymbol,
     required this.onSymbolSelected,
   });
+
+  @override
+  State<SymbolSidebar> createState() => _SymbolSidebarState();
+}
+
+class _SymbolSidebarState extends State<SymbolSidebar> {
+  final Map<String, double?> _alerts = {};
+
+  void _showAlertDialog(String symbol) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: MehdAiTheme.bgSecondary,
+        title: Text('SET PRICE ALERT', style: MehdAiTheme.headingStyle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(symbol, style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.blue, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              style: MehdAiTheme.terminalStyle,
+              decoration: InputDecoration(
+                labelText: 'Target Price',
+                labelStyle: MehdAiTheme.labelStyle,
+                enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: MehdAiTheme.borderColor)),
+                focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: MehdAiTheme.blue)),
+              ),
+            ),
+            if (_alerts[symbol] != null) ...[
+              const SizedBox(height: 8),
+              Text('Active alert: ${_alerts[symbol]!.toStringAsFixed(5)}', style: MehdAiTheme.labelStyle.copyWith(color: MehdAiTheme.yellow)),
+            ],
+          ],
+        ),
+        actions: [
+          if (_alerts[symbol] != null)
+            TextButton(
+              onPressed: () {
+                setState(() => _alerts.remove(symbol));
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(backgroundColor: MehdAiTheme.red, content: Text('Alert removed for $symbol', style: MehdAiTheme.terminalStyle)),
+                );
+              },
+              child: Text('REMOVE', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.red)),
+            ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('CANCEL', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              final price = double.tryParse(controller.text);
+              if (price != null) {
+                setState(() => _alerts[symbol] = price);
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(backgroundColor: MehdAiTheme.green, content: Text('Alert set for $symbol at ${price.toStringAsFixed(5)}', style: MehdAiTheme.terminalStyle)),
+                );
+              }
+            },
+            child: Text('SET ALERT', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.green)),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,8 +152,8 @@ class SymbolSidebar extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('RISK KERNEL', style: MehdAiTheme.labelStyle.copyWith(fontSize: 10, color: MehdAiTheme.purple)),
-                      Text('1% max active', style: MehdAiTheme.labelStyle.copyWith(fontSize: 11, color: MehdAiTheme.textPrimary)),
+                      Text('RISK KERNEL', style: MehdAiTheme.labelStyle.copyWith(fontSize: 10, color: MehdAiTheme.purple), overflow: TextOverflow.ellipsis),
+                      Text('1% max active', style: MehdAiTheme.labelStyle.copyWith(fontSize: 11, color: MehdAiTheme.textPrimary), overflow: TextOverflow.ellipsis),
                     ],
                   ),
                 ),
@@ -101,9 +172,12 @@ class SymbolSidebar extends StatelessWidget {
         children: [
           const Icon(Icons.keyboard_arrow_down, size: 14, color: MehdAiTheme.textSecondary),
           const SizedBox(width: 4),
-          Text(
-            title,
-            style: MehdAiTheme.labelStyle.copyWith(fontSize: 11, fontWeight: FontWeight.bold),
+          Expanded(
+            child: Text(
+              title,
+              style: MehdAiTheme.labelStyle.copyWith(fontSize: 11, fontWeight: FontWeight.bold),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
@@ -111,9 +185,10 @@ class SymbolSidebar extends StatelessWidget {
   }
 
   Widget _buildSymbolRow(String symbol) {
-    final isActive = symbol == activeSymbol;
+    final isActive = symbol == widget.activeSymbol;
+    final hasAlert = _alerts.containsKey(symbol);
     return InkWell(
-      onTap: () => onSymbolSelected(symbol),
+      onTap: () => widget.onSymbolSelected(symbol),
       child: Container(
         color: isActive ? MehdAiTheme.blue.withOpacity(0.1) : Colors.transparent,
         padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 6.0),
@@ -125,11 +200,23 @@ class SymbolSidebar extends StatelessWidget {
               color: isActive ? MehdAiTheme.blue : MehdAiTheme.textSecondary,
             ),
             const SizedBox(width: 8),
-            Text(
-              symbol,
-              style: MehdAiTheme.terminalStyle.copyWith(
-                color: isActive ? MehdAiTheme.blue : MehdAiTheme.textPrimary,
-                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            Expanded(
+              child: Text(
+                symbol,
+                style: MehdAiTheme.terminalStyle.copyWith(
+                  color: isActive ? MehdAiTheme.blue : MehdAiTheme.textPrimary,
+                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const Spacer(),
+            InkWell(
+              onTap: () => _showAlertDialog(symbol),
+              child: Icon(
+                hasAlert ? Icons.notifications_active : Icons.notifications_none,
+                size: 14,
+                color: hasAlert ? MehdAiTheme.yellow : (isActive ? MehdAiTheme.blue.withOpacity(0.5) : MehdAiTheme.textSecondary.withOpacity(0.3)),
               ),
             ),
           ],

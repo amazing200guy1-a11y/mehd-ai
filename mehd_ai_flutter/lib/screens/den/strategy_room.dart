@@ -4,12 +4,14 @@ import 'package:mehd_ai_flutter/models/consensus_result.dart';
 import 'package:mehd_ai_flutter/core/api_service.dart';
 import 'package:mehd_ai_flutter/widgets/den_verdict_card.dart';
 import 'package:mehd_ai_flutter/widgets/den_loading_widget.dart';
+import 'package:mehd_ai_flutter/core/den_identity.dart';
 
 /// FILE — strategy_room.dart
 ///
 /// Build Debrief:
-/// The Strategy Room houses the heavy analytical lifters: Claude, GPT-4, and Llama.
-/// These models look at price action, technical structure, and risk-reward ratios.
+/// The Strategy Room houses the heavy analytical lifters: Caesar, Sage, and Guardian.
+/// These agents look at price action, technical structure, and risk-reward ratios.
+
 /// 
 /// We place the powerful DenVerdictCard at the top here because Strategy
 /// is the bridge between raw sentiment and exact mathematics.
@@ -65,7 +67,7 @@ class _StrategyRoomState extends State<StrategyRoom> {
     }
 
     final strategyVotes = widget.consensusResult?.votes.where(
-      (v) => ['claude', 'gpt-4', 'llama'].contains(v.modelName.toLowerCase())
+      (v) => ['caesar', 'sage', 'guardian'].contains(v.modelName.toLowerCase())
     ).toList() ?? [];
 
     return ListView(
@@ -84,7 +86,7 @@ class _StrategyRoomState extends State<StrategyRoom> {
         const SizedBox(height: 24),
         if (strategyVotes.isEmpty && _specializedResponse == null)
           Center(
-            child: Text('No Strategy Predators Responded.', style: MehdAiTheme.labelStyle),
+            child: Text('No Empire Agents Responded.', style: MehdAiTheme.labelStyle),
           )
         else
           ...strategyVotes.map((v) => _buildPredatorCard(v)),
@@ -108,13 +110,21 @@ class _StrategyRoomState extends State<StrategyRoom> {
             children: [
               const Icon(Icons.bolt, color: MehdAiTheme.purple, size: 16),
               const SizedBox(width: 8),
-              Text('STRATEGIC DECREE', style: MehdAiTheme.headingStyle.copyWith(fontSize: 14, color: MehdAiTheme.purple)),
+              Flexible(
+                child: Text(
+                  'STRATEGIC DECREE', 
+                  style: MehdAiTheme.headingStyle.copyWith(fontSize: 14, color: MehdAiTheme.purple),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
           Text(
             _specializedResponse!,
             style: MehdAiTheme.labelStyle.copyWith(height: 1.5, color: MehdAiTheme.textPrimary),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 10,
           ),
         ],
       ),
@@ -136,13 +146,21 @@ class _StrategyRoomState extends State<StrategyRoom> {
             children: [
               const Icon(Icons.account_tree, color: MehdAiTheme.purple),
               const SizedBox(width: 8),
-              Text('TECHNICAL STRATEGY', style: MehdAiTheme.headingStyle),
+              Flexible(
+                child: Text(
+                  'TECHNICAL STRATEGY', 
+                  style: MehdAiTheme.headingStyle,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
             'Analyzing market structure, liquidity zones, and risk topologies to determine the highest probability setup.',
             style: MehdAiTheme.labelStyle,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 3,
           ),
         ],
       ),
@@ -154,12 +172,7 @@ class _StrategyRoomState extends State<StrategyRoom> {
     if (vote.direction == 'BUY') dirColor = MehdAiTheme.green;
     if (vote.direction == 'SELL') dirColor = MehdAiTheme.red;
 
-    IconData getIcon(String name) {
-      if (name == 'claude') return Icons.psychology;
-      if (name == 'gpt-4') return Icons.bolt;
-      if (name == 'llama') return Icons.all_inclusive;
-      return Icons.memory;
-    }
+    final identity = DenIdentity.getIdentity(vote.modelName);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -175,27 +188,36 @@ class _StrategyRoomState extends State<StrategyRoom> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(getIcon(vote.modelName.toLowerCase()), color: MehdAiTheme.textPrimary, size: 16),
-                  const SizedBox(width: 8),
-                  Text(
-                    vote.modelName.toUpperCase(),
-                    style: MehdAiTheme.headingStyle.copyWith(fontSize: 14),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: dirColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
+              Flexible(
+                child: Row(
+                  children: [
+                    Icon(identity.icon, color: MehdAiTheme.textPrimary, size: 16),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        identity.displayName,
+                        style: MehdAiTheme.headingStyle.copyWith(fontSize: 14),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
-                child: Text(
-                  vote.direction,
-                  style: MehdAiTheme.terminalStyle.copyWith(
-                    color: dirColor,
-                    fontWeight: FontWeight.bold,
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: dirColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    vote.direction,
+                    style: MehdAiTheme.terminalStyle.copyWith(
+                      color: dirColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ),
@@ -205,6 +227,8 @@ class _StrategyRoomState extends State<StrategyRoom> {
           Text(
             vote.reasoning,
             style: MehdAiTheme.labelStyle.copyWith(height: 1.5, color: MehdAiTheme.textSecondary),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 5,
           ),
         ],
       ),
@@ -216,17 +240,29 @@ class _StrategyRoomState extends State<StrategyRoom> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Opacity(
-            opacity: 0.1,
-            child: Image.asset('assets/images/mehd_logo.png', width: 120, height: 120),
+          const Icon(
+            Icons.track_changes_outlined,
+            color: Color(0xFF1A1A1A),
+            size: 36,
           ),
-          const SizedBox(height: 16),
-          Text(
-            'AWAITING TARGET',
-            style: MehdAiTheme.terminalStyle.copyWith(
-              color: MehdAiTheme.textSecondary,
-              letterSpacing: 2,
+          const SizedBox(height: 14),
+          const Text(
+            'SELECT A MARKET',
+            style: TextStyle(
+              color: Color(0xFF58A6FF),
+              fontSize: 12,
+              letterSpacing: 3,
             ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Choose a symbol from\nMarkets Explorer.',
+            style: TextStyle(
+              color: Color(0xFF333333),
+              fontSize: 10,
+              height: 1.6,
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),

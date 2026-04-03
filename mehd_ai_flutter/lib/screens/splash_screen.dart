@@ -1,17 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
 import 'package:mehd_ai_flutter/services/auth_service.dart';
 import 'package:mehd_ai_flutter/screens/home_screen.dart';
-import 'package:mehd_ai_flutter/screens/auth/login_screen.dart';
-import 'package:mehd_ai_flutter/screens/onboarding/broker_connect_screen.dart';
+import 'package:mehd_ai_flutter/screens/auth_screen.dart';
+import 'package:mehd_ai_flutter/screens/onboarding_screen.dart';
 import 'package:provider/provider.dart';
-
-/// FILE — splash_screen.dart
-///
-/// Build Debrief: VS Code style aesthetic. Pure #0D1117 background.
-/// Faded 0.08 watermark logo. Muted "MEHD AI" text.
-/// Blinking cursor like a terminal. No loading bars. Silence.
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -20,66 +15,101 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _cursorController;
+  late AnimationController _controller;
+  
+  late Animation<double> _tigerScale;
+  late Animation<double> _tigerFade;
+  late Animation<int> _typingAnim;
+  late Animation<Color?> _typingColor;
+  late Animation<double> _taglineFade;
   late Animation<double> _cursorFade;
+  
+  Widget? _nextPage;
   bool _isDisposed = false;
-  double _globalOpacity = 1.0;
 
   @override
   void initState() {
     super.initState();
-    // 1-second cursor blink cycle
-    _cursorController = AnimationController(
+    _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 500),
-    )..repeat(reverse: true);
-    
-    // Instead of smooth pulsing fade, we want it to blink on/off like a terminal cursor
-    // so we use a StepTween or just harsh thresholds on the transition, but a fast fade
-    // simulating a monitor cursor is typical.
-    _cursorFade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _cursorController, curve: Curves.linear),
+      duration: const Duration(milliseconds: 2500),
     );
 
-    // After 2.5 seconds exactly, we fade out then navigate.
-    Future.delayed(const Duration(milliseconds: 2500), () {
-      if (mounted) {
-        setState(() => _globalOpacity = 0.0);
-        // The fade out takes 400ms, wait for it then navigate
-        Future.delayed(const Duration(milliseconds: 400), _navigate);
+    // 0.3s - 1.0s (12% to 40%)
+    _tigerScale = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.12, 0.40, curve: Curves.easeOutBack)),
+    );
+    _tigerFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.12, 0.40, curve: Curves.easeOut)),
+    );
+
+    // 1.0s - 1.8s (40% to 72%)
+    // 7 letters taking 560ms out of 2500ms = 22.4% (from 40% to 62.4%)
+    _typingAnim = IntTween(begin: 0, end: 7).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.40, 0.624, curve: Curves.linear)),
+    );
+    _typingColor = ColorTween(begin: const Color(0xFF1A1A1A), end: const Color(0xFF2A2A2A)).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.40, 0.72, curve: Curves.linear)),
+    );
+
+    // 1.8s - 2.2s (72% to 88%)
+    _taglineFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.72, 0.88, curve: Curves.easeIn)),
+    );
+
+    // 2.2s - 2.5s (88% to 100%) - Blink once (visible -> hidden -> visible -> hidden)
+    _cursorFade = TweenSequence<double>([
+      TweenSequenceItem(tween: ConstantTween<double>(1.0), weight: 30),
+      TweenSequenceItem(tween: ConstantTween<double>(0.0), weight: 40),
+      TweenSequenceItem(tween: ConstantTween<double>(1.0), weight: 30),
+    ]).animate(CurvedAnimation(parent: _controller, curve: const Interval(0.88, 1.0, curve: Curves.linear)));
+
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _dispatch();
       }
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _resolveRoute();
+      _controller.forward();
     });
   }
 
-  void _navigate() {
-    if (_isDisposed) return;
-    final authService = context.read<AuthService>();
+  Future<void> _resolveRoute() async {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    
+    // Ensure firebase is initialized
+    await authService.ensureFirebaseReady();
+    
+    final prefs = authService.prefs;
+    final onboardingDone = prefs.getBool('onboarding_complete') ?? false;
+    final user = authService.immediateCurrentUser;
 
-    if (!authService.isLoggedIn) {
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          transitionDuration: Duration.zero,
-          pageBuilder: (_, __, ___) => const LoginScreen(),
-        ),
-      );
-      return;
+    if (user != null) {
+      _nextPage = const HomeScreen();
+    } else if (!onboardingDone) {
+      _nextPage = const OnboardingScreen();
+    } else {
+      _nextPage = const AuthScreen();
     }
+  }
 
-    final profile = authService.userProfile;
-    if (profile == null || !profile.onboardingComplete) {
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          transitionDuration: Duration.zero,
-          pageBuilder: (_, __, ___) => const BrokerConnectScreen(),
-        ),
-      );
-      return;
+  void _dispatch() async {
+    if (_isDisposed || !mounted) return;
+    
+    // Fallback if auth is still parsing
+    while (_nextPage == null) {
+      await Future.delayed(const Duration(milliseconds: 100));
     }
-
+    
+    if (_isDisposed || !mounted) return;
+    
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        transitionDuration: Duration.zero,
-        pageBuilder: (_, __, ___) => const HomeScreen(),
+        transitionDuration: const Duration(milliseconds: 500),
+        pageBuilder: (_, __, ___) => _nextPage!,
+        transitionsBuilder: (_, animation, __, child) => FadeTransition(opacity: animation, child: child),
       ),
     );
   }
@@ -87,63 +117,107 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void dispose() {
     _isDisposed = true;
-    _cursorController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: MehdAiTheme.bgPrimary, // #0D1117
-      body: AnimatedOpacity(
-        opacity: _globalOpacity,
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // 260x260 Tiger Logo Watermark, opacity 0.10
-              Opacity(
-                opacity: 0.10,
-                child: Image.asset(
-                  'assets/images/mehd_logo.png',
-                  width: 260,
-                  height: 260,
-                  fit: BoxFit.contain,
-                ),
-              ),
-              const SizedBox(height: 32),
-              // Muted Title
-              Text(
-                'MEHD AI',
-                style: GoogleFonts.jetBrainsMono(
-                  color: const Color(0xFF3B4048), // Barely visible muted grey
-                  fontSize: 16,
-                  letterSpacing: 10.0,
-                  fontWeight: FontWeight.normal,
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Blinking Cursor
-              AnimatedBuilder(
-                animation: _cursorFade,
-                builder: (context, child) {
-                  // Make it a hard blink rather than a slow fade
-                  final isVisible = _cursorFade.value > 0.5;
-                  return Opacity(
-                    opacity: isVisible ? 1.0 : 0.0,
-                    child: Container(
-                      width: 8,
-                      height: 16,
-                      color: const Color(0xFF58A6FF), // Blue cursor
+      backgroundColor: const Color(0xFF000000), // Pure Black Specification
+      body: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final textStr = "THE DEN".substring(0, _typingAnim.value);
+          
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Tiger Logo Fade & Scale
+                Opacity(
+                  opacity: _tigerFade.value,
+                  child: Transform.scale(
+                    scale: _tigerScale.value,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/images/mehd_logo.png',
+                          width: 200,
+                          height: 200,
+                          fit: BoxFit.contain,
+                        ),
+                        // Simulated glowing eye pulse via shader mask scaling
+                        if (_controller.value > 0.12 && _controller.value < 0.50)
+                          Opacity(
+                            opacity: (_tigerScale.value - 0.8) * 5.0, // Pulsing effect that fades
+                            child: ShaderMask(
+                              shaderCallback: (rect) => RadialGradient(
+                                center: const Alignment(0, -0.2),
+                                radius: 0.15,
+                                colors: [Colors.blue.withOpacity(0.8), Colors.transparent],
+                              ).createShader(rect),
+                              blendMode: BlendMode.srcATop,
+                              child: Image.asset(
+                                'assets/images/mehd_logo.png',
+                                width: 200,
+                                height: 200,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
+                  ),
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // THE DEN text + Cursor
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      textStr,
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 18,
+                        letterSpacing: 8.0,
+                        fontWeight: FontWeight.bold,
+                        color: _typingColor.value,
+                      ),
+                    ),
+                    if (_controller.value >= 0.4)
+                      Opacity(
+                        opacity: _controller.value >= 0.88 ? _cursorFade.value : 1.0,
+                        child: Container(
+                          width: 8,
+                          height: 18,
+                          margin: const EdgeInsets.only(left: 4),
+                          color: MehdAiTheme.blue,
+                        ),
+                      )
+                  ],
+                ),
+                
+                const SizedBox(height: 12),
+                
+                // Tagline Fade
+                Opacity(
+                  opacity: _taglineFade.value,
+                  child: Text(
+                    "Capital is a seed, not a sacrifice",
+                    style: GoogleFonts.jetBrainsMono(
+                      color: const Color(0xFF111111),
+                      fontSize: 9,
+                      letterSpacing: 2.0,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

@@ -1,0 +1,21 @@
+﻿Analyzing mehd_ai_flutter...                                    
+
+   info - The declaration '_startPolling' isn't referenced - lib\screens\home_screen.dart:101:8 - unused_element
+   info - Unnecessary escape in string literal - lib\widgets\consensus_bar.dart:115:42 - unnecessary_string_escapes
+
+flutter : 2 issues found. 
+(ran in 6.9s)
+At line:1 char:1
++ flutter analyze 2>&1 | 
+Out-File -Encoding utf8 
+-FilePath analysis2.lo ...
++ ~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo        
+      : NotSpeci    fied: 
+(2 issues f    ound. (ran 
+in 6.9    s):String) [], 
+Re    moteException
+    + FullyQualifiedE    
+rrorId : NativeCo    
+mmandError
+ 

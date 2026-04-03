@@ -1,0 +1,237 @@
+Analyzing mehd_ai_flutter...                                    
+
+  error - Missing concrete implementation of 'State.build' - lib\screens\home_screen.dart:61:7 - non_abstract_class_inherits_abstract_member
+   info - The private field _isTradeProcessing could be 'final' - lib\screens\home_screen.dart:64:8 - prefer_final_fields
+   info - The private field _currentDrawings could be 'final' - lib\screens\home_screen.dart:65:26 - prefer_final_fields
+   info - The private field _mobileTab could be 'final' - lib\screens\home_screen.dart:80:7 - prefer_final_fields
+   info - The private field _showUpdateBanner could be 'final' - lib\screens\home_screen.dart:90:8 - prefer_final_fields
+   info - The private field _paperTradesCompleted could be 'final' - lib\screens\home_screen.dart:97:7 - prefer_final_fields
+   info - The declaration '_startPolling' isn't referenced - lib\screens\home_screen.dart:101:8 - unused_element
+   info - The declaration '_toggleDen' isn't referenced - lib\screens\home_screen.dart:126:8 - unused_element
+   info - The declaration '_currentDenState' isn't referenced - lib\screens\home_screen.dart:131:16 - unused_element
+   info - The declaration '_selectSymbol' isn't referenced - lib\screens\home_screen.dart:218:8 - unused_element
+  error - Expected to find ',' - lib\screens\home_screen.dart:317:7 - expected_token
+  error - Too many positional arguments: 1 expected, but 2 found - lib\screens\home_screen.dart:317:7 - extra_positional_arguments
+  error - Expected to find ')' - lib\screens\home_screen.dart:317:33 - expected_token
+  error - Expected a class member - lib\screens\home_screen.dart:318:6 - expected_class_member
+  error - Expected a class member - lib\screens\home_screen.dart:318:7 - expected_class_member
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:322:9 - undefined_identifier
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:322:31 - undefined_identifier
+  error - Undefined name '_isTradeProcessing' - lib\screens\home_screen.dart:325:9 - undefined_identifier
+  error - Undefined name '_perf' - lib\screens\home_screen.dart:328:9 - undefined_identifier
+  error - The function '_showErrorBanner' isn't defined - lib\screens\home_screen.dart:329:7 - undefined_function
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:334:41 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:334:66 - undefined_identifier
+  error - The function '_showErrorBanner' isn't defined - lib\screens\home_screen.dart:335:7 - undefined_function
+  error - Undefined name '_legalAccepted' - lib\screens\home_screen.dart:340:10 - undefined_identifier
+  error - The function '_showErrorBanner' isn't defined - lib\screens\home_screen.dart:341:7 - undefined_function
+  error - Undefined name '_paperTradesCompleted' - lib\screens\home_screen.dart:344:9 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\home_screen.dart:346:18 - undefined_identifier
+  error - Undefined name '_paperTradesCompleted' - lib\screens\home_screen.dart:351:34 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\home_screen.dart:364:7 - undefined_function
+  error - Undefined name '_paperTradesCompleted' - lib\screens\home_screen.dart:364:22 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:370:22 - undefined_identifier
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:370:60 - undefined_identifier
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:370:92 - undefined_identifier
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:372:15 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:373:18 - undefined_identifier
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:375:19 - undefined_identifier
+  error - The function '_showErrorBanner' isn't defined - lib\screens\home_screen.dart:379:7 - undefined_function
+  error - Undefined name 'context' - lib\screens\home_screen.dart:385:16 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:390:18 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:391:22 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:400:21 - undefined_identifier
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:400:51 - undefined_identifier
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:402:28 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:405:32 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:416:62 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:418:36 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\home_screen.dart:427:5 - undefined_function
+  error - Undefined name '_btnState' - lib\screens\home_screen.dart:428:7 - undefined_identifier
+  error - Undefined name '_isTradeProcessing' - lib\screens\home_screen.dart:429:7 - undefined_identifier
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:433:15 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:434:18 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:437:14 - undefined_identifier
+  error - Undefined name '_apiService' - lib\screens\home_screen.dart:440:28 - undefined_identifier
+  error - Undefined name 'mounted' - lib\screens\home_screen.dart:442:9 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\home_screen.dart:442:18 - undefined_function
+  error - Undefined name '_isTradeProcessing' - lib\screens\home_screen.dart:442:33 - undefined_identifier
+  error - Undefined name 'mounted' - lib\screens\home_screen.dart:444:9 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\home_screen.dart:445:7 - undefined_function
+  error - Undefined name '_btnState' - lib\screens\home_screen.dart:446:9 - undefined_identifier
+  error - The function '_showErrorBanner' isn't defined - lib\screens\home_screen.dart:450:9 - undefined_function
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:454:30 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:456:16 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:457:16 - undefined_identifier
+  error - Undefined name '_recentTrades' - lib\screens\home_screen.dart:459:9 - undefined_identifier
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:460:19 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:461:22 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:465:27 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:468:22 - undefined_identifier
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:470:69 - undefined_identifier
+  error - Undefined name '_apiService' - lib\screens\home_screen.dart:473:33 - undefined_identifier
+  error - Undefined name 'mounted' - lib\screens\home_screen.dart:474:34 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\home_screen.dart:476:26 - undefined_identifier
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:488:27 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:489:30 - undefined_identifier
+  error - Undefined name '_apiService' - lib\screens\home_screen.dart:497:38 - undefined_identifier
+  error - Undefined name 'mounted' - lib\screens\home_screen.dart:498:19 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\home_screen.dart:500:29 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\home_screen.dart:506:47 - undefined_identifier
+  error - Undefined name 'mounted' - lib\screens\home_screen.dart:523:15 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\home_screen.dart:523:24 - undefined_function
+  error - Undefined name '_btnState' - lib\screens\home_screen.dart:523:39 - undefined_identifier
+  error - The function '_fetchAccountHealth' isn't defined - lib\screens\home_screen.dart:526:13 - undefined_function
+  error - Undefined name 'context' - lib\screens\home_screen.dart:532:16 - undefined_identifier
+  error - The function '_selectSymbol' isn't defined - lib\screens\home_screen.dart:551:23 - undefined_function
+  error - Undefined name 'context' - lib\screens\home_screen.dart:565:16 - undefined_identifier
+  error - Undefined name '_accountHealth' - lib\screens\home_screen.dart:571:46 - undefined_identifier
+  error - Undefined name '_recentTrades' - lib\screens\home_screen.dart:571:76 - undefined_identifier
+  error - Undefined name '_priceSub' - lib\screens\home_screen.dart:579:5 - undefined_identifier
+  error - Undefined name '_pollingTimer' - lib\screens\home_screen.dart:580:5 - undefined_identifier
+  error - Undefined name '_retryTimer' - lib\screens\home_screen.dart:581:5 - undefined_identifier
+  error - Undefined name '_connectionMonitor' - lib\screens\home_screen.dart:582:5 - undefined_identifier
+  error - Undefined name '_apiService' - lib\screens\home_screen.dart:583:5 - undefined_identifier
+  error - Invalid context for 'super' invocation - lib\screens\home_screen.dart:584:5 - super_in_invalid_context
+  error - Undefined name '_activeSymbol' - lib\screens\home_screen.dart:599:19 - undefined_identifier
+  error - Undefined name '_isAnalyzing' - lib\screens\home_screen.dart:599:45 - undefined_identifier
+  error - The function '_triggerAnalysis' isn't defined - lib\screens\home_screen.dart:600:17 - undefined_function
+  error - Undefined name '_activeSymbol' - lib\screens\home_screen.dart:600:34 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:624:50 - undefined_identifier
+  error - Undefined name '_isAnalyzing' - lib\screens\home_screen.dart:624:75 - undefined_identifier
+  error - Undefined name '_isDenOpen' - lib\screens\home_screen.dart:631:28 - undefined_identifier
+  error - Undefined name '_isBackendOffline' - lib\screens\home_screen.dart:635:28 - undefined_identifier
+  error - Undefined name '_isDenOpen' - lib\screens\home_screen.dart:655:26 - undefined_identifier
+  error - Undefined name '_isDenOpen' - lib\screens\home_screen.dart:659:34 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:664:40 - undefined_identifier
+  error - Undefined name '_isAnalyzing' - lib\screens\home_screen.dart:665:36 - undefined_identifier
+  error - Undefined name '_activeSymbol' - lib\screens\home_screen.dart:666:37 - undefined_identifier
+  error - Undefined name '_toggleDen' - lib\screens\home_screen.dart:667:32 - undefined_identifier
+  error - Undefined name '_isDenOpen' - lib\screens\home_screen.dart:671:22 - undefined_identifier
+  error - Undefined name '_isSentinelFrozen' - lib\screens\home_screen.dart:677:21 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:678:21 - undefined_identifier
+  error - Undefined name '_showFeedbackOption' - lib\screens\home_screen.dart:681:21 - undefined_identifier
+  error - Undefined name '_showUpdateBanner' - lib\screens\home_screen.dart:682:21 - undefined_identifier
+  error - Undefined name '_hasSeenOnboarding' - lib\screens\home_screen.dart:684:22 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\home_screen.dart:684:75 - undefined_function
+  error - Undefined name '_hasSeenOnboarding' - lib\screens\home_screen.dart:684:90 - undefined_identifier
+  error - Undefined name '_isDenOpen' - lib\screens\home_screen.dart:687:35 - undefined_identifier
+  error - Undefined name '_toggleDen' - lib\screens\home_screen.dart:690:26 - undefined_identifier
+  error - Undefined name '_activeSymbol' - lib\screens\home_screen.dart:745:17 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\home_screen.dart:757:55 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:757:128 - undefined_identifier
+  error - Undefined name '_isAnalyzing' - lib\screens\home_screen.dart:757:153 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\home_screen.dart:765:55 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\home_screen.dart:773:55 - undefined_identifier
+  error - Invalid constant value - lib\screens\home_screen.dart:779:72 - invalid_constant
+  error - The getter 'shieldColor' isn't defined for the type 'MehdAiTheme' - lib\screens\home_screen.dart:779:84 - undefined_getter
+  error - Undefined name 'context' - lib\screens\home_screen.dart:781:55 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\home_screen.dart:789:55 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\home_screen.dart:797:55 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\home_screen.dart:805:55 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\home_screen.dart:813:55 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\home_screen.dart:821:55 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\home_screen.dart:829:55 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\home_screen.dart:837:55 - undefined_identifier
+  error - Undefined name '_activeSymbol' - lib\screens\home_screen.dart:841:25 - undefined_identifier
+  error - Undefined name '_isSentinelFrozen' - lib\screens\home_screen.dart:902:9 - undefined_identifier
+  error - Undefined name '_isBackendOffline' - lib\screens\home_screen.dart:905:16 - undefined_identifier
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:908:16 - undefined_identifier
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:908:43 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:911:16 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:911:38 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\home_screen.dart:1023:30 - undefined_function
+  error - Undefined name '_showUpdateBanner' - lib\screens\home_screen.dart:1023:45 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\home_screen.dart:1059:19 - undefined_function
+  error - Undefined name '_showFeedbackOption' - lib\screens\home_screen.dart:1059:34 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\home_screen.dart:1060:40 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\home_screen.dart:1067:19 - undefined_function
+  error - Undefined name '_showFeedbackOption' - lib\screens\home_screen.dart:1067:34 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\home_screen.dart:1070:30 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\home_screen.dart:1085:50 - undefined_identifier
+  error - Undefined name '_activeSymbol' - lib\screens\home_screen.dart:1251:37 - undefined_identifier
+  error - Undefined name '_selectSymbol' - lib\screens\home_screen.dart:1251:76 - undefined_identifier
+  error - Undefined name '_activeSymbol' - lib\screens\home_screen.dart:1258:24 - undefined_identifier
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:1260:22 - undefined_identifier
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:1263:39 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:1264:43 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\home_screen.dart:1265:51 - undefined_function
+  error - Undefined name '_currentDrawings' - lib\screens\home_screen.dart:1265:66 - undefined_identifier
+  error - Undefined name '_activeSymbol' - lib\screens\home_screen.dart:1268:19 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:1270:30 - undefined_identifier
+  error - Undefined name '_btnState' - lib\screens\home_screen.dart:1271:32 - undefined_identifier
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:1273:34 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:1280:37 - undefined_identifier
+  error - Undefined name '_isAnalyzing' - lib\screens\home_screen.dart:1280:62 - undefined_identifier
+  error - Undefined name '_currentDrawings' - lib\screens\home_screen.dart:1280:86 - undefined_identifier
+  error - The function '_selectSymbol' isn't defined - lib\screens\home_screen.dart:1295:28 - undefined_function
+  error - Undefined name '_activeSymbol' - lib\screens\home_screen.dart:1299:29 - undefined_identifier
+  error - Undefined name '_activeSymbol' - lib\screens\home_screen.dart:1303:33 - undefined_identifier
+  error - Undefined name '_activeSymbol' - lib\screens\home_screen.dart:1304:38 - undefined_identifier
+  error - Undefined name '_activeSymbol' - lib\screens\home_screen.dart:1324:26 - undefined_identifier
+  error - Undefined name '_activeSymbol' - lib\screens\home_screen.dart:1335:24 - undefined_identifier
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:1337:22 - undefined_identifier
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:1340:39 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:1341:43 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\home_screen.dart:1342:51 - undefined_function
+  error - Undefined name '_currentDrawings' - lib\screens\home_screen.dart:1342:66 - undefined_identifier
+  error - Undefined name '_activeSymbol' - lib\screens\home_screen.dart:1345:19 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:1347:30 - undefined_identifier
+  error - Undefined name '_btnState' - lib\screens\home_screen.dart:1348:32 - undefined_identifier
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:1350:34 - undefined_identifier
+  error - Undefined name '_activeSymbol' - lib\screens\home_screen.dart:1383:44 - undefined_identifier
+  error - The function '_selectSymbol' isn't defined - lib\screens\home_screen.dart:1385:40 - undefined_function
+  error - Undefined name '_mobileTab' - lib\screens\home_screen.dart:1396:32 - undefined_identifier
+  error - Undefined name '_activeSymbol' - lib\screens\home_screen.dart:1403:40 - undefined_identifier
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:1405:38 - undefined_identifier
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:1408:55 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:1409:59 - undefined_identifier
+  error - Undefined name '_currentDenState' - lib\screens\home_screen.dart:1410:51 - undefined_identifier
+  error - Undefined name '_currentDrawings' - lib\screens\home_screen.dart:1412:47 - undefined_identifier
+  error - Undefined name 'mounted' - lib\screens\home_screen.dart:1414:51 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\home_screen.dart:1414:60 - undefined_function
+  error - Undefined name '_currentDrawings' - lib\screens\home_screen.dart:1414:75 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:1421:68 - undefined_identifier
+  error - Undefined name '_isAnalyzing' - lib\screens\home_screen.dart:1421:93 - undefined_identifier
+  error - Undefined name '_currentDrawings' - lib\screens\home_screen.dart:1421:117 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:1430:48 - undefined_identifier
+  error - Undefined name '_isAnalyzing' - lib\screens\home_screen.dart:1431:44 - undefined_identifier
+  error - Undefined name '_activeSymbol' - lib\screens\home_screen.dart:1432:45 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\home_screen.dart:1433:46 - undefined_function
+  error - Undefined name '_mobileTab' - lib\screens\home_screen.dart:1433:61 - undefined_identifier
+  error - Undefined name '_accountHealth' - lib\screens\home_screen.dart:1439:37 - undefined_identifier
+  error - Undefined name '_recentTrades' - lib\screens\home_screen.dart:1440:43 - undefined_identifier
+  error - Undefined name '_mobileTab' - lib\screens\home_screen.dart:1447:25 - undefined_identifier
+  error - Undefined name '_activeSymbol' - lib\screens\home_screen.dart:1447:44 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:1449:36 - undefined_identifier
+  error - Undefined name '_btnState' - lib\screens\home_screen.dart:1450:38 - undefined_identifier
+  error - Undefined name '_latestSnapshot' - lib\screens\home_screen.dart:1452:40 - undefined_identifier
+  error - Undefined name '_mobileTab' - lib\screens\home_screen.dart:1471:21 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\home_screen.dart:1473:9 - undefined_function
+  error - Undefined name '_mobileTab' - lib\screens\home_screen.dart:1474:11 - undefined_identifier
+  error - Undefined name '_isDenOpen' - lib\screens\home_screen.dart:1476:13 - undefined_identifier
+  error - Undefined name '_isDenOpen' - lib\screens\home_screen.dart:1478:13 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\home_screen.dart:1521:21 - undefined_function
+  error - Undefined name '_activeSymbol' - lib\screens\home_screen.dart:1522:23 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:1523:23 - undefined_identifier
+  error - Undefined name '_isSentinelFrozen' - lib\screens\home_screen.dart:1524:23 - undefined_identifier
+  error - The function '_selectSymbol' isn't defined - lib\screens\home_screen.dart:1525:23 - undefined_function
+  error - Undefined name 'context' - lib\screens\home_screen.dart:1550:16 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:1671:23 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\home_screen.dart:1683:25 - undefined_function
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:1684:27 - undefined_identifier
+  error - Undefined name '_activeSymbol' - lib\screens\home_screen.dart:1685:27 - undefined_identifier
+  error - Undefined name '_isDenOpen' - lib\screens\home_screen.dart:1686:27 - undefined_identifier
+  error - Expected a method, getter, setter or operator declaration - lib\screens\home_screen.dart:1726:1 - expected_executable
+  error - The getter 'shieldColor' isn't defined for the type 'MehdAiTheme' - lib\screens\onboarding_screen.dart:34:28 - undefined_getter
+warning - Unused import: 'package:mehd_ai_flutter/widgets/den_loading_widget.dart' - lib\screens\rejection_feed_screen.dart:4:8 - unused_import
+  error - The getter 'shieldColor' isn't defined for the type 'MehdAiTheme' - lib\screens\rejection_feed_screen.dart:99:34 - undefined_getter
+  error - Invalid constant value - lib\screens\rejection_feed_screen.dart:102:62 - invalid_constant
+  error - The getter 'shieldColor' isn't defined for the type 'MehdAiTheme' - lib\screens\rejection_feed_screen.dart:102:74 - undefined_getter
+  error - The getter 'shieldColor' isn't defined for the type 'MehdAiTheme' - lib\screens\rejection_feed_screen.dart:108:34 - undefined_getter
+warning - Unused import: 'package:mehd_ai_flutter/services/language_service.dart' - lib\screens\splash_screen.dart:9:8 - unused_import
+   info - Don't use 'BuildContext's across async gaps - lib\screens\splash_screen.dart:65:20 - use_build_context_synchronously
+   info - Unnecessary escape in string literal - lib\widgets\consensus_bar.dart:115:38 - unnecessary_string_escapes
+  error - The getter 'textGlowRed' isn't defined for the type 'MehdAiTheme' - lib\widgets\consensus_bar.dart:125:128 - undefined_getter
+   info - Use 'whereType' to select elements of a given type - lib\widgets\drawing_engine.dart:39:38 - prefer_iterable_wheretype
+

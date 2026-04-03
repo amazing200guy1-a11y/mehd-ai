@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mehd_ai_flutter/models/user_profile.dart';
@@ -25,30 +27,69 @@ import 'package:mehd_ai_flutter/models/user_profile.dart';
 /// This means the app NEVER crashes from an auth failure.
 
 class AuthService extends ChangeNotifier {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  // Lazy getters to prevent "App not initialized" errors on web parallel boot
+  FirebaseAuth get _auth => FirebaseAuth.instance;
+  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
+  final SharedPreferences prefs;
   User? _currentUser;
   UserProfile? _userProfile;
   bool _isLoading = false;
 
-  User? get currentUser => _currentUser;
+  User? get currentUser => _isFirebaseReady ? _auth.currentUser : _currentUser;
   UserProfile? get userProfile => _userProfile;
   bool get isLoading => _isLoading;
-  bool get isLoggedIn => _currentUser != null;
+  bool get isLoggedIn {
+    if (!_isFirebaseReady) return _currentUser != null;
+    return _currentUser != null || _auth.currentUser != null;
+  }
+  User? get immediateCurrentUser {
+    if (!_isFirebaseReady) return _currentUser;
+    return _auth.currentUser ?? _currentUser;
+  }
+  
+  bool _isFirebaseReady = false;
+  bool get isFirebaseReady => _isFirebaseReady;
 
-  AuthService() {
-    // Listen to auth state changes — if user logs out anywhere, we know instantly
-    _auth.authStateChanges().listen((User? user) {
-      _currentUser = user;
-      if (user != null) {
-        _loadUserProfile(user.uid);
-      } else {
-        _userProfile = null;
-      }
+  AuthService({required this.prefs}) {
+    _initAsync();
+  }
+
+  Future<void> _initAsync() async {
+    // Poll for Firebase ready state in parallel boot scenario
+    int attempts = 0;
+    while (Firebase.apps.isEmpty && attempts < 20) {
+      await Future.delayed(const Duration(milliseconds: 200));
+      attempts++;
+    }
+
+    if (Firebase.apps.isNotEmpty) {
+      _isFirebaseReady = true;
+      // Listen to auth state changes — if user logs out anywhere, we know instantly
+      _auth.authStateChanges().listen((User? user) {
+        _currentUser = user;
+        if (user != null) {
+          _loadUserProfile(user.uid);
+        } else {
+          _userProfile = null;
+        }
+        notifyListeners();
+      });
       notifyListeners();
-    });
+    } else {
+      debugPrint("DEN_AUTH: Firebase failed to initialize in time.");
+    }
+  }
+
+  /// Waiter for UI to ensure Firebase is ready before auth operations
+  Future<void> ensureFirebaseReady() async {
+    if (_isFirebaseReady) return;
+    int attempts = 0;
+    while (!_isFirebaseReady && attempts < 50) {
+      await Future.delayed(const Duration(milliseconds: 100));
+      attempts++;
+    }
   }
 
   /// Stream of auth state changes — used by SplashScreen to route users

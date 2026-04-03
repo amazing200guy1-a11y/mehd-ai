@@ -1,136 +1,134 @@
-/// FILE 2 — user_profile.dart
-///
-/// Build Debrief:
-/// This model mirrors the user document stored in Firestore. Every field is
-/// carefully chosen: `riskPercent` is clamped to 0.1–1.0 in the constructor
-/// itself, so even if tampered data arrives from the network, the model layer
-/// enforces the cap before the UI or services ever see it.
-///
-/// `BrokerType` is an enum rather than a raw string because the app only
-/// supports three connection modes. Enums give us exhaustive switch safety —
-/// the compiler will warn us if we add a new broker type but forget to handle
-/// it somewhere.
-///
-/// Why Firebase Auth was chosen: Firebase Auth provides battle-tested security
-/// including password hashing (bcrypt), OAuth token management, email
-/// verification, and abuse-prevention (rate limiting). Rolling our own auth
-/// for a financial app would be dangerous — one mistake in password storage
-/// and user accounts are compromised. Firebase handles this at Google-scale.
+/// FIX 6: UserProfile — backwards-compatible with auth_service.dart
+/// Now includes paper trading enforcement fields alongside existing auth fields.
 
-enum BrokerType { mt5, oanda, demo }
+enum BrokerType { demo, oanda, mt5, custom }
 
 class UserProfile {
   final String userId;
   final String name;
   final String email;
   final BrokerType brokerType;
-  final String? brokerLogin;     // Encrypted — never stored as plain text
-  final String? brokerServer;    // MT5 server name
-  final double riskPercent;      // 0.1 to 1.0 ONLY — hard-capped
+  final double riskPercent;
   final bool paperTradingMode;
   final bool onboardingComplete;
-  final DateTime createdAt;
-  final int totalTrades;
-  final double winRate;
-  final DateTime joinedAt;
+  final DateTime accountCreated;
+
+  // FIX 6: Paper trading enforcement fields
+  final int paperTradesCompleted;
+  final bool legalAccepted;
+  final double paperDrawdownPct;
+  final bool liveTradingUnlocked;
 
   UserProfile({
-    required this.userId,
-    required this.name,
-    required this.email,
+    this.userId = '',
+    this.name = '',
+    this.email = '',
     this.brokerType = BrokerType.demo,
-    this.brokerLogin,
-    this.brokerServer,
-    double riskPercent = 1.0,
+    this.riskPercent = 1.0,
     this.paperTradingMode = true,
     this.onboardingComplete = false,
-    DateTime? createdAt,
-    this.totalTrades = 0,
-    this.winRate = 0.0,
-    DateTime? joinedAt,
-  })  : riskPercent = riskPercent.clamp(0.1, 1.0),
-        createdAt = createdAt ?? DateTime.now(),
-        joinedAt = joinedAt ?? DateTime.now();
+    DateTime? accountCreated,
+    this.paperTradesCompleted = 0,
+    this.legalAccepted = false,
+    this.paperDrawdownPct = 0.0,
+    this.liveTradingUnlocked = false,
+  }) : accountCreated = accountCreated ?? DateTime.now();
 
-  /// Creates a UserProfile from a Firestore document snapshot.
+  /// Number of days since account creation
+  int get accountAgeDays => DateTime.now().difference(accountCreated).inDays;
+
+  /// Whether this user has cleared all requirements for live trading
+  bool get isReadyForLive =>
+      paperTradesCompleted >= 10 &&
+      accountAgeDays >= 7 &&
+      legalAccepted &&
+      paperDrawdownPct < 10.0;
+
+  /// Progress percentage toward live trading unlock
+  double get progressPercent {
+    double progress = 0;
+    progress += (paperTradesCompleted.clamp(0, 10) / 10) * 40;
+    progress += (accountAgeDays.clamp(0, 7) / 7) * 30;
+    if (legalAccepted) progress += 15;
+    if (paperDrawdownPct < 10.0) progress += 15;
+    return progress.clamp(0, 100);
+  }
+
+  /// Human readable status line
+  String get statusLine {
+    if (isReadyForLive) return 'Ready for live trading!';
+    final parts = <String>[];
+    if (paperTradesCompleted < 10) parts.add('${10 - paperTradesCompleted} more paper trades');
+    if (accountAgeDays < 7) parts.add('${7 - accountAgeDays} more days');
+    if (!legalAccepted) parts.add('accept legal terms');
+    if (paperDrawdownPct >= 10.0) parts.add('reduce paper drawdown');
+    return 'Need: ${parts.join(', ')}';
+  }
+
+  Map<String, dynamic> toJson() => {
+    'userId': userId,
+    'name': name,
+    'email': email,
+    'brokerType': brokerType.name,
+    'riskPercent': riskPercent,
+    'paperTradingMode': paperTradingMode,
+    'onboardingComplete': onboardingComplete,
+    'accountCreated': accountCreated.toIso8601String(),
+    'paperTradesCompleted': paperTradesCompleted,
+    'legalAccepted': legalAccepted,
+    'paperDrawdownPct': paperDrawdownPct,
+    'liveTradingUnlocked': liveTradingUnlocked,
+  };
+
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
       userId: json['userId'] as String? ?? '',
       name: json['name'] as String? ?? '',
       email: json['email'] as String? ?? '',
-      brokerType: _brokerTypeFromString(json['brokerType'] as String? ?? 'demo'),
-      brokerLogin: json['brokerLogin'] as String?,
-      brokerServer: json['brokerServer'] as String?,
+      brokerType: BrokerType.values.firstWhere(
+        (e) => e.name == (json['brokerType'] as String? ?? 'demo'),
+        orElse: () => BrokerType.demo,
+      ),
       riskPercent: (json['riskPercent'] as num?)?.toDouble() ?? 1.0,
       paperTradingMode: json['paperTradingMode'] as bool? ?? true,
       onboardingComplete: json['onboardingComplete'] as bool? ?? false,
-      createdAt: json['createdAt'] != null
-          ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
+      accountCreated: json['accountCreated'] != null
+          ? DateTime.tryParse(json['accountCreated'] as String) ?? DateTime.now()
           : DateTime.now(),
-      totalTrades: json['totalTrades'] as int? ?? 0,
-      winRate: (json['winRate'] as num?)?.toDouble() ?? 0.0,
-      joinedAt: json['joinedAt'] != null
-          ? DateTime.tryParse(json['joinedAt'].toString()) ?? DateTime.now()
-          : DateTime.now(),
+      paperTradesCompleted: json['paperTradesCompleted'] as int? ?? 0,
+      legalAccepted: json['legalAccepted'] as bool? ?? false,
+      paperDrawdownPct: (json['paperDrawdownPct'] as num?)?.toDouble() ?? 0.0,
+      liveTradingUnlocked: json['liveTradingUnlocked'] as bool? ?? false,
     );
   }
 
-  /// Serializes to Firestore-ready JSON.
-  Map<String, dynamic> toJson() {
-    return {
-      'userId': userId,
-      'name': name,
-      'email': email,
-      'brokerType': brokerType.name,
-      'brokerLogin': brokerLogin,
-      'brokerServer': brokerServer,
-      'riskPercent': riskPercent,
-      'paperTradingMode': paperTradingMode,
-      'onboardingComplete': onboardingComplete,
-      'createdAt': createdAt.toIso8601String(),
-      'totalTrades': totalTrades,
-      'winRate': winRate,
-      'joinedAt': joinedAt.toIso8601String(),
-    };
-  }
-
-  /// Returns a copy with modified fields.
   UserProfile copyWith({
+    String? userId,
     String? name,
+    String? email,
     BrokerType? brokerType,
-    String? brokerLogin,
-    String? brokerServer,
     double? riskPercent,
     bool? paperTradingMode,
     bool? onboardingComplete,
-    int? totalTrades,
-    double? winRate,
+    DateTime? accountCreated,
+    int? paperTradesCompleted,
+    bool? legalAccepted,
+    double? paperDrawdownPct,
+    bool? liveTradingUnlocked,
   }) {
     return UserProfile(
-      userId: userId,
+      userId: userId ?? this.userId,
       name: name ?? this.name,
-      email: email,
+      email: email ?? this.email,
       brokerType: brokerType ?? this.brokerType,
-      brokerLogin: brokerLogin ?? this.brokerLogin,
-      brokerServer: brokerServer ?? this.brokerServer,
       riskPercent: riskPercent ?? this.riskPercent,
       paperTradingMode: paperTradingMode ?? this.paperTradingMode,
       onboardingComplete: onboardingComplete ?? this.onboardingComplete,
-      createdAt: createdAt,
-      totalTrades: totalTrades ?? this.totalTrades,
-      winRate: winRate ?? this.winRate,
-      joinedAt: joinedAt,
+      accountCreated: accountCreated ?? this.accountCreated,
+      paperTradesCompleted: paperTradesCompleted ?? this.paperTradesCompleted,
+      legalAccepted: legalAccepted ?? this.legalAccepted,
+      paperDrawdownPct: paperDrawdownPct ?? this.paperDrawdownPct,
+      liveTradingUnlocked: liveTradingUnlocked ?? this.liveTradingUnlocked,
     );
-  }
-
-  static BrokerType _brokerTypeFromString(String value) {
-    switch (value.toLowerCase()) {
-      case 'mt5':
-        return BrokerType.mt5;
-      case 'oanda':
-        return BrokerType.oanda;
-      default:
-        return BrokerType.demo;
-    }
   }
 }

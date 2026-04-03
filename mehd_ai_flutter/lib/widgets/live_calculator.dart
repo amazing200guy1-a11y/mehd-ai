@@ -41,9 +41,12 @@ class LiveCalculator extends StatelessWidget {
             children: [
               const Icon(Icons.calculate, color: MehdAiTheme.green),
               const SizedBox(width: 8),
-              Text(
-                'LIVE CALCULUS',
-                style: MehdAiTheme.headingStyle.copyWith(letterSpacing: 1),
+              Flexible(
+                child: Text(
+                  'LIVE CALCULUS',
+                  style: MehdAiTheme.headingStyle.copyWith(letterSpacing: 1),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
@@ -51,9 +54,9 @@ class LiveCalculator extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildStatWidget('Avg Confidence', '${avgConfidence.toStringAsFixed(1)}%', MehdAiTheme.textPrimary),
-              _buildStatWidget('Math Discrepancy', _calculateDiscrepancy(), MehdAiTheme.textSecondary),
-              _buildStatWidget('Models Active', '${mathVotes.length}/3', MehdAiTheme.blue),
+              Flexible(child: _buildStatWidget('Avg Confidence', '${avgConfidence.toStringAsFixed(1)}%', MehdAiTheme.textPrimary)),
+              Flexible(child: _buildStatWidget('Math Discrepancy', _calculateDiscrepancy(), MehdAiTheme.textSecondary)),
+              Flexible(child: _buildStatWidget('Models Active', '${mathVotes.length}/3', MehdAiTheme.blue)),
             ],
           ),
         ],
@@ -84,6 +87,7 @@ class LiveCalculator extends StatelessWidget {
             fontWeight: FontWeight.bold,
             color: valueColor,
           ),
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );

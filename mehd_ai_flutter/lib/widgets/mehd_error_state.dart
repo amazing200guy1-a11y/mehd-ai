@@ -57,11 +57,14 @@ class _MehdErrorStateState extends State<MehdErrorState> with SingleTickerProvid
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                '> ${widget.message}',
-                style: GoogleFonts.jetBrainsMono(
-                  color: const Color(0xFFF85149), // Red error color
-                  fontSize: 13,
+              Flexible(
+                child: Text(
+                  '> ${widget.message}',
+                  style: GoogleFonts.jetBrainsMono(
+                    color: const Color(0xFFF85149), // Red error color
+                    fontSize: 13,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 4),

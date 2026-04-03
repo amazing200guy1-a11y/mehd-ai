@@ -31,8 +31,73 @@
 
   <title>mehd_ai_flutter</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    body {
+      background-color: #0D1117;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: #58A6FF;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .loader {
+      text-align: center;
+    }
+    .glitch {
+      font-size: 24px;
+      font-weight: bold;
+      letter-spacing: 5px;
+      margin-bottom: 20px;
+      animation: blink 1.5s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+    .cube {
+      width: 40px;
+      height: 40px;
+      border: 2px solid #58A6FF;
+      margin: 0 auto;
+      animation: rotate 2s infinite linear;
+      box-shadow: 0 0 15px rgba(88, 166, 255, 0.4);
+    }
+    @keyframes rotate {
+      0% { transform: rotateX(0deg) rotateY(0deg); }
+      100% { transform: rotateX(360deg) rotateY(360deg); }
+    }
+  </style>
 </head>
 <body>
+  <div id="loading" class="loader">
+    <div class="cube"></div>
+    <div class="glitch">MEHD AI</div>
+    <div style="font-size: 10px; opacity: 0.4; letter-spacing: 2px;">SYNCHRONIZING KERNEL...</div>
+  </div>
   <script src="flutter_bootstrap.js" async></script>
+  <script>
+    window.addEventListener('load', function(ev) {
+      // Remove loader once the page is fully loaded or engine is ready
+      // Flutter 3.22+ handles some of this via bootstrap, but extra safety:
+      var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          if (mutation.addedNodes.length > 0) {
+            for (var i = 0; i < mutation.addedNodes.length; i++) {
+              var node = mutation.addedNodes[i];
+              if (node.tagName === 'FLUTTER-VIEW') {
+                document.getElementById('loading').remove();
+                observer.disconnect();
+              }
+            }
+          }
+        });
+      });
+      observer.observe(document.body, { childList: true });
+    });
+  </script>
 </body>
 </html>

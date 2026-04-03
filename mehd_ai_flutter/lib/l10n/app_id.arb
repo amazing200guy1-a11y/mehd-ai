@@ -1,0 +1,20 @@
+{
+  "@@locale": "id",
+  "appTitle": "MEHD AI",
+  "warRoom": "Ruang Perang",
+  "marketplace": "Pasar",
+  "dataMoat": "Parit Data Berdaulat",
+  "apiDocs": "API Konsensus",
+  "compliance": "Kepatuhan & Audit",
+  "heatmap": "Peta Panas Global",
+  "licensing": "Lisensi Perusahaan",
+  "helpCenter": "Pusat Bantuan",
+  "platoon": "Peleton Ruang Perang",
+  "shadowMode": "Mode Bayangan",
+  "settings": "Pengaturan",
+  "language": "Bahasa",
+  "strikeNow": "Den setuju. Eksekusi sekarang.",
+  "sovereignStrike": "Bulat. Semua 11 lapisan selaras. Ini sinyal paling langka di Den. Eksekusi dengan kekuatan penuh.",
+  "awaitingCommand": "11 AGEN MENUNGGU PERINTAH",
+  "selectSymbol": "Pilih simbol dari bilah sisi untuk memulai analisis multi-agen."
+}

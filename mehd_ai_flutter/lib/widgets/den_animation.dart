@@ -9,7 +9,7 @@ import 'package:mehd_ai_flutter/core/theme.dart';
 /// It encapsulates 5 distinct states that emotionally connect the trader 
 /// to the AI models working for them.
 /// 
-/// State 1: Activation - A ghost tiger rises, surrounded by 9 predators lighting up.
+/// State 1: Activation - A ghost tiger rises, surrounded by 11 predators lighting up.
 /// State 2: Idle - A ghostly 5% opacity pulse waiting in the background.
 /// State 3: Locked - A subtle aggressive shake. The Den growls "No."
 /// State 4: Unlocked - A full blue flash with circuit waves. "Strike Now."
@@ -28,7 +28,7 @@ enum DenState {
 
 class DenAnimation extends StatefulWidget {
   final DenState state;
-  final bool animateModels; // Should the 9 models circle the tiger?
+  final bool animateModels; // Should the 11 agents circle the tiger?
   
   const DenAnimation({
     super.key,
@@ -46,7 +46,7 @@ class _DenAnimationState extends State<DenAnimation> with TickerProviderStateMix
   late AnimationController _surgeController;
 
   final List<String> _predators = [
-    'GROK', 'CLAUDE', 'DEEPSEEK', 'PERPLEXITY', 'GPT-4', 'O3', 'GEMINI', 'LLAMA', 'CODESTRAL'
+    'DON', 'PHANTOM', 'ORACLE', 'CAESAR', 'SAGE', 'GUARDIAN', 'TITAN', 'ATLAS', 'FORGE', 'THE DON', 'SENTINEL'
   ];
 
   @override
@@ -108,7 +108,8 @@ class _DenAnimationState extends State<DenAnimation> with TickerProviderStateMix
               break;
               
             case DenState.activation:
-              opacity = 0.12;
+              opacity = 0.15;
+              glowColor = MehdAiTheme.blue.withOpacity(0.3); // Blue eye flash base
               verticalOffset = -40.0; // Rises up slightly
               break;
               
@@ -170,7 +171,7 @@ class _DenAnimationState extends State<DenAnimation> with TickerProviderStateMix
                               child: Image.asset('assets/images/mehd_logo.png', width: 200, height: 200),
                             ),
                             
-                            // The 9 Predators Circling
+                            // The 11 Predators Circling
                             if (widget.state == DenState.activation && widget.animateModels)
                               _buildCirclingPredators(),
                               

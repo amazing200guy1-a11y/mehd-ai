@@ -24,7 +24,7 @@ class _DenLoadingWidgetState extends State<DenLoadingWidget> with SingleTickerPr
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1333),
     )..repeat(reverse: true);
 
     _opacityAnim = Tween<double>(begin: 0.05, end: 0.14).animate(
@@ -65,6 +65,7 @@ class _DenLoadingWidgetState extends State<DenLoadingWidget> with SingleTickerPr
               color: const Color(0xFF3B4048),
               fontSize: 11,
             ),
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

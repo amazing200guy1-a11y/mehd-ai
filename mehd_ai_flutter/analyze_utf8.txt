@@ -1,5 +1,88 @@
 ﻿Analyzing mehd_ai_flutter...                                    
 
-  error - Target of URI doesn't exist: 'package:mehd_ai_flutter/widgets/mehd_loading_indicator.dart' - lib\screens\auth\login_screen.dart:17:8 - uri_does_not_exist
-warning - Unused import: 'package:mehd_ai_flutter/services/auth_service.dart' - lib\screens\home_screen.dart:15:8 - unused_import
+warning - The value of the local variable 'initFuture' isn't used - lib\main.dart:19:9 - unused_local_variable
+  error - Undefined name 'SharedPreferences' - lib\main.dart:20:23 - undefined_identifier
+  error - Undefined class 'SharedPreferences' - lib\main.dart:42:9 - undefined_class
+  error - 'dynamic' doesn't conform to the bound 'ChangeNotifier?' of the type parameter 'T' - lib\main.dart:50:9 - type_argument_not_matching_bounds
+  error - Couldn't infer type parameter 'T'.
 
+Tried to infer 'dynamic' for 'T' which doesn't work:
+  Type parameter 'T' is declared to extend 'ChangeNotifier?' producing 'ChangeNotifier?'.
+The type 'dynamic' was inferred from:
+  Parameter 'create' declared as     'T Function(BuildContext)'
+                     but argument is 'dynamic Function(BuildContext)'.
+
+Consider passing explicit type argument(s) to the generic.
+
+ - lib\main.dart:50:9 - could_not_infer
+  error - The name 'LanguageService' isn't a type, so it can't be used as a type argument - lib\main.dart:52:23 - non_type_as_type_argument
+  error - The property 'currentLocale' can't be unconditionally accessed because the receiver can be 'null' - lib\main.dart:58:34 - unchecked_use_of_nullable_value
+  error - The property 'currentLocale' can't be unconditionally accessed because the receiver can be 'null' - lib\main.dart:77:42 - unchecked_use_of_nullable_value
+   info - The declaration '_buildErrorState' isn't referenced - lib\screens\home_screen.dart:934:10 - unused_element
+  error - The name '_retryConnection' is already defined - lib\screens\home_screen.dart:1094:8 - duplicate_definition
+  error - The method '_checkBackendHealth' isn't defined for the type '_HomeScreenState' - lib\screens\home_screen.dart:1095:5 - undefined_method
+  error - The name 'acceptLegal' is already defined - lib\screens\home_screen.dart:1098:8 - duplicate_definition
+  error - Expected to find ';' - lib\screens\home_screen.dart:1523:15 - expected_token
+  error - Expected an identifier - lib\screens\home_screen.dart:1523:16 - missing_identifier
+  error - Unexpected text ';' - lib\screens\home_screen.dart:1523:16 - unexpected_token
+  error - Expected to find '}' - lib\screens\home_screen.dart:1524:13 - expected_token
+  error - Expected a class member - lib\screens\home_screen.dart:1527:7 - expected_class_member
+  error - Expected a class member - lib\screens\home_screen.dart:1527:8 - expected_class_member
+  error - Expected a class member - lib\screens\home_screen.dart:1528:5 - expected_class_member
+  error - Expected a class member - lib\screens\home_screen.dart:1528:6 - expected_class_member
+  error - Undefined name '_mobileTab' - lib\screens\home_screen.dart:1537:21 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\home_screen.dart:1539:9 - undefined_function
+  error - Undefined name '_mobileTab' - lib\screens\home_screen.dart:1540:11 - undefined_identifier
+  error - Undefined name '_isDenOpen' - lib\screens\home_screen.dart:1542:13 - undefined_identifier
+  error - Undefined name '_isDenOpen' - lib\screens\home_screen.dart:1544:13 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\home_screen.dart:1587:21 - undefined_function
+  error - Undefined name '_activeSymbol' - lib\screens\home_screen.dart:1588:23 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:1589:23 - undefined_identifier
+  error - Undefined name '_isSentinelFrozen' - lib\screens\home_screen.dart:1590:23 - undefined_identifier
+  error - The function '_selectSymbol' isn't defined - lib\screens\home_screen.dart:1591:23 - undefined_function
+  error - Undefined name 'context' - lib\screens\home_screen.dart:1616:16 - undefined_identifier
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:1737:23 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\home_screen.dart:1749:25 - undefined_function
+  error - Undefined name '_consensus' - lib\screens\home_screen.dart:1750:27 - undefined_identifier
+  error - Undefined name '_activeSymbol' - lib\screens\home_screen.dart:1751:27 - undefined_identifier
+  error - Undefined name '_isDenOpen' - lib\screens\home_screen.dart:1752:27 - undefined_identifier
+   info - The declaration '_buildActivationWarning' isn't referenced - lib\screens\home_screen.dart:1767:10 - unused_element
+  error - Expected a method, getter, setter or operator declaration - lib\screens\home_screen.dart:1792:1 - expected_executable
+  error - The name 'LanguageService' isn't a type, so it can't be used as a type argument - lib\screens\settings_screen.dart:21:31 - non_type_as_type_argument
+  error - The getter 'supportedLanguages' isn't defined for the type 'dynamic Function({required dynamic prefs})' - lib\screens\settings_screen.dart:56:40 - undefined_getter
+  error - The getter 'supportedLanguages' isn't defined for the type 'dynamic Function({required dynamic prefs})' - lib\screens\settings_screen.dart:58:44 - undefined_getter
+warning - Unused import: 'package:shared_preferences/shared_preferences.dart' - lib\screens\splash_screen.dart:10:8 - unused_import
+   info - The private field _globalOpacity could be 'final' - lib\screens\splash_screen.dart:28:10 - prefer_final_fields
+warning - The value of the local variable 'authService' isn't used - lib\screens\splash_screen.dart:77:11 - unused_local_variable
+  error - The name 'authService' is already defined - lib\screens\splash_screen.dart:77:11 - duplicate_definition
+  error - Undefined class 'SharedPreferences' - lib\services\auth_service.dart:32:9 - undefined_class
+  error - The final variable 'prefs' must be initialized - lib\services\language_service.dart:8:27 - final_not_initialized
+   info - The variable name 'LanguageService' isn't a lowerCamelCase identifier - lib\services\language_service.dart:10:3 - non_constant_identifier_names
+  error - Initializing formal parameters can only be used in constructors - lib\services\language_service.dart:10:20 - field_initializer_outside_constructor
+  error - Undefined name '_langKey' - lib\services\language_service.dart:11:38 - undefined_identifier
+  error - Undefined name '_currentLocale' - lib\services\language_service.dart:13:7 - undefined_identifier
+  error - Undefined name '_currentLocale' - lib\services\language_service.dart:18:9 - undefined_identifier
+  error - Undefined name '_currentLocale' - lib\services\language_service.dart:19:5 - undefined_identifier
+  error - The function 'notifyListeners' isn't defined - lib\services\language_service.dart:20:5 - undefined_function
+  error - Undefined name '_langKey' - lib\services\language_service.dart:23:27 - undefined_identifier
+  error - Can't have modifier 'static' here - lib\services\language_service.dart:28:3 - extraneous_modifier
+  error - Expected a method, getter, setter or operator declaration - lib\services\language_service.dart:38:1 - expected_executable
+
+flutter : 57 issues 
+found. (ran in 4.9s)
+At line:1 char:1
++ flutter analyze > 
+analyze_current.txt 
+2>&1
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (57 issues    
+ found. (ran in 4.    
+9s):String) [], R    
+emoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 

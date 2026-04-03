@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
 import 'package:mehd_ai_flutter/models/consensus_result.dart';
 
+
 /// FILE — den_verdict_card.dart
 ///
 /// Build Debrief:
-/// The DenVerdictCard is the ultimate output of the 9-model consensus.
-/// It sits at the top of the Strategy Room. It instantly tells the user
-/// the final trading direction, the consensus percentage, and whether
-/// the trade is approved to proceed according to Hard Risk rules.
+/// The DenVerdictCard represents the final decision of the 11-agent architecture.
+/// Displays votes grouped by layer (UNDERWORLD, EMPIRE, OLYMPUS) and final system checks.
 
 class DenVerdictCard extends StatelessWidget {
   final ConsensusResult consensus;
@@ -17,30 +16,20 @@ class DenVerdictCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isBuy = consensus.finalDirection == 'BUY';
-    final isSell = consensus.finalDirection == 'SELL';
-    
-    Color verdictColor = MehdAiTheme.textSecondary;
-    if (isBuy) verdictColor = MehdAiTheme.green;
-    if (isSell) verdictColor = MehdAiTheme.red;
+    final proceed = consensus.proceed;
+    final primaryColor = proceed ? MehdAiTheme.green : MehdAiTheme.red;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
       margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
-        color: MehdAiTheme.bgSecondary,
+        gradient: MehdAiTheme.cardGradient,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: consensus.proceed ? verdictColor.withOpacity(0.5) : MehdAiTheme.borderColor,
-          width: consensus.proceed ? 2 : 1,
-        ),
-        boxShadow: consensus.proceed ? [
-          BoxShadow(
-            color: verdictColor.withOpacity(0.1),
-            blurRadius: 20,
-            spreadRadius: 2,
-          )
-        ] : [],
+        border: Border.all(color: primaryColor.withOpacity(0.5), width: 1.5),
+        boxShadow: proceed
+            ? [BoxShadow(color: primaryColor.withOpacity(0.15), blurRadius: 30, spreadRadius: 4)]
+            : [],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,87 +37,162 @@ class DenVerdictCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'THE DEN VERDICT',
-                style: MehdAiTheme.headingStyle.copyWith(
-                  letterSpacing: 2,
-                  color: MehdAiTheme.textSecondary,
+              Flexible(
+                child: Text(
+                  'THE DEN HAS SPOKEN',
+                  style: MehdAiTheme.headingStyle.copyWith(letterSpacing: 2, color: Colors.white),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              _buildConsensusBadge(),
+              const Icon(Icons.shield, color: MehdAiTheme.gold, size: 20),
             ],
           ),
+          Text(
+            'Consensus-Verified™',
+            style: MehdAiTheme.labelStyle.copyWith(color: MehdAiTheme.gold),
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 24),
+          const Divider(height: 1, color: MehdAiTheme.borderColor),
           const SizedBox(height: 16),
+          
+          _buildLayerStatus('THE UNDERWORLD', ['grok', 'perplexity', 'gemini']),
+          const SizedBox(height: 12),
+          _buildLayerStatus('THE EMPIRE', ['gpt-4', 'claude', 'llama']),
+          const SizedBox(height: 12),
+          _buildLayerStatus('OLYMPUS', ['deepseek', 'openai-o3', 'codestral']),
+
+          const SizedBox(height: 16),
+          const Divider(height: 1, color: MehdAiTheme.borderColor),
+          const SizedBox(height: 16),
+
+          _buildFinalChecks(),
+
+          const SizedBox(height: 16),
+          const Divider(height: 1, color: MehdAiTheme.borderColor),
+          const SizedBox(height: 24),
+
           Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                consensus.finalDirection,
-                style: MehdAiTheme.headingStyle.copyWith(
-                  fontSize: 32,
-                  color: consensus.proceed ? verdictColor : MehdAiTheme.textSecondary,
-                ),
+              Icon(
+                proceed ? Icons.check_circle : Icons.warning_rounded,
+                color: primaryColor,
+                size: 24,
               ),
               const SizedBox(width: 12),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
+              Expanded(
                 child: Text(
-                  consensus.proceed ? 'CLEARED FOR EXECUTION' : 'EXECUTION LOCKED',
-                  style: MehdAiTheme.terminalStyle.copyWith(
-                    fontSize: 12,
-                    color: consensus.proceed ? MehdAiTheme.textPrimary : MehdAiTheme.red,
+                  proceed 
+                      ? 'CONSENSUS-VERIFIED — STRIKE NOW' 
+                      : 'HARD FREEZE — ${consensus.rejectionReason?.toUpperCase() ?? "SYSTEM LOCKED"}',
+                  style: MehdAiTheme.headingStyle.copyWith(
+                    fontSize: 20,
+                    color: primaryColor,
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          if (!consensus.proceed && consensus.rejectionReason != null && consensus.rejectionReason!.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: MehdAiTheme.red.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: MehdAiTheme.red.withOpacity(0.3)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.warning_amber_rounded, color: MehdAiTheme.red, size: 16),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      consensus.rejectionReason!,
-                      style: MehdAiTheme.labelStyle.copyWith(color: MehdAiTheme.red),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ]
         ],
       ),
     );
   }
 
-  Widget _buildConsensusBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: MehdAiTheme.blue.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: MehdAiTheme.blue.withOpacity(0.5)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.check_circle_outline, color: MehdAiTheme.blue, size: 14),
-          const SizedBox(width: 6),
-          Text(
-            '${consensus.consensusPercentage.toInt()}% AGREEMENT',
-            style: MehdAiTheme.labelStyle.copyWith(color: MehdAiTheme.blue, fontWeight: FontWeight.bold),
+  Widget _buildLayerStatus(String layerName, List<String> agentIds) {
+    final layerVotes = consensus.votes.where((v) => agentIds.contains(v.modelName.toLowerCase())).toList();
+    if (layerVotes.isEmpty) return const SizedBox.shrink();
+
+    final agreeCount = layerVotes.where((v) => v.direction == consensus.finalDirection).length;
+    final total = agentIds.length;
+    final isFull = agreeCount == total;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Flexible(
+          child: Text(
+            '$layerName:',
+            style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.textSecondary, fontWeight: FontWeight.bold),
+            overflow: TextOverflow.ellipsis,
           ),
-        ],
-      ),
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                '$agreeCount/$total',
+                style: MehdAiTheme.terminalStyle.copyWith(color: Colors.white),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(isFull ? Icons.check : Icons.circle_outlined, color: isFull ? MehdAiTheme.green : MehdAiTheme.textSecondary, size: 16),
+            const SizedBox(width: 16),
+            SizedBox(
+              width: 50,
+              child: Text(
+                consensus.finalDirection,
+                style: MehdAiTheme.terminalStyle.copyWith(color: isFull ? MehdAiTheme.green : MehdAiTheme.textSecondary, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.right,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        )
+      ],
+    );
+  }
+
+  Widget _buildFinalChecks() {
+    final primaryColor = consensus.proceed ? MehdAiTheme.green : MehdAiTheme.red;
+    
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Flexible(child: Text('THE DON:', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.gold, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
+            Expanded(
+              child: Text(
+                ' "${consensus.consensusPercentage.toInt()} confidence. Strike."',
+                style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.textPrimary),
+                textAlign: TextAlign.right,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Flexible(child: Text('SENTINEL:', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.red, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(child: Text(consensus.proceed ? 'All clear ' : 'Paradox detected ', style: MehdAiTheme.terminalStyle, overflow: TextOverflow.ellipsis)),
+                Icon(consensus.proceed ? Icons.check : Icons.close, color: primaryColor, size: 16),
+              ],
+            )
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Flexible(child: Text('KERNEL:', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.purple, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(child: Text(consensus.proceed ? 'Verified ' : 'Locked ', style: MehdAiTheme.terminalStyle, overflow: TextOverflow.ellipsis)),
+                Icon(consensus.proceed ? Icons.check : Icons.close, color: primaryColor, size: 16),
+              ],
+            )
+          ],
+        ),
+      ],
     );
   }
 }

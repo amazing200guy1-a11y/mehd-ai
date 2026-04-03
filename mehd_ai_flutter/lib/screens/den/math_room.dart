@@ -4,6 +4,7 @@ import 'package:mehd_ai_flutter/models/consensus_result.dart';
 import 'package:mehd_ai_flutter/core/api_service.dart';
 import 'package:mehd_ai_flutter/widgets/live_calculator.dart';
 import 'package:mehd_ai_flutter/widgets/den_loading_widget.dart';
+import 'package:mehd_ai_flutter/core/den_identity.dart';
 
 /// FILE — math_room.dart
 ///
@@ -66,7 +67,7 @@ class _MathRoomState extends State<MathRoom> {
     }
 
     final mathVotes = widget.consensusResult?.votes.where(
-      (v) => ['deepseek', 'openai-o3', 'codestral'].contains(v.modelName.toLowerCase())
+      (v) => ['titan', 'atlas', 'forge'].contains(v.modelName.toLowerCase())
     ).toList() ?? [];
 
     return ListView(
@@ -85,7 +86,7 @@ class _MathRoomState extends State<MathRoom> {
         const SizedBox(height: 24),
         if (mathVotes.isEmpty && _specializedResponse == null)
           Center(
-            child: Text('No Quantitative Predators Responded.', style: MehdAiTheme.labelStyle),
+            child: Text('No Olympus Agents Responded.', style: MehdAiTheme.labelStyle),
           )
         else
           ...mathVotes.map((v) => _buildPredatorCard(v)),
@@ -109,13 +110,21 @@ class _MathRoomState extends State<MathRoom> {
             children: [
               const Icon(Icons.calculate, color: MehdAiTheme.green, size: 16),
               const SizedBox(width: 8),
-              Text('QUANTITATIVE CORE', style: MehdAiTheme.headingStyle.copyWith(fontSize: 14, color: MehdAiTheme.green)),
+              Flexible(
+                child: Text(
+                  'QUANTITATIVE CORE', 
+                  style: MehdAiTheme.headingStyle.copyWith(fontSize: 14, color: MehdAiTheme.green),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
           Text(
             _specializedResponse!,
             style: MehdAiTheme.labelStyle.copyWith(height: 1.5, color: MehdAiTheme.textPrimary),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 10,
           ),
         ],
       ),
@@ -137,13 +146,21 @@ class _MathRoomState extends State<MathRoom> {
             children: [
               const Icon(Icons.functions, color: MehdAiTheme.green),
               const SizedBox(width: 8),
-              Text('QUANTITATIVE CALCULUS', style: MehdAiTheme.headingStyle),
+              Flexible(
+                child: Text(
+                  'QUANTITATIVE CALCULUS', 
+                  style: MehdAiTheme.headingStyle,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
             'Running 10,000 Monte Carlo simulations on tick volume and historical deviation parameters to find the exact entry coordinate.',
             style: MehdAiTheme.labelStyle,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 3,
           ),
         ],
       ),
@@ -155,12 +172,7 @@ class _MathRoomState extends State<MathRoom> {
     if (vote.direction == 'BUY') dirColor = MehdAiTheme.green;
     if (vote.direction == 'SELL') dirColor = MehdAiTheme.red;
 
-    IconData getIcon(String name) {
-      if (name == 'deepseek') return Icons.radar;
-      if (name == 'openai-o3') return Icons.hub;
-      if (name == 'codestral') return Icons.data_object;
-      return Icons.memory;
-    }
+    final identity = DenIdentity.getIdentity(vote.modelName);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -176,38 +188,53 @@ class _MathRoomState extends State<MathRoom> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(getIcon(vote.modelName.toLowerCase()), color: MehdAiTheme.textPrimary, size: 16),
-                  const SizedBox(width: 8),
-                  Text(
-                    vote.modelName.toUpperCase(),
-                    style: MehdAiTheme.headingStyle.copyWith(fontSize: 14),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  Text(
-                    '${vote.confidence.toStringAsFixed(1)}%',
-                    style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.textSecondary, fontSize: 11),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: dirColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      vote.direction,
-                      style: MehdAiTheme.terminalStyle.copyWith(
-                        color: dirColor,
-                        fontWeight: FontWeight.bold,
+              Flexible(
+                child: Row(
+                  children: [
+                    Icon(identity.icon, color: MehdAiTheme.textPrimary, size: 16),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        identity.displayName,
+                        style: MehdAiTheme.headingStyle.copyWith(fontSize: 14),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        '${vote.confidence.toStringAsFixed(1)}%',
+                        style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.textSecondary, fontSize: 11),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: dirColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          vote.direction,
+                          style: MehdAiTheme.terminalStyle.copyWith(
+                            color: dirColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -215,6 +242,8 @@ class _MathRoomState extends State<MathRoom> {
           Text(
             vote.reasoning,
             style: MehdAiTheme.labelStyle.copyWith(height: 1.5, color: MehdAiTheme.textSecondary),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 5,
           ),
         ],
       ),
@@ -226,17 +255,29 @@ class _MathRoomState extends State<MathRoom> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Opacity(
-            opacity: 0.1,
-            child: Image.asset('assets/images/mehd_logo.png', width: 120, height: 120),
+          const Icon(
+            Icons.track_changes_outlined,
+            color: Color(0xFF1A1A1A),
+            size: 36,
           ),
-          const SizedBox(height: 16),
-          Text(
-            'AWAITING TARGET',
-            style: MehdAiTheme.terminalStyle.copyWith(
-              color: MehdAiTheme.textSecondary,
-              letterSpacing: 2,
+          const SizedBox(height: 14),
+          const Text(
+            'SELECT A MARKET',
+            style: TextStyle(
+              color: Color(0xFF58A6FF),
+              fontSize: 12,
+              letterSpacing: 3,
             ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Choose a symbol from\nMarkets Explorer.',
+            style: TextStyle(
+              color: Color(0xFF333333),
+              fontSize: 10,
+              height: 1.6,
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),

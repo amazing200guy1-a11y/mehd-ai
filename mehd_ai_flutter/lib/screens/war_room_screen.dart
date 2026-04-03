@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
 import 'package:mehd_ai_flutter/models/consensus_result.dart';
+import 'package:mehd_ai_flutter/core/den_identity.dart';
+import 'package:mehd_ai_flutter/core/performance_tracker.dart';
+import 'package:mehd_ai_flutter/core/cache_service.dart';
+import 'package:mehd_ai_flutter/core/api_service.dart';
 import 'dart:math' as math;
 import 'dart:async';
 
@@ -20,6 +24,12 @@ class _WarRoomScreenState extends State<WarRoomScreen> with TickerProviderStateM
   
   String _liveText = "";
   Timer? _typewriterTimer;
+  final PerformanceTracker _perf = PerformanceTracker();
+  final CacheService _cache = CacheService();
+  final ApiService _apiService = ApiService();
+  
+  Map<String, dynamic>? _healthData;
+  Timer? _healthTimer;
 
   @override
   void initState() {
@@ -27,6 +37,15 @@ class _WarRoomScreenState extends State<WarRoomScreen> with TickerProviderStateM
     _pulseCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat(reverse: true);
     _radarCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 4))..repeat();
     _startTypewriter();
+    _fetchHealth();
+    _healthTimer = Timer.periodic(const Duration(seconds: 5), (_) => _fetchHealth());
+  }
+
+  Future<void> _fetchHealth() async {
+    final data = await _apiService.getSystemHealth();
+    if (mounted && data.isNotEmpty) {
+      setState(() => _healthData = data);
+    }
   }
 
   @override
@@ -42,9 +61,11 @@ class _WarRoomScreenState extends State<WarRoomScreen> with TickerProviderStateM
 
   void _startTypewriter() {
     _typewriterTimer?.cancel();
-    const fullText = "DECRYPTING MARKET VECTORS...\n\n"
-        "SENTIMENT LAYER: Scanning global news.\nSTRATEGY LAYER: Analyzing liquidity sweeps.\nMATH LAYER: Running Monte Carlo probability.\n\n"
-        "Awaiting final consensus...";
+    const fullText = "THE DON HAS INITIATED ANALYSIS...\n\n"
+        "THE UNDERWORLD: Gathering street intelligence and sentiment.\n"
+        "THE EMPIRE: Formulating imperial strategy and risk protocols.\n"
+        "OLYMPUS: Calculating quantitative probabilities.\n\n"
+        "Awaiting The Don's Synthesis...";
     
     int charIndex = 0;
     _typewriterTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
@@ -62,6 +83,7 @@ class _WarRoomScreenState extends State<WarRoomScreen> with TickerProviderStateM
     _pulseCtrl.dispose();
     _radarCtrl.dispose();
     _typewriterTimer?.cancel();
+    _healthTimer?.cancel();
     super.dispose();
   }
 
@@ -82,8 +104,16 @@ class _WarRoomScreenState extends State<WarRoomScreen> with TickerProviderStateM
         iconTheme: const IconThemeData(color: MehdAiTheme.red),
         centerTitle: true,
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(color: MehdAiTheme.red.withOpacity(0.3), height: 1),
+          preferredSize: const Size.fromHeight(25),
+          child: Container(
+            color: const Color(0xFF0D1117),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Text(
+                '${_perf.warRoomSummary} | Cache: ${_cache.hitRate.toStringAsFixed(0)}% hit',
+              style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.green, fontSize: 11),
+              textAlign: TextAlign.center,
+            ),
+          ),
         ),
       ),
       body: Row(
@@ -104,10 +134,14 @@ class _WarRoomScreenState extends State<WarRoomScreen> with TickerProviderStateM
   }
 
   Widget _buildNeuralMap() {
+    final isBuy = widget.consensus?.finalDirection == 'BUY';
+    final isSell = widget.consensus?.finalDirection == 'SELL';
+    final baseColor = isBuy ? const Color(0xFF00FF88) : (isSell ? const Color(0xFFFF3B3B) : MehdAiTheme.red);
+
     return Container(
       decoration: BoxDecoration(
         gradient: RadialGradient(
-          colors: [MehdAiTheme.red.withOpacity(0.1), Colors.black],
+          colors: [baseColor.withOpacity(0.1), Colors.black],
           radius: 0.8,
         )
       ),
@@ -116,48 +150,106 @@ class _WarRoomScreenState extends State<WarRoomScreen> with TickerProviderStateM
         children: [
           CustomPaint(
             size: const Size(double.infinity, double.infinity),
-            painter: NeuralConnectionPainter(pulse: _pulseCtrl),
+            painter: NeuralConnectionPainter(pulse: _pulseCtrl, activeNodes: _getActiveAgentIds(), baseColor: baseColor),
           ),
-          _buildNode(0, -100, "Math 1"),
-          _buildNode(-80, -40, "Math 2"),
-          _buildNode(80, -40, "Math 3"),
-          _buildNode(-120, 60, "Strat 1"),
-          _buildNode(0, 40, "Strat 2"),
-          _buildNode(120, 60, "Strat 3"),
-          _buildNode(-80, 160, "Sent 1"),
-          _buildNode(0, 140, "Sent 2"),
-          _buildNode(80, 160, "Sent 3"),
-          // Sentinel Center
-          AnimatedBuilder(
-            animation: _pulseCtrl,
-            builder: (_, __) => Container(
-              width: 60, height: 60,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.black,
-                border: Border.all(color: MehdAiTheme.red, width: 2),
-                boxShadow: [BoxShadow(color: MehdAiTheme.red.withOpacity(_pulseCtrl.value), blurRadius: 30)],
+          // 9 Outer Agent Nodes + THE DON (center) + SENTINEL (eye) = 11 total
+          // OLYMPUS
+          _buildNode(0, -110, "vanguard", baseColor),
+          
+          // THE EMPIRE
+          _buildNode(-80, -50, "guardian", baseColor), 
+          _buildNode(80, -50, "titan", baseColor),
+          _buildNode(-120, 50, "atlas", baseColor), 
+          _buildNode(120, 50, "forge", baseColor), 
+          
+          // THE UNDERWORLD
+          _buildNode(0, -20, "phantom", baseColor), 
+          _buildNode(-80, 150, "oracle", baseColor), 
+          _buildNode(0, 130, "caesar", baseColor), 
+          _buildNode(80, 150, "sage", baseColor),
+          
+          // THE DON (Center - white, large)
+          Transform.translate(
+            offset: const Offset(0, 45),
+            child: AnimatedBuilder(
+              animation: _pulseCtrl,
+              builder: (_, __) => Container(
+                width: 70, height: 70,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [BoxShadow(color: Colors.white.withOpacity(_pulseCtrl.value), blurRadius: 40)],
+                ),
+                child: const Icon(Icons.account_balance, color: Colors.black, size: 35),
               ),
-              child: const Icon(Icons.remove_red_eye, color: MehdAiTheme.red, size: 30),
             ),
-          )
+          ),
+          // THE DON LABEL
+          Transform.translate(
+            offset: const Offset(0, 95),
+            child: Text('THE DON', style: MehdAiTheme.labelStyle.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+          
+          // SENTINEL (Eye shape around center)
+          Transform.translate(
+            offset: const Offset(0, 45),
+            child: AnimatedBuilder(
+              animation: _pulseCtrl,
+              builder: (_, __) => Container(
+                width: 140, height: 100, // Wide eye shape
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.all(Radius.elliptical(140, 100)),
+                  border: Border.all(color: baseColor.withOpacity(0.3 + (_pulseCtrl.value * 0.4)), width: 3),
+                  boxShadow: [BoxShadow(color: baseColor.withOpacity(0.1), blurRadius: 20)],
+                ),
+              ),
+            ),
+          ),
+          Transform.translate(
+            offset: const Offset(0, -15),
+            child: Text('SENTINEL WATCHING', style: MehdAiTheme.terminalStyle.copyWith(color: baseColor, fontSize: 10, fontWeight: FontWeight.bold)),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildNode(double dx, double dy, String label) {
+  Set<String> _getActiveAgentIds() {
+    if (widget.consensus == null) return {};
+    return widget.consensus!.votes.map((v) => v.modelName.toLowerCase()).toSet();
+  }
+
+  Widget _buildNode(double dx, double dy, String rawModelName, Color baseColor) {
+    final identity = DenIdentity.getIdentity(rawModelName);
+    final hasVoted = widget.consensus?.votes.any((v) => v.modelName.toLowerCase() == rawModelName.toLowerCase()) ?? false;
+    final color = hasVoted ? baseColor : baseColor.withOpacity(0.3);
+    final size = hasVoted ? 16.0 : 12.0;
+
     return Transform.translate(
       offset: Offset(dx, dy),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 12, height: 12,
-            decoration: const BoxDecoration(shape: BoxShape.circle, color: MehdAiTheme.red),
+          AnimatedBuilder(
+            animation: _pulseCtrl,
+            builder: (context, child) {
+              final scale = hasVoted ? 1.0 + (_pulseCtrl.value * 0.3) : 1.0;
+              return Transform.scale(
+                scale: scale,
+                child: Container(
+                  width: size, height: size,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle, 
+                    color: color,
+                    boxShadow: hasVoted ? [BoxShadow(color: color.withOpacity(0.8), blurRadius: 15 * scale, spreadRadius: 2 * scale)] : [],
+                  ),
+                ),
+              );
+            },
           ),
           const SizedBox(height: 4),
-          Text(label, style: MehdAiTheme.labelStyle.copyWith(color: MehdAiTheme.red, fontSize: 10)),
+          Text(identity.displayName, style: MehdAiTheme.labelStyle.copyWith(color: color, fontSize: 10, fontWeight: hasVoted ? FontWeight.bold : FontWeight.normal)),
         ],
       ),
     );
@@ -196,12 +288,50 @@ class _WarRoomScreenState extends State<WarRoomScreen> with TickerProviderStateM
           const SizedBox(height: 16),
           Expanded(
             child: SingleChildScrollView(
-              child: Text(
-                _liveText,
-                style: MehdAiTheme.terminalStyle.copyWith(height: 1.5, color: MehdAiTheme.textPrimary),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _liveText,
+                    style: MehdAiTheme.terminalStyle.copyWith(height: 1.5, color: MehdAiTheme.textPrimary),
+                  ),
+                  if (_healthData != null) ...[
+                    const SizedBox(height: 40),
+                    const Divider(color: MehdAiTheme.red),
+                    const SizedBox(height: 16),
+                    Text('WAR ROOM TELEMETRY', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.red, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 16),
+                    _buildMetricRow('Consensus Avg Time', _healthData!['avg_consensus_time'] ?? 'N/A'),
+                    _buildMetricRow('Market Feed Latency', _healthData!['price_feed_latency'] ?? 'N/A'),
+                    _buildMetricRow('Agent Cache Hit Rate', _healthData!['cache_hit_rate'] ?? 'N/A'),
+                    _buildMetricRow('System Error Rate', _healthData!['error_rate'] ?? 'N/A'),
+                    _buildMetricRow('API Budget', _healthData!['api_budget_remaining'] ?? 'N/A'),
+                    const SizedBox(height: 16),
+                    Text('AGENT RESPONSE RATES', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.gold, fontSize: 10)),
+                    const SizedBox(height: 8),
+                    if (_healthData!['model_response_times'] != null)
+                      ...(_healthData!['model_response_times'] as Map<String, dynamic>).entries.map(
+                        (e) => _buildMetricRow(" > ${DenIdentity.getIdentity(e.key).displayName}", e.value.toString())
+                      ),
+
+                  ]
+                ],
               ),
             ),
           )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.textSecondary, fontSize: 12)),
+          Text(value, style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.green, fontSize: 12, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -210,31 +340,37 @@ class _WarRoomScreenState extends State<WarRoomScreen> with TickerProviderStateM
 
 class NeuralConnectionPainter extends CustomPainter {
   final Animation<double> pulse;
+  final Set<String> activeNodes;
+  final Color baseColor;
 
-  NeuralConnectionPainter({required this.pulse}) : super(repaint: pulse);
+  NeuralConnectionPainter({required this.pulse, required this.activeNodes, required this.baseColor}) : super(repaint: pulse);
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = MehdAiTheme.red.withOpacity(0.2 + (pulse.value * 0.3))
+      ..color = baseColor.withOpacity(0.2 + (pulse.value * 0.3))
       ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
 
     final center = Offset(size.width / 2, size.height / 2);
     final nodes = [
-      Offset(center.dx, center.dy - 100),
-      Offset(center.dx - 80, center.dy - 40),
-      Offset(center.dx + 80, center.dy - 40),
-      Offset(center.dx - 120, center.dy + 60),
-      Offset(center.dx, center.dy + 40),
-      Offset(center.dx + 120, center.dy + 60),
-      Offset(center.dx - 80, center.dy + 160),
-      Offset(center.dx, center.dy + 140),
-      Offset(center.dx + 80, center.dy + 160),
+      Offset(center.dx, center.dy - 110),
+      Offset(center.dx - 80, center.dy - 50),
+      Offset(center.dx + 80, center.dy - 50),
+      Offset(center.dx - 120, center.dy + 50),
+      Offset(center.dx + 120, center.dy + 50),
+      Offset(center.dx, center.dy - 20),
+      Offset(center.dx - 80, center.dy + 150),
+      Offset(center.dx, center.dy + 130),
+      Offset(center.dx + 80, center.dy + 150),
     ];
 
+    // Connect nodes to The Don (center offset 0, 45)
+    final theDon = Offset(center.dx, center.dy + 45);
+    
     for (var node in nodes) {
-      canvas.drawLine(center, node, paint);
+      canvas.drawLine(theDon, node, paint);
     }
   }
 
@@ -253,9 +389,13 @@ class RadarPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
 
+    final isBuy = consensus?.finalDirection == 'BUY';
+    final isSell = consensus?.finalDirection == 'SELL';
+    final baseColor = isBuy ? const Color(0xFF00FF88) : (isSell ? const Color(0xFFFF3B3B) : MehdAiTheme.red);
+
     // Background rings
     final ringPaint = Paint()
-      ..color = MehdAiTheme.red.withOpacity(0.2)
+      ..color = baseColor.withOpacity(0.2)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
     
@@ -273,7 +413,7 @@ class RadarPainter extends CustomPainter {
         center: Alignment.center,
         startAngle: 0.0,
         endAngle: math.pi / 2,
-        colors: [MehdAiTheme.red.withOpacity(0), MehdAiTheme.red.withOpacity(0.5)],
+        colors: [baseColor.withOpacity(0), baseColor.withOpacity(0.5)],
         transform: GradientRotation(angle - (math.pi / 2)),
       ).createShader(Rect.fromCircle(center: center, radius: radius))
       ..style = PaintingStyle.fill;
@@ -282,17 +422,17 @@ class RadarPainter extends CustomPainter {
 
     // Render nodes based on consensus
     if (consensus != null) {
-      final nodePaint = Paint()..color = MehdAiTheme.red..style = PaintingStyle.fill;
+      final nodePaint = Paint()..color = baseColor..style = PaintingStyle.fill;
       final int activeNodes = consensus!.votes.length;
-      for (int i = 0; i < 9; i++) {
-        final nodeAngle = (i * (math.pi * 2) / 9) - (math.pi / 2);
+      for (int i = 0; i < 11; i++) {
+        final nodeAngle = (i * (math.pi * 2) / 11) - (math.pi / 2);
         final dist = i < activeNodes ? radius * 0.8 : radius * 0.4;
         final alpha = i < activeNodes ? 1.0 : 0.2;
         
         canvas.drawCircle(
           Offset(center.dx + math.cos(nodeAngle) * dist, center.dy + math.sin(nodeAngle) * dist),
           6.0,
-          nodePaint..color = MehdAiTheme.red.withOpacity(alpha),
+          nodePaint..color = baseColor.withOpacity(alpha),
         );
       }
     }

@@ -1,0 +1,17 @@
+Analyzing mehd_ai_flutter...                                    
+
+   info - The declaration '_startPolling' isn't referenced - lib\screens\home_screen.dart:101:8 - unused_element
+  error - Invalid constant value - lib\screens\home_screen.dart:778:72 - invalid_constant
+  error - The getter 'shieldColor' isn't defined for the type 'MehdAiTheme' - lib\screens\home_screen.dart:778:84 - undefined_getter
+  error - The getter 'shieldColor' isn't defined for the type 'MehdAiTheme' - lib\screens\onboarding_screen.dart:34:28 - undefined_getter
+warning - Unused import: 'package:mehd_ai_flutter/widgets/den_loading_widget.dart' - lib\screens\rejection_feed_screen.dart:4:8 - unused_import
+  error - The getter 'shieldColor' isn't defined for the type 'MehdAiTheme' - lib\screens\rejection_feed_screen.dart:99:34 - undefined_getter
+  error - Invalid constant value - lib\screens\rejection_feed_screen.dart:102:62 - invalid_constant
+  error - The getter 'shieldColor' isn't defined for the type 'MehdAiTheme' - lib\screens\rejection_feed_screen.dart:102:74 - undefined_getter
+  error - The getter 'shieldColor' isn't defined for the type 'MehdAiTheme' - lib\screens\rejection_feed_screen.dart:108:34 - undefined_getter
+warning - Unused import: 'package:mehd_ai_flutter/services/language_service.dart' - lib\screens\splash_screen.dart:9:8 - unused_import
+   info - Don't use 'BuildContext's across async gaps - lib\screens\splash_screen.dart:65:20 - use_build_context_synchronously
+   info - Unnecessary escape in string literal - lib\widgets\consensus_bar.dart:115:38 - unnecessary_string_escapes
+  error - The getter 'textGlowRed' isn't defined for the type 'MehdAiTheme' - lib\widgets\consensus_bar.dart:125:128 - undefined_getter
+   info - Use 'whereType' to select elements of a given type - lib\widgets\drawing_engine.dart:39:38 - prefer_iterable_wheretype
+

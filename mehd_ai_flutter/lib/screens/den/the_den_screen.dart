@@ -14,7 +14,7 @@ import 'package:mehd_ai_flutter/screens/journey_screen.dart';
 /// trader to seamlessly swipe between the three specialized rooms: Research, 
 /// Strategy, and Math. 
 ///
-/// Why? 9 AIs talking at once is overwhelming. By separating them into rooms, 
+/// Why? 11 agents talking at once is overwhelming. By separating them into rooms, 
 /// the user can focus purely on news/sentiment (Research), risk/technical (Strategy),
 /// or strict quantitative calculus (Math) without cognitive overload.
 
@@ -88,7 +88,68 @@ class _TheDenScreenState extends State<TheDenScreen> {
           icon: const Icon(Icons.close, color: MehdAiTheme.textSecondary),
           onPressed: widget.onClose,
         ),
-        title: Text('THE DEN', style: MehdAiTheme.headingStyle.copyWith(letterSpacing: 3)),
+        title: Row(
+          children: [
+            Flexible(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // SIMULATED DATA badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: const Color(0xFFD29922)),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                    child: const Text(
+                      'SIMULATED DATA',
+                      style: TextStyle(
+                        fontSize: 8,
+                        color: Color(0xFFD29922),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      'THE DEN',
+                      style: TextStyle(
+                        color: const Color(0xFF58A6FF),
+                        letterSpacing: 3,
+                        fontSize: 12,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // DEN READY indicator — fixed right
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8, height: 8,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF00FF88),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Text(
+                  'DEN READY',
+                  style: TextStyle(
+                    color: Color(0xFF00FF88),
+                    fontSize: 9,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
@@ -131,14 +192,17 @@ class _TheDenScreenState extends State<TheDenScreen> {
         color: MehdAiTheme.bgSecondary,
         border: Border(bottom: BorderSide(color: MehdAiTheme.borderColor)),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildTabItem(0, 'RESEARCH', Icons.travel_explore),
-          _buildTabItem(1, 'STRATEGY', Icons.account_tree),
-          _buildTabItem(2, 'MATH', Icons.calculate),
-          _buildTabItem(3, 'VIBE', Icons.psychology),
-        ],
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildTabItem(0, 'UNDERWORLD', Icons.travel_explore),
+            _buildTabItem(1, 'THE EMPIRE', Icons.account_tree),
+            _buildTabItem(2, 'OLYMPUS', Icons.calculate),
+            _buildTabItem(3, 'VIBE', Icons.psychology),
+          ],
+        ),
       ),
     );
   }

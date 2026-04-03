@@ -1,11 +1,11 @@
 {
-    "name": "mehd_ai_flutter",
-    "short_name": "mehd_ai_flutter",
+    "name": "Mehd AI Terminal",
+    "short_name": "Mehd AI",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#000000",
+    "theme_color": "#000000",
+    "description": "Institutional-grade AI Forex Trading Assistant with focus on capital preservation.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

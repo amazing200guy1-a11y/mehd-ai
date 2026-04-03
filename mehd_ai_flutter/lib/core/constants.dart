@@ -9,12 +9,11 @@
 class AppConstants {
   // Network (Use 127.0.0.1:8000 for local Android emulator, or actual Railway URL)
   // For Chrome testing locally we use localhost:8000
-  static const String baseUrl = 'http://127.0.0.1:8000'; // Placeholder requested: 'https://mehd-ai-backend.railway.app'
+  static const String baseUrl = 'http://127.0.0.1:8005'; // Placeholder requested: 'https://mehd-ai-backend.railway.app'
   static const String wsUrl = '$baseUrl/stream';       // Base path for SSE stream endpoints
 
   // Symbols
   static const List<String> symbols = [
-    'EUR/USD',
     'EUR/USD',
     'GBP/JPY',
     'XAU/USD',
@@ -23,13 +22,12 @@ class AppConstants {
     'PARADOX/USD', // Testing Sentinel Mock
     'NAS100',
     'US30',
-    'BTC/USD'
   ];
 
-  // AI Models by Layer
-  static const List<String> sentimentModels = ['grok', 'perplexity', 'gemini'];
-  static const List<String> strategyModels = ['claude', 'gpt-4', 'llama'];
-  static const List<String> mathModels = ['deepseek', 'openai-o3', 'codestral'];
+  // AI Models by Layer (11 Specialized Agents)
+  static const List<String> sentimentModels = ['DON', 'PHANTOM', 'ORACLE'];
+  static const List<String> strategyModels = ['CAESAR', 'SAGE', 'GUARDIAN'];
+  static const List<String> mathModels = ['TITAN', 'ATLAS', 'FORGE', 'THE DON', 'SENTINEL'];
 
   // Risk Kernel Constants
   static const double maxRiskPercent = 1.0;

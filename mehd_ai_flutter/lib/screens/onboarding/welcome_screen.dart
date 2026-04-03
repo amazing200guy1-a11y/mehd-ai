@@ -10,7 +10,7 @@ import 'package:mehd_ai_flutter/screens/auth/register_screen.dart';
 /// is built in 3 seconds — the dark, clean aesthetic with the pulsing cursor
 /// immediately signals "this is a professional trading tool, not a toy."
 ///
-/// The tagline "Your money. Protected by 9 AIs." is the entire value prop in
+/// The tagline "Your money. Protected by 11 AIs." is the entire value prop in
 /// one line. The paper trading callout at the bottom removes fear — new users
 /// can explore without risking real money. This converts sign-ups.
 
@@ -67,15 +67,20 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: MehdAiTheme.bgPrimary,
+      backgroundColor: const Color(0xFF000000),
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: SafeArea(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Column(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
+              ),
+              child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Spacer(flex: 3),
+                const SizedBox(height: 60),
 
                 // ── LOGO ──────────────────────────────────────────
                 Row(
@@ -116,21 +121,20 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
                 // ── TAGLINE ───────────────────────────────────────
                 Text(
-                  'Your money. Protected by 9 AIs.',
+                  '11 agents. 3 layers. One Den. Your money protected by The Don.',
                   style: MehdAiTheme.labelStyle.copyWith(
-                    fontSize: 16,
+                    fontSize: 14,
                     color: MehdAiTheme.textSecondary,
-                    letterSpacing: 1.2,
+                    letterSpacing: 1.0,
                   ),
                   textAlign: TextAlign.center,
                 ),
 
-                const Spacer(flex: 3),
+                const SizedBox(height: 60),
 
                 // ── CREATE ACCOUNT BUTTON ─────────────────────────
                 SizedBox(
                   width: double.infinity,
-                  height: 54,
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.of(context).push(MaterialPageRoute(
@@ -140,6 +144,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     style: ElevatedButton.styleFrom(
                       backgroundColor: MehdAiTheme.green,
                       foregroundColor: Colors.black,
+                      minimumSize: const Size(double.infinity, 54),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -161,7 +166,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 // ── SIGN IN BUTTON ────────────────────────────────
                 SizedBox(
                   width: double.infinity,
-                  height: 54,
                   child: OutlinedButton(
                     onPressed: () {
                       Navigator.of(context).push(MaterialPageRoute(
@@ -171,6 +175,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     style: OutlinedButton.styleFrom(
                       foregroundColor: MehdAiTheme.textPrimary,
                       side: const BorderSide(color: MehdAiTheme.borderColor),
+                      minimumSize: const Size(double.infinity, 54),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -218,8 +223,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 const SizedBox(height: 40),
               ],
             ),
+            ),
           ),
         ),
+
       ),
     );
   }

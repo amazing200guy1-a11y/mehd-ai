@@ -1,7 +1,7 @@
 /// FILE 4b — consensus_result.dart
 ///
 /// Build Debrief:
-/// This encapsulates the output from all 9 AI models. We parse the 'votes' array
+/// This encapsulates the output from all 11 AI agents. We parse the 'votes' array
 /// into strongly typed AIVote objects. This allows our AI Terminal widget to easily 
 /// color-code the reasoning based on the 'direction' field without ugly string 
 /// parsing everywhere in the widget tree.
@@ -47,7 +47,11 @@ class ConsensusResult {
   final String finalDirection;
   final double consensusPercentage;
   final bool proceed;
+  final String tier;
+  final double requiredThreshold;
+  final String? chairmanSummary;
   final String? rejectionReason;
+  final bool panicProtocolActive;
   final DateTime timestamp;
 
   ConsensusResult({
@@ -55,9 +59,26 @@ class ConsensusResult {
     required this.finalDirection,
     required this.consensusPercentage,
     required this.proceed,
+    this.tier = 'civilian',
+    this.requiredThreshold = 0.70,
+    this.chairmanSummary,
     this.rejectionReason,
+    this.panicProtocolActive = false,
     required this.timestamp,
-  });
+    Map<String, bool>? sovereignConditions,
+  }) : sovereignConditions = sovereignConditions ?? const {};
+
+  /// The 9 Sovereign Lock conditions — all must be true for SOVEREIGN tier.
+  /// Keys: unanimity, spread_ok, volatility_ok, session_ok, drawdown_ok,
+  ///        correlation_ok, news_clear, sentinel_clear, don_approved
+  final Map<String, bool> sovereignConditions;
+
+  /// Returns true only if ALL 9 sovereign conditions pass.
+  bool get isSovereignLockAchieved =>
+      tier == 'sovereign' &&
+      proceed &&
+      sovereignConditions.length >= 9 &&
+      sovereignConditions.values.every((v) => v);
 
   factory ConsensusResult.fromJson(Map<String, dynamic> json) {
     final votesList = json['votes'] as List<dynamic>? ?? [];
@@ -66,8 +87,15 @@ class ConsensusResult {
       finalDirection: json['final_direction'] as String,
       consensusPercentage: (json['consensus_percentage'] as num).toDouble(),
       proceed: json['proceed'] as bool,
+      tier: json['tier'] as String? ?? 'civilian',
+      requiredThreshold: (json['required_threshold'] as num?)?.toDouble() ?? 0.70,
+      chairmanSummary: json['chairman_summary'] as String?,
       rejectionReason: json['rejection_reason'] as String?,
+      panicProtocolActive: json['panic_protocol_active'] as bool? ?? false,
       timestamp: DateTime.parse(json['timestamp'] as String),
+      sovereignConditions: (json['sovereign_conditions'] as Map<String, dynamic>?)?.map(
+        (k, v) => MapEntry(k, v as bool),
+      ),
     );
   }
 
@@ -77,8 +105,13 @@ class ConsensusResult {
       'final_direction': finalDirection,
       'consensus_percentage': consensusPercentage,
       'proceed': proceed,
+      'tier': tier,
+      'required_threshold': requiredThreshold,
+      'chairman_summary': chairmanSummary,
       'rejection_reason': rejectionReason,
+      'panic_protocol_active': panicProtocolActive,
       'timestamp': timestamp.toIso8601String(),
+      'sovereign_conditions': sovereignConditions,
     };
   }
 }

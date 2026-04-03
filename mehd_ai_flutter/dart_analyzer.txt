@@ -1,0 +1,26 @@
+Analyzing mehd_ai_flutter...                                    
+
+warning - Unused import: 'package:intl/intl.dart' - lib\models\executive_brief.dart:1:8 - unused_import
+   info - Statements in an if should be enclosed in a block - lib\screens\community_fund_screen.dart:199:19 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\community_fund_screen.dart:200:12 - curly_braces_in_flow_control_structures
+warning - The value of the field '_apiService' isn't used - lib\screens\data_moat_screen.dart:14:20 - unused_field
+   info - Statements in an if should be enclosed in a block - lib\screens\heatmap_screen.dart:69:29 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\heatmap_screen.dart:70:35 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\heatmap_screen.dart:71:14 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\heatmap_screen.dart:74:29 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\heatmap_screen.dart:75:35 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\heatmap_screen.dart:76:14 - curly_braces_in_flow_control_structures
+   info - Unnecessary braces in a string interpolation - lib\screens\heatmap_screen.dart:103:20 - unnecessary_brace_in_string_interps
+warning - Unused import: 'package:mehd_ai_flutter/widgets/data_freshness_indicator.dart' - lib\screens\home_screen.dart:29:8 - unused_import
+warning - Unused import: 'package:mehd_ai_flutter/widgets/legal_disclaimer.dart' - lib\screens\home_screen.dart:30:8 - unused_import
+warning - Unused import: 'package:mehd_ai_flutter/widgets/friendly_error.dart' - lib\screens\home_screen.dart:31:8 - unused_import
+   info - The private field _paperTradesCompleted could be 'final' - lib\screens\home_screen.dart:73:7 - prefer_final_fields
+warning - The value of the field '_paperTradesCompleted' isn't used - lib\screens\home_screen.dart:73:7 - unused_field
+   info - The private field _legalAccepted could be 'final' - lib\screens\home_screen.dart:74:8 - prefer_final_fields
+warning - The value of the field '_legalAccepted' isn't used - lib\screens\home_screen.dart:74:8 - unused_field
+   info - Unnecessary use of 'toList' in a spread - lib\screens\licensing_screen.dart:125:14 - unnecessary_to_list_in_spreads
+warning - The value of the local variable 'color' isn't used - lib\widgets\ai_terminal.dart:153:15 - unused_local_variable
+warning - Unused import: 'package:mehd_ai_flutter/core/den_identity.dart' - lib\widgets\den_verdict_card.dart:4:8 - unused_import
+  error - The getter 'value' isn't defined for the type 'String' - lib\widgets\den_verdict_card.dart:101:60 - undefined_getter
+warning - Unused import: 'package:intl/intl.dart' - lib\widgets\executive_brief_dialog.dart:5:8 - unused_import
+

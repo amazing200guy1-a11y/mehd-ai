@@ -55,54 +55,88 @@ class TradeHistoryItem extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Left: Symbol and Time
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: trade.direction == 'BUY' ? MehdAiTheme.green : MehdAiTheme.red,
-                      shape: BoxShape.circle,
+          Flexible(
+            flex: 2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: trade.direction == 'BUY' ? MehdAiTheme.green : MehdAiTheme.red,
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(trade.symbol, style: MehdAiTheme.terminalStyle.copyWith(fontWeight: FontWeight.bold)),
-                  const SizedBox(width: 8),
-                  Text(trade.direction, style: MehdAiTheme.labelStyle),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                DateFormat('MMM d, HH:mm:ss').format(trade.timestamp), 
-                style: MehdAiTheme.labelStyle.copyWith(fontSize: 10),
-              ),
-            ],
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        trade.symbol, 
+                        style: MehdAiTheme.terminalStyle.copyWith(fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        trade.direction, 
+                        style: MehdAiTheme.labelStyle, 
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  DateFormat('MMM d, HH:mm:ss').format(trade.timestamp), 
+                  style: MehdAiTheme.labelStyle.copyWith(fontSize: 10),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
           
-          // Middle: Consensus Score (Hidden on very small screens if needed)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: MehdAiTheme.blue.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              'AI: ${trade.consensusScore.toStringAsFixed(1)}%',
-              style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.blue, fontSize: 10),
+          const SizedBox(width: 8),
+
+          // Middle: Consensus Score (Flexible wrapper)
+          Flexible(
+            flex: 2,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: MehdAiTheme.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                '✓ Verified ${trade.consensusScore.toStringAsFixed(0)}%',
+                style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.blue, fontSize: 10),
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
           
+          const SizedBox(width: 8),
+
           // Right: PnL
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(pnlText, style: MehdAiTheme.priceStyle.copyWith(color: pnlColor, fontSize: 14)),
-              const SizedBox(height: 4),
-              Text('@ ${trade.entryPrice.toStringAsFixed(4)}', style: MehdAiTheme.labelStyle.copyWith(fontSize: 10)),
-            ],
+          Flexible(
+            flex: 1,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(pnlText, style: MehdAiTheme.priceStyle.copyWith(color: pnlColor, fontSize: 14)),
+                ),
+                const SizedBox(height: 4),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text('@ ${trade.entryPrice.toStringAsFixed(4)}', style: MehdAiTheme.labelStyle.copyWith(fontSize: 10)),
+                ),
+              ],
+            ),
           )
         ],
       ),

@@ -1,0 +1,20 @@
+{
+  "@@locale": "es",
+  "appTitle": "MEHD AI",
+  "warRoom": "Sala de Guerra",
+  "marketplace": "Mercado",
+  "dataMoat": "Foso de Datos Soberano",
+  "apiDocs": "API de Consenso",
+  "compliance": "Cumplimiento y Auditoría",
+  "heatmap": "Mapa de Calor Global",
+  "licensing": "Licenciamiento Empresarial",
+  "helpCenter": "Centro de Ayuda",
+  "platoon": "Pelotón de Sala de Guerra",
+  "shadowMode": "Modo Sombra",
+  "settings": "Ajustes",
+  "language": "Idioma",
+  "strikeNow": "La Guarida está de acuerdo. Ataca ahora.",
+  "sovereignStrike": "Unánime. Las 11 capas alineadas. Esta es la señal más rara en La Guarida. Ataca con toda tu fuerza.",
+  "awaitingCommand": "11 AGENTES ESPERANDO ÓRDENES",
+  "selectSymbol": "Seleccione un símbolo de la barra lateral para comenzar el análisis multi-agente."
+}

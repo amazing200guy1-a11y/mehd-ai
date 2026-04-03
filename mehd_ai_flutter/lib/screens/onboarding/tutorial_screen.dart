@@ -44,7 +44,7 @@ class _TutorialScreenState extends State<TutorialScreen> {
       backgroundColor: MehdAiTheme.bgPrimary,
       appBar: AppBar(
         backgroundColor: Colors.transparent, elevation: 0,
-        title: Text('Step 3 of 3', style: MehdAiTheme.labelStyle.copyWith(fontSize: 13)),
+        title: Text('Step ${_currentPage + 1} of 3', style: MehdAiTheme.labelStyle.copyWith(fontSize: 13)),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -76,32 +76,31 @@ class _TutorialScreenState extends State<TutorialScreen> {
             // Bottom button
             Padding(
               padding: const EdgeInsets.fromLTRB(28, 0, 28, 32),
-              child: SizedBox(
-                width: double.infinity, height: 52,
-                child: _currentPage == 2
-                  ? ElevatedButton(
-                      onPressed: _enterApp,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: MehdAiTheme.green,
-                        foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: Text('Enter Mehd AI', style: MehdAiTheme.headingStyle.copyWith(fontSize: 16, color: Colors.black, fontWeight: FontWeight.w600)),
-                    )
-                  : OutlinedButton(
-                      onPressed: () => _pageController.nextPage(duration: const Duration(milliseconds: 400), curve: Curves.easeInOut),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: MehdAiTheme.textPrimary,
-                        side: const BorderSide(color: MehdAiTheme.borderColor),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        Text('Next', style: MehdAiTheme.headingStyle.copyWith(fontSize: 16, color: MehdAiTheme.textPrimary)),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.arrow_forward, size: 18, color: MehdAiTheme.textPrimary),
-                      ]),
+              child: _currentPage == 2
+                ? ElevatedButton(
+                    onPressed: _enterApp,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: MehdAiTheme.green,
+                      foregroundColor: Colors.black,
+                      minimumSize: const Size(double.infinity, 52),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-              ),
+                    child: Text('Enter Mehd AI', style: MehdAiTheme.headingStyle.copyWith(fontSize: 16, color: Colors.black, fontWeight: FontWeight.w600)),
+                  )
+                : OutlinedButton(
+                    onPressed: () => _pageController.nextPage(duration: const Duration(milliseconds: 400), curve: Curves.easeInOut),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: MehdAiTheme.textPrimary,
+                      side: const BorderSide(color: MehdAiTheme.borderColor),
+                      minimumSize: const Size(double.infinity, 52),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Text('Next', style: MehdAiTheme.headingStyle.copyWith(fontSize: 16, color: MehdAiTheme.textPrimary)),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.arrow_forward, size: 18, color: MehdAiTheme.textPrimary),
+                    ]),
+                  ),
             ),
           ],
         ),
@@ -111,10 +110,15 @@ class _TutorialScreenState extends State<TutorialScreen> {
 
   Widget _card1() => _buildCard(
     icon: Icons.groups, color: MehdAiTheme.blue, title: 'The Den',
-    subtitle: '9 AI predators analyze every trade from 3 angles',
-    body: 'Sentiment → Strategy → Math',
-    details: ['Grok  •  Perplexity  •  Gemini', 'Claude  •  GPT-4  •  LLaMA', 'DeepSeek  •  OpenAI-o3  •  Codestral'],
-    footer: 'All 9 must agree before you can strike',
+    subtitle: '11 specialized agents analyze every trade from all angles',
+    body: 'Sentiment → Strategy → Math → Oversight',
+    details: [
+      'Sentiment: Don, Phantom, Oracle',
+      'Strategy: Caesar, Sage, Guardian',
+      'Math: Titan, Atlas, Forge',
+      'Oversight: The Don, Sentinel'
+    ],
+    footer: 'All 11 must analyze before you can strike',
   );
 
   Widget _card2() => _buildCard(
@@ -133,9 +137,10 @@ class _TutorialScreenState extends State<TutorialScreen> {
 
   Widget _buildCard({required IconData icon, required Color color, required String title,
     required String subtitle, required String body, required List<String> details, required String footer}) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 28),
       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        const SizedBox(height: 24),
         Container(
           width: 80, height: 80,
           decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle, border: Border.all(color: color.withOpacity(0.3))),
@@ -148,12 +153,13 @@ class _TutorialScreenState extends State<TutorialScreen> {
         if (body.isNotEmpty) ...[const SizedBox(height: 8), Text(body, style: MehdAiTheme.terminalStyle.copyWith(fontSize: 14, color: color), textAlign: TextAlign.center)],
         const SizedBox(height: 28),
         Container(
-          width: double.infinity, padding: const EdgeInsets.all(20),
+          width: double.infinity, padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(color: MehdAiTheme.bgSecondary, borderRadius: BorderRadius.circular(14), border: Border.all(color: MehdAiTheme.borderColor)),
-          child: Column(children: details.map((d) => Padding(padding: const EdgeInsets.symmetric(vertical: 6), child: Text(d, style: MehdAiTheme.terminalStyle.copyWith(fontSize: 13, color: MehdAiTheme.textPrimary, height: 1.4), textAlign: TextAlign.center))).toList()),
+          child: Column(children: details.map((d) => Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Text(d, style: MehdAiTheme.terminalStyle.copyWith(fontSize: 13, color: MehdAiTheme.textPrimary, height: 1.4), textAlign: TextAlign.center))).toList()),
         ),
         const SizedBox(height: 20),
         Text(footer, style: MehdAiTheme.labelStyle.copyWith(fontSize: 13, color: color, fontWeight: FontWeight.w500), textAlign: TextAlign.center),
+        const SizedBox(height: 24),
       ]),
     );
   }

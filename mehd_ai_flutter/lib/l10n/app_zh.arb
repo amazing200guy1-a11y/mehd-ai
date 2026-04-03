@@ -1,0 +1,20 @@
+{
+  "@@locale": "zh",
+  "appTitle": "MEHD AI",
+  "warRoom": "作战室",
+  "marketplace": "市场",
+  "dataMoat": "主权数据护城河",
+  "apiDocs": "共识API",
+  "compliance": "合规与审计",
+  "heatmap": "全球热力图",
+  "licensing": "企业许可",
+  "helpCenter": "帮助中心",
+  "platoon": "作战室小队",
+  "shadowMode": "影子模式",
+  "settings": "设置",
+  "language": "语言",
+  "strikeNow": "巢穴同意。立即执行。",
+  "sovereignStrike": "一致通过。所有11层对齐。这是巢穴中最稀有的信号。全力执行。",
+  "awaitingCommand": "11个代理等待指令",
+  "selectSymbol": "从侧边栏选择一个交易品种以开始多代理分析。"
+}

@@ -1,0 +1,5 @@
+Analyzing mehd_ai_flutter...                                    
+
+warning - Unused import: 'dart:math' - lib\screens\onboarding_screen.dart:6:8 - unused_import
+warning - Unused import: 'package:mehd_ai_flutter/screens/onboarding/welcome_screen.dart' - lib\screens\splash_screen.dart:9:8 - unused_import
+

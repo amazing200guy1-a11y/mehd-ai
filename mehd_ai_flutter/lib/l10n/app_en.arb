@@ -1,0 +1,20 @@
+{
+  "@@locale": "en",
+  "appTitle": "MEHD AI",
+  "warRoom": "War Room",
+  "marketplace": "Marketplace",
+  "dataMoat": "Sovereign Data Moat",
+  "apiDocs": "Consensus API",
+  "compliance": "Compliance & Audit",
+  "heatmap": "Global Heatmap",
+  "licensing": "Enterprise Licensing",
+  "helpCenter": "Help Center",
+  "platoon": "War Room Platoon",
+  "shadowMode": "Shadow Mode",
+  "settings": "Settings",
+  "language": "Language",
+  "strikeNow": "The Den agrees. Strike now.",
+  "sovereignStrike": "Unanimous. All 11 layers aligned. This is the rarest signal in The Den. Strike with full force.",
+  "awaitingCommand": "11 AGENTS AWAITING COMMAND",
+  "selectSymbol": "Select a symbol from the sidebar to begin multi-agent analysis."
+}

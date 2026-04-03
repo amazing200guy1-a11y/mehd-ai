@@ -1,0 +1,43 @@
+﻿Analyzing mehd_ai_flutter...                                    
+
+   info - The parameter name 's' doesn't match the name 'chartSize' in the overridden method - lib\models\manual_drawing.dart:34:35 - avoid_renaming_method_parameters
+   info - The parameter name 'mnX' doesn't match the name 'minX' in the overridden method - lib\models\manual_drawing.dart:34:45 - avoid_renaming_method_parameters
+   info - The parameter name 'mxX' doesn't match the name 'maxX' in the overridden method - lib\models\manual_drawing.dart:34:57 - avoid_renaming_method_parameters
+   info - The parameter name 'mnY' doesn't match the name 'minY' in the overridden method - lib\models\manual_drawing.dart:34:69 - avoid_renaming_method_parameters
+   info - The parameter name 'mxY' doesn't match the name 'maxY' in the overridden method - lib\models\manual_drawing.dart:34:81 - avoid_renaming_method_parameters
+   info - The parameter name 's' doesn't match the name 'chartSize' in the overridden method - lib\models\manual_drawing.dart:50:35 - avoid_renaming_method_parameters
+   info - The parameter name 'mnX' doesn't match the name 'minX' in the overridden method - lib\models\manual_drawing.dart:50:45 - avoid_renaming_method_parameters
+   info - The parameter name 'mxX' doesn't match the name 'maxX' in the overridden method - lib\models\manual_drawing.dart:50:57 - avoid_renaming_method_parameters
+   info - The parameter name 'mnY' doesn't match the name 'minY' in the overridden method - lib\models\manual_drawing.dart:50:69 - avoid_renaming_method_parameters
+   info - The parameter name 'mxY' doesn't match the name 'maxY' in the overridden method - lib\models\manual_drawing.dart:50:81 - avoid_renaming_method_parameters
+   info - The parameter name 's' doesn't match the name 'chartSize' in the overridden method - lib\models\manual_drawing.dart:64:35 - avoid_renaming_method_parameters
+   info - The parameter name 'mnX' doesn't match the name 'minX' in the overridden method - lib\models\manual_drawing.dart:64:45 - avoid_renaming_method_parameters
+   info - The parameter name 'mxX' doesn't match the name 'maxX' in the overridden method - lib\models\manual_drawing.dart:64:57 - avoid_renaming_method_parameters
+   info - The parameter name 'mnY' doesn't match the name 'minY' in the overridden method - lib\models\manual_drawing.dart:64:69 - avoid_renaming_method_parameters
+   info - The parameter name 'mxY' doesn't match the name 'maxY' in the overridden method - lib\models\manual_drawing.dart:64:81 - avoid_renaming_method_parameters
+   info - The parameter name 's' doesn't match the name 'chartSize' in the overridden method - lib\models\manual_drawing.dart:81:35 - avoid_renaming_method_parameters
+   info - The parameter name 'mnX' doesn't match the name 'minX' in the overridden method - lib\models\manual_drawing.dart:81:45 - avoid_renaming_method_parameters
+   info - The parameter name 'mxX' doesn't match the name 'maxX' in the overridden method - lib\models\manual_drawing.dart:81:57 - avoid_renaming_method_parameters
+   info - The parameter name 'mnY' doesn't match the name 'minY' in the overridden method - lib\models\manual_drawing.dart:81:69 - avoid_renaming_method_parameters
+   info - The parameter name 'mxY' doesn't match the name 'maxY' in the overridden method - lib\models\manual_drawing.dart:81:81 - avoid_renaming_method_parameters
+   info - The declaration '_startPolling' isn't referenced - lib\screens\home_screen.dart:101:8 - unused_element
+   info - Unnecessary escape in string literal - lib\widgets\consensus_bar.dart:115:42 - unnecessary_string_escapes
+warning - Unused import: 'dart:ui' - lib\widgets\manual_drawing_painter.dart:1:8 - unused_import
+   info - The parameter name 'old' doesn't match the name 'oldDelegate' in the overridden method - lib\widgets\manual_drawing_painter.dart:205:53 - avoid_renaming_method_parameters
+
+flutter : 24 issues 
+found. (ran in 3.1s)
+At line:1 char:1
++ flutter analyze 2>&1 | 
+Out-File -Encoding utf8 
+-FilePath analysis.log ...
++ ~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (2  
+  4 issues found. (ran    
+ in 3.1s):String) [],     
+RemoteException
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 

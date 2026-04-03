@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
+import 'package:mehd_ai_flutter/core/api_service.dart';
+import 'package:mehd_ai_flutter/widgets/executive_brief_dialog.dart';
 
 class CommunityFundScreen extends StatelessWidget {
   const CommunityFundScreen({super.key});
@@ -24,7 +26,7 @@ class CommunityFundScreen extends StatelessWidget {
           children: [
             _buildMetricsHeader(),
             const SizedBox(height: 32),
-            _buildChartMockups(),
+            _buildPerformanceChart(),
             const SizedBox(height: 32),
             _buildLedgerList(),
           ],
@@ -72,7 +74,7 @@ class CommunityFundScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildChartMockups() {
+  Widget _buildPerformanceChart() {
     return Container(
       height: 400,
       width: double.infinity,
@@ -101,9 +103,9 @@ class CommunityFundScreen extends StatelessWidget {
             child: Stack(
               children: [
                 _buildGridLines(),
-                _buildMockLine(MehdAiTheme.green, [100, 120, 115, 140, 160, 200, 284], 4.0),
-                _buildMockLine(MehdAiTheme.blue, [100, 105, 102, 110, 108, 115, 122], 2.0),
-                _buildMockLine(MehdAiTheme.yellow, [100, 98, 105, 104, 112, 109, 118], 2.0),
+                _buildPerformanceLine(MehdAiTheme.yellow, [100, 98, 105, 104, 112, 109, 118], 2.0, false),
+                _buildPerformanceLine(MehdAiTheme.blue, [100, 105, 102, 110, 108, 115, 122], 2.0, false),
+                _buildPerformanceLine(MehdAiTheme.green, [100, 120, 115, 140, 160, 200, 284], 4.0, true), // Main line with gradient
               ],
             ),
           )
@@ -129,12 +131,13 @@ class CommunityFundScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMockLine(Color color, List<double> points, double stroke) {
+  Widget _buildPerformanceLine(Color color, List<double> points, double stroke, bool withGradient) {
     return CustomPaint(
       size: const Size(double.infinity, double.infinity),
-      painter: _SparklinePainter(color: color, points: points, strokeWidth: stroke),
+      painter: _SparklinePainter(color: color, points: points, strokeWidth: stroke, withGradient: withGradient),
     );
   }
+
 
   Widget _buildLedgerList() {
     return Column(
@@ -142,15 +145,17 @@ class CommunityFundScreen extends StatelessWidget {
       children: [
         Text('RECENT PUBLIC EXECUTIONS', style: MehdAiTheme.headingStyle),
         const SizedBox(height: 16),
-        _buildLedgerRow('EUR/USD', 'BUY', '+42 pips', '2 mins ago', MehdAiTheme.green),
-        _buildLedgerRow('GBP/JPY', 'SELL', '+114 pips', '1 hour ago', MehdAiTheme.green),
-        _buildLedgerRow('XAU/USD', 'BUY', '-12 pips', '3 hours ago', MehdAiTheme.red),
-        _buildLedgerRow('BTC/USD', 'SELL', '+850 pips', '5 hours ago', MehdAiTheme.green),
+        Builder(builder: (context) => Column(children: [
+          _buildLedgerRow(context, 'EUR/USD', 'BUY', '+42 pips', '2 mins ago', MehdAiTheme.green, 'cf-eurusd-001'),
+          _buildLedgerRow(context, 'GBP/JPY', 'SELL', '+114 pips', '1 hour ago', MehdAiTheme.green, 'cf-gbpjpy-002'),
+          _buildLedgerRow(context, 'XAU/USD', 'BUY', '-12 pips', '3 hours ago', MehdAiTheme.red, 'cf-xauusd-003'),
+          _buildLedgerRow(context, 'BTC/USD', 'SELL', '+850 pips', '5 hours ago', MehdAiTheme.green, 'cf-btcusd-004'),
+        ])),
       ],
     );
   }
 
-  Widget _buildLedgerRow(String pair, String dir, String result, String time, Color color) {
+  Widget _buildLedgerRow(BuildContext context, String pair, String dir, String result, String time, Color color, String tradeId) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -167,7 +172,12 @@ class CommunityFundScreen extends StatelessWidget {
           Text(result, style: MehdAiTheme.terminalStyle.copyWith(color: color, fontWeight: FontWeight.bold, fontSize: 16)),
           Text(time, style: MehdAiTheme.labelStyle),
           TextButton(
-             onPressed: () {},
+             onPressed: () async {
+               final brief = await ApiService().getExecutiveBrief(tradeId);
+               if (brief != null && context.mounted) {
+                 showDialog(context: context, builder: (_) => ExecutiveBriefDialog(brief: brief));
+               }
+             },
              child: Text('VIEW BRIEF', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.blue, fontSize: 12)),
           )
         ],
@@ -180,8 +190,9 @@ class _SparklinePainter extends CustomPainter {
   final Color color;
   final List<double> points;
   final double strokeWidth;
+  final bool withGradient;
 
-  _SparklinePainter({required this.color, required this.points, required this.strokeWidth});
+  _SparklinePainter({required this.color, required this.points, required this.strokeWidth, this.withGradient = false});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -196,8 +207,28 @@ class _SparklinePainter extends CustomPainter {
     for (int i = 0; i < points.length; i++) {
       final x = i * stepX;
       final y = size.height - ((points[i] - minVal) / (maxVal - minVal) * size.height);
-      if (i == 0) path.moveTo(x, y);
-      else path.lineTo(x, y);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    
+    if (withGradient) {
+      final gradientPath = Path.from(path)
+        ..lineTo(size.width, size.height)
+        ..lineTo(0, size.height)
+        ..close();
+
+      final paintGradient = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [color.withOpacity(0.3), color.withOpacity(0.0)],
+        ).createShader(Rect.fromLTRB(0, 0, size.width, size.height))
+        ..style = PaintingStyle.fill;
+        
+      canvas.drawPath(gradientPath, paintGradient);
     }
     
     canvas.drawPath(path, paint);

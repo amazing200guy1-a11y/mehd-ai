@@ -1,0 +1,20 @@
+{
+  "@@locale": "fr",
+  "appTitle": "MEHD AI",
+  "warRoom": "Salle de Guerre",
+  "marketplace": "Marché",
+  "dataMoat": "Fossé de Données Souverain",
+  "apiDocs": "API de Consensus",
+  "compliance": "Conformité et Audit",
+  "heatmap": "Carte Thermique Globale",
+  "licensing": "Licence d'Entreprise",
+  "helpCenter": "Centre d'Aide",
+  "platoon": "Peloton de la Salle de Guerre",
+  "shadowMode": "Mode Ombre",
+  "settings": "Paramètres",
+  "language": "Langue",
+  "strikeNow": "La Tanière est d'accord. Frapper maintenant.",
+  "sovereignStrike": "Unanime. Les 11 couches alignées. C'est le signal le plus rare. Frapper de toute force.",
+  "awaitingCommand": "11 AGENTS ATTENDENT L'ORDRE",
+  "selectSymbol": "Sélectionnez un symbole dans la barre latérale pour commencer."
+}

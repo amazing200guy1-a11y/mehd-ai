@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
 import 'package:mehd_ai_flutter/models/consensus_result.dart';
 import 'package:mehd_ai_flutter/core/api_service.dart';
+import 'package:mehd_ai_flutter/core/den_identity.dart';
 import 'package:mehd_ai_flutter/widgets/den_loading_widget.dart';
 
 /// FILE — research_room.dart
@@ -66,7 +67,7 @@ class _ResearchRoomState extends State<ResearchRoom> {
     }
 
     final researchVotes = widget.consensusResult?.votes.where(
-      (v) => ['grok', 'perplexity', 'gemini'].contains(v.modelName.toLowerCase())
+      (v) => ['don', 'phantom', 'oracle'].contains(v.modelName.toLowerCase())
     ).toList() ?? [];
 
     return ListView(
@@ -84,7 +85,7 @@ class _ResearchRoomState extends State<ResearchRoom> {
         const SizedBox(height: 24),
         if (researchVotes.isEmpty && _specializedResponse == null)
           Center(
-            child: Text('No Research Predators Responded.', style: MehdAiTheme.labelStyle),
+            child: Text('No Underworld Agents Responded.', style: MehdAiTheme.labelStyle),
           )
         else
           ...researchVotes.map((v) => _buildPredatorCard(v)),
@@ -108,13 +109,21 @@ class _ResearchRoomState extends State<ResearchRoom> {
             children: [
               const Icon(Icons.auto_awesome, color: MehdAiTheme.blue, size: 16),
               const SizedBox(width: 8),
-              Text('DEN INTELLIGENCE', style: MehdAiTheme.headingStyle.copyWith(fontSize: 14, color: MehdAiTheme.blue)),
+              Flexible(
+                child: Text(
+                  'DEN INTELLIGENCE', 
+                  style: MehdAiTheme.headingStyle.copyWith(fontSize: 14, color: MehdAiTheme.blue),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
           Text(
             _specializedResponse!,
             style: MehdAiTheme.labelStyle.copyWith(height: 1.5, color: MehdAiTheme.textPrimary),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 10,
           ),
         ],
       ),
@@ -136,13 +145,21 @@ class _ResearchRoomState extends State<ResearchRoom> {
             children: [
               const Icon(Icons.travel_explore, color: MehdAiTheme.blue),
               const SizedBox(width: 8),
-              Text('FUNDAMENTAL SENTIMENT', style: MehdAiTheme.headingStyle),
+              Flexible(
+                child: Text(
+                  'FUNDAMENTAL SENTIMENT', 
+                  style: MehdAiTheme.headingStyle,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
             'Scanning X (Twitter), Reuters, and global macro data to detect black swan events and shifted sentiment.',
             style: MehdAiTheme.labelStyle,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 3,
           ),
         ],
       ),
@@ -154,12 +171,7 @@ class _ResearchRoomState extends State<ResearchRoom> {
     if (vote.direction == 'BUY') dirColor = MehdAiTheme.green;
     if (vote.direction == 'SELL') dirColor = MehdAiTheme.red;
 
-    IconData getIcon(String name) {
-      if (name == 'grok') return Icons.public;
-      if (name == 'perplexity') return Icons.library_books;
-      if (name == 'gemini') return Icons.auto_graph;
-      return Icons.memory;
-    }
+    final identity = DenIdentity.getIdentity(vote.modelName);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -175,27 +187,36 @@ class _ResearchRoomState extends State<ResearchRoom> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(getIcon(vote.modelName.toLowerCase()), color: MehdAiTheme.textPrimary, size: 16),
-                  const SizedBox(width: 8),
-                  Text(
-                    vote.modelName.toUpperCase(),
-                    style: MehdAiTheme.headingStyle.copyWith(fontSize: 14),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: dirColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
+              Flexible(
+                child: Row(
+                  children: [
+                    Icon(identity.icon, color: MehdAiTheme.textPrimary, size: 16),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        identity.displayName,
+                        style: MehdAiTheme.headingStyle.copyWith(fontSize: 14),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
-                child: Text(
-                  vote.direction,
-                  style: MehdAiTheme.terminalStyle.copyWith(
-                    color: dirColor,
-                    fontWeight: FontWeight.bold,
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: dirColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    vote.direction,
+                    style: MehdAiTheme.terminalStyle.copyWith(
+                      color: dirColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ),
@@ -205,6 +226,8 @@ class _ResearchRoomState extends State<ResearchRoom> {
           Text(
             vote.reasoning,
             style: MehdAiTheme.labelStyle.copyWith(height: 1.5, color: MehdAiTheme.textSecondary),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 5,
           ),
         ],
       ),
@@ -216,17 +239,29 @@ class _ResearchRoomState extends State<ResearchRoom> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Opacity(
-            opacity: 0.1,
-            child: Image.asset('assets/images/mehd_logo.png', width: 120, height: 120),
+          const Icon(
+            Icons.track_changes_outlined,
+            color: Color(0xFF1A1A1A),
+            size: 36,
           ),
-          const SizedBox(height: 16),
-          Text(
-            'AWAITING TARGET',
-            style: MehdAiTheme.terminalStyle.copyWith(
-              color: MehdAiTheme.textSecondary,
-              letterSpacing: 2,
+          const SizedBox(height: 14),
+          const Text(
+            'SELECT A MARKET',
+            style: TextStyle(
+              color: Color(0xFF58A6FF),
+              fontSize: 12,
+              letterSpacing: 3,
             ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Choose a symbol from\nMarkets Explorer.',
+            style: TextStyle(
+              color: Color(0xFF333333),
+              fontSize: 10,
+              height: 1.6,
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
