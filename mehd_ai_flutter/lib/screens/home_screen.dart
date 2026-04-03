@@ -1101,46 +1101,58 @@ class _HomeScreenState extends State<HomeScreen> {
       right: 16,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: const Color(0xFF0A0800),
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: const Color(0xFFD29922).withOpacity(0.5)),
-        ),
+        height: 24, // fixed small height
+        color: const Color(0xFF0A0800),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 10),
         child: Row(
           children: [
-            const Icon(Icons.info_outline, color: Color(0xFFD29922), size: 12),
-            const SizedBox(width: 6),
+            const Icon(Icons.info_outline,
+              color: Color(0xFFD29922),
+              size: 10),
+            const SizedBox(width: 5),
             const Flexible(
               child: Text(
-                'SIMULATED DATA — Add API keys to enable live trading.',
+                'SIMULATED DATA — Add API keys '
+                'for live trading',
                 style: TextStyle(
                   color: Color(0xFFD29922),
-                  fontSize: 9,
-                  letterSpacing: 0.5,
+                  fontSize: 8,
+                  letterSpacing: 0.3,
                 ),
                 overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 5),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 5, vertical: 1),
               decoration: BoxDecoration(
-                color: const Color(0xFF100800),
                 border: Border.all(
-                  color: const Color(0xFFD29922),
-                  width: 0.5,
-                ),
-                borderRadius: BorderRadius.circular(2),
+                  color: const Color(0xFFD29922)
+                    .withOpacity(0.4),
+                  width: 0.5),
+                borderRadius:
+                  BorderRadius.circular(2),
               ),
-              child: const Text(
-                'DEMO MODE',
+              child: const Text('DEMO MODE',
                 style: TextStyle(
                   color: Color(0xFFD29922),
                   fontSize: 7,
-                  letterSpacing: 1,
+                  letterSpacing: 0.5,
                 ),
               ),
+            ),
+            const SizedBox(width: 5),
+            // Dismiss button
+            GestureDetector(
+              onTap: () => setState(() =>
+                _showBanner = false),
+              child: Icon(Icons.close,
+                color: const Color(0xFFD29922)
+                  .withOpacity(0.5),
+                size: 12),
             ),
           ],
         ),
@@ -1354,7 +1366,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onTradePressed: _handleTrade,
                   currentSpread: _latestSnapshot?.spread ?? 0.0,
                 ),
-              const LegalDisclaimer(),
+              
             ],
           ),
         ),
@@ -1438,7 +1450,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onTradePressed: _handleTrade,
                   currentSpread: _latestSnapshot?.spread ?? 0.0,
                 ),
-              const LegalDisclaimer(),
+              
             ],
           ),
         ),
@@ -1539,7 +1551,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onTradePressed: _handleTrade,
                   currentSpread: _latestSnapshot?.spread ?? 0.0,
                 ),
-              const LegalDisclaimer(),
+              
             ],
           );
         },

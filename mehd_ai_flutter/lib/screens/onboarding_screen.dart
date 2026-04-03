@@ -41,13 +41,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('onboarding_complete', true);
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 500),
-        pageBuilder: (_, __, ___) => const AuthScreen(),
-        transitionsBuilder: (_, animation, __, child) => FadeTransition(opacity: animation, child: child),
-      ),
-    );
+    Navigator.pushReplacementNamed(context, '/auth');
   }
 
   @override

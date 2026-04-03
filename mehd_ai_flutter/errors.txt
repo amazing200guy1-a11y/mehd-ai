@@ -1,0 +1,11 @@
+error - lib\screens\home_screen.dart:1151:17 - Undefined name '_showBanner'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+error - lib\screens\splash_screen.dart:79:25 - Undefined name 'SharedPreferences'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+error - lib\screens\splash_screen.dart:81:18 - Undefined name 'FirebaseAuth'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+error - lib\widgets\zen_chart.dart:182:9 - Undefined name '_manualDrawings'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+error - lib\widgets\zen_chart.dart:188:51 - Undefined name '_manualDrawings'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+error - lib\widgets\zen_chart.dart:589:7 - The type 'DrawingTool' is not exhaustively matched by the switch cases since it doesn't match 'DrawingTool.none'. Try adding a default case or cases that match 'DrawingTool.none'. - non_exhaustive_switch_statement
+error - lib\widgets\zen_chart.dart:594:13 - Undefined name '_manualDrawings'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+error - lib\widgets\zen_chart.dart:606:11 - Undefined name '_manualDrawings'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+error - lib\widgets\zen_chart.dart:618:13 - Undefined name '_manualDrawings'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+error - lib\widgets\zen_chart.dart:633:13 - Undefined name '_manualDrawings'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+error - lib\widgets\zen_chart.dart:651:7 - Undefined name '_manualDrawings'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier

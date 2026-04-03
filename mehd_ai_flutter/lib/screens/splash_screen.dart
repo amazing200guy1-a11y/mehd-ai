@@ -66,52 +66,28 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        _dispatch();
+        _navigate();
       }
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _resolveRoute();
       _controller.forward();
     });
   }
 
-  Future<void> _resolveRoute() async {
-    final authService = Provider.of<AuthService>(context, listen: false);
+  void _navigate() async {
+    final prefs = await SharedPreferences.getInstance();
+    final done = prefs.getBool('onboarding_complete') ?? false;
+    final user = FirebaseAuth.instance.currentUser;
+    if (!mounted) return;
     
-    // Ensure firebase is initialized
-    await authService.ensureFirebaseReady();
-    
-    final prefs = authService.prefs;
-    final onboardingDone = prefs.getBool('onboarding_complete') ?? false;
-    final user = authService.immediateCurrentUser;
-
     if (user != null) {
-      _nextPage = const HomeScreen();
-    } else if (!onboardingDone) {
-      _nextPage = const OnboardingScreen();
+      Navigator.pushReplacementNamed(context, '/home');
+    } else if (!done) {
+      Navigator.pushReplacementNamed(context, '/onboarding');
     } else {
-      _nextPage = const AuthScreen();
+      Navigator.pushReplacementNamed(context, '/auth');
     }
-  }
-
-  void _dispatch() async {
-    if (_isDisposed || !mounted) return;
-    
-    // Fallback if auth is still parsing
-    while (_nextPage == null) {
-      await Future.delayed(const Duration(milliseconds: 100));
-    }
-    
-    if (_isDisposed || !mounted) return;
-    
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 500),
-        pageBuilder: (_, __, ___) => _nextPage!,
-        transitionsBuilder: (_, animation, __, child) => FadeTransition(opacity: animation, child: child),
-      ),
-    );
   }
 
   @override
@@ -124,100 +100,33 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF000000), // Pure Black Specification
-      body: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          final textStr = "THE DEN".substring(0, _typingAnim.value);
-          
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Tiger Logo Fade & Scale
-                Opacity(
-                  opacity: _tigerFade.value,
-                  child: Transform.scale(
-                    scale: _tigerScale.value,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Image.asset(
-                          'assets/images/mehd_logo.png',
-                          width: 200,
-                          height: 200,
-                          fit: BoxFit.contain,
-                        ),
-                        // Simulated glowing eye pulse via shader mask scaling
-                        if (_controller.value > 0.12 && _controller.value < 0.50)
-                          Opacity(
-                            opacity: (_tigerScale.value - 0.8) * 5.0, // Pulsing effect that fades
-                            child: ShaderMask(
-                              shaderCallback: (rect) => RadialGradient(
-                                center: const Alignment(0, -0.2),
-                                radius: 0.15,
-                                colors: [Colors.blue.withOpacity(0.8), Colors.transparent],
-                              ).createShader(rect),
-                              blendMode: BlendMode.srcATop,
-                              child: Image.asset(
-                                'assets/images/mehd_logo.png',
-                                width: 200,
-                                height: 200,
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // THE DEN text + Cursor
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      textStr,
-                      style: GoogleFonts.jetBrainsMono(
-                        fontSize: 18,
-                        letterSpacing: 8.0,
-                        fontWeight: FontWeight.bold,
-                        color: _typingColor.value,
-                      ),
-                    ),
-                    if (_controller.value >= 0.4)
-                      Opacity(
-                        opacity: _controller.value >= 0.88 ? _cursorFade.value : 1.0,
-                        child: Container(
-                          width: 8,
-                          height: 18,
-                          margin: const EdgeInsets.only(left: 4),
-                          color: MehdAiTheme.blue,
-                        ),
-                      )
-                  ],
-                ),
-                
-                const SizedBox(height: 12),
-                
-                // Tagline Fade
-                Opacity(
-                  opacity: _taglineFade.value,
-                  child: Text(
-                    "Capital is a seed, not a sacrifice",
-                    style: GoogleFonts.jetBrainsMono(
-                      color: const Color(0xFF111111),
-                      fontSize: 9,
-                      letterSpacing: 2.0,
-                    ),
-                  ),
-                ),
-              ],
+      backgroundColor: const Color(0xFF000000),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('🐯', style: TextStyle(fontSize: 80)),
+            const SizedBox(height: 28),
+            const Text(
+              'THE DEN',
+              style: TextStyle(
+                color: Color(0xFF1A1A1A),
+                fontSize: 20,
+                letterSpacing: 8,
+                fontFamily: 'Courier New',
+              ),
             ),
-          );
-        },
+            const SizedBox(height: 8),
+            const Text(
+              'Capital is a seed, not a sacrifice',
+              style: TextStyle(
+                color: Color(0xFF0D0D0D),
+                fontSize: 10,
+                letterSpacing: 2,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
