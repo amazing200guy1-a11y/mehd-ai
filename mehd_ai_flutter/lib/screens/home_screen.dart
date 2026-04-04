@@ -40,8 +40,6 @@ import 'package:mehd_ai_flutter/widgets/floating_help_button.dart';
 import 'package:mehd_ai_flutter/screens/help/support_screen.dart';
 import 'package:mehd_ai_flutter/screens/language_screen.dart';
 
-import 'package:mehd_ai_flutter/widgets/legal_disclaimer.dart';
-
 import 'package:mehd_ai_flutter/core/connection_monitor.dart';
 import 'package:mehd_ai_flutter/core/input_validator.dart';
 import 'package:mehd_ai_flutter/core/performance_tracker.dart';
@@ -1148,7 +1146,7 @@ class _HomeScreenState extends State<HomeScreen> {
             // Dismiss button
             GestureDetector(
               onTap: () => setState(() =>
-                _showBanner = false),
+                _isBackendOffline = false),
               child: Icon(Icons.close,
                 color: const Color(0xFFD29922)
                   .withOpacity(0.5),

@@ -1,21 +1,22 @@
 # Mehd AI — Forex Trading Assistant
 
 > Multi-model AI consensus engine with unbreakable risk rules.  
-> Protects traders from losing money through 9-model voting, hard-coded safety limits, and permanent audit logging.
+> Protects traders from losing money through 11-agent voting, hard-coded safety limits, and permanent audit logging.
 
 ---
 
 ## What Is This?
 
-Mehd AI is a forex trading assistant that works like a **council of nine AI experts**. Before any trade is allowed, nine different AI models analyze the market from three perspectives:
+Mehd AI is a forex trading assistant that works like a **council of eleven AI experts**. Before any trade is allowed, eleven different AI agents analyze the market from three perspectives:
 
-| Layer | Models | What They Analyze |
+| Layer | Agents | What They Analyze |
 |-------|--------|-------------------|
 | **Sentiment** | Grok, Perplexity, Gemini | News tone, social media, fear/greed index |
 | **Strategy** | Claude, GPT-4, Llama | Chart patterns, indicators, technical signals |
 | **Math** | DeepSeek, OpenAI o3, Codestral | Probabilities, statistics, quantitative models |
+| **Oversight** | The Don, Sentinel | Final veto, risk governance |
 
-If **7 out of 9 models agree** on a direction, the trade button unlocks. If they disagree, the system protects you by holding.
+If **8 out of 11 agents agree** on a direction, the trade button unlocks. If they disagree, the system protects you by holding.
 
 On top of that, a **Hard Risk Kernel** enforces strict safety rules that **no AI can override**:
 - Maximum 1% of your balance at risk per trade
@@ -35,7 +36,7 @@ mehd-ai/
 │   ├── main.py              ← FastAPI app — the front door (4 endpoints)
 │   ├── models.py            ← Pydantic v2 data models — strict data shapes
 │   ├── risk_engine.py       ← HardRiskKernel — unbreakable safety rules
-│   ├── consensus_engine.py  ← AsyncCouncil — 9 AI models vote simultaneously
+│   ├── consensus_engine.py  ← AsyncCouncil — 11 AI agents vote simultaneously
 │   ├── audit_trail.py       ← AuditLogger — Firebase Firestore + fallback log
 │   ├── requirements.txt     ← Pinned Python dependencies
 │   ├── Procfile             ← Railway deployment config
@@ -51,7 +52,7 @@ Flutter App (later)
     │
     ▼
 main.py (FastAPI)
-    ├── GET /analyze/{symbol}  ──→  consensus_engine.py (9 models vote)
+    ├── GET /analyze/{symbol}  ──→  consensus_engine.py (11 agents vote)
     ├── POST /execute          ──→  risk_engine.py (safety check FIRST)
     │                               then audit_trail.py (log the decision)
     ├── GET /account_health    ──→  risk_engine.py (account status)
@@ -113,10 +114,10 @@ All decisions logged through audit_trail.py (Firebase Firestore)
 
 | Method | Path | What It Does |
 |--------|------|--------------|
-| `GET` | `/analyze/{symbol}` | Fire 9 AI models, return consensus result |
+| `GET` | `/analyze/{symbol}` | Fire 11 AI agents, return consensus result |
 | `POST` | `/execute` | Submit trade order — risk kernel runs first |
 | `GET` | `/account_health` | Current balance, drawdown, lock status |
-| `GET` | `/health` | System heartbeat + model status |
+| `GET` | `/health` | System heartbeat + agent status |
 
 ---
 
@@ -133,9 +134,9 @@ All decisions logged through audit_trail.py (Firebase Firestore)
 
 | Phase | Status | What Happens |
 |-------|--------|--------------|
-| **Phase 1** | ✅ Complete | Backend structure, mock AI models, working API |
-| **Phase 2** | 🔜 Next | Connect real AI APIs (9 live models) |
-| **Phase 3** | 📋 Planned | Flutter frontend (IDE-style dark theme) |
+| **Phase 1** | ✅ Complete | Backend structure, mock AI agents, working API |
+| **Phase 2** | 🔜 Next | Connect real AI APIs (11 live agents) |
+| **Phase 3** | ✅ Complete | Flutter frontend (IDE-style dark theme) |
 | **Phase 4** | 📋 Planned | Live market data feed integration |
 | **Phase 5** | 📋 Planned | Broker API connection for real trade execution |
 
@@ -147,7 +148,7 @@ All decisions logged through audit_trail.py (Firebase Firestore)
 - **FastAPI** — modern async web framework
 - **Pydantic v2** — strict data validation
 - **Firebase Firestore** — real-time audit logging
-- **asyncio** — concurrent 9-model execution
+- **asyncio** — concurrent 11-agent execution
 - **uvicorn** — ASGI server
 
 ---

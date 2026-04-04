@@ -268,5 +268,575 @@
       "votes": []
     },
     "failed_at": "2026-03-17T00:27:36.298599+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-19T19:29:14.317767+00:00",
+      "session_id": "a4c1ce47-0b18-4339-87f4-e1b4f560aed8",
+      "model_versions": [],
+      "symbol": "BTCUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-19T19:29:14.317767+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-19T19:29:43.673076+00:00",
+      "session_id": "a4c1ce47-0b18-4339-87f4-e1b4f560aed8",
+      "model_versions": [],
+      "symbol": "PARADOXUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-19T19:29:43.673076+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-19T19:29:49.092172+00:00",
+      "session_id": "a4c1ce47-0b18-4339-87f4-e1b4f560aed8",
+      "model_versions": [],
+      "symbol": "XAUUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-19T19:29:49.092172+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-19T23:27:36.966253+00:00",
+      "session_id": "a4c1ce47-0b18-4339-87f4-e1b4f560aed8",
+      "model_versions": [],
+      "symbol": "XAUUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-19T23:27:36.966253+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-19T23:29:08.276812+00:00",
+      "session_id": "a4c1ce47-0b18-4339-87f4-e1b4f560aed8",
+      "model_versions": [],
+      "symbol": "GBPJPY",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-19T23:29:08.276812+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-20T21:38:05.642565+00:00",
+      "session_id": "fe1e049c-a518-44ce-a63c-e4ec19d23451",
+      "model_versions": [],
+      "symbol": "EURUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-20T21:38:05.642565+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-20T21:38:08.107067+00:00",
+      "session_id": "fe1e049c-a518-44ce-a63c-e4ec19d23451",
+      "model_versions": [],
+      "symbol": "GBPJPY",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-20T21:38:08.107067+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-20T21:39:57.710565+00:00",
+      "session_id": "fe1e049c-a518-44ce-a63c-e4ec19d23451",
+      "model_versions": [],
+      "symbol": "EURUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-20T21:39:57.710565+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-20T21:40:05.303789+00:00",
+      "session_id": "fe1e049c-a518-44ce-a63c-e4ec19d23451",
+      "model_versions": [],
+      "symbol": "NAS100",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-20T21:40:05.303789+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-21T22:36:28.360171+00:00",
+      "session_id": "d709d827-c1d4-4acb-83cb-307a15c5dabf",
+      "model_versions": [],
+      "symbol": "ETHUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-21T22:36:28.360171+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-21T22:36:48.646719+00:00",
+      "session_id": "d709d827-c1d4-4acb-83cb-307a15c5dabf",
+      "model_versions": [],
+      "symbol": "PARADOXUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-21T22:36:48.646719+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-21T22:41:50.198461+00:00",
+      "session_id": "d709d827-c1d4-4acb-83cb-307a15c5dabf",
+      "model_versions": [],
+      "symbol": "PARADOXUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-21T22:41:50.198461+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-21T23:05:48.069249+00:00",
+      "session_id": "d7149680-2ace-41ca-b2e1-554d7a895c55",
+      "model_versions": [],
+      "symbol": "NAS100",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-21T23:05:48.069249+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-21T23:10:49.897083+00:00",
+      "session_id": "d7149680-2ace-41ca-b2e1-554d7a895c55",
+      "model_versions": [],
+      "symbol": "NAS100",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-21T23:10:49.897083+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-21T23:15:51.631013+00:00",
+      "session_id": "d7149680-2ace-41ca-b2e1-554d7a895c55",
+      "model_versions": [],
+      "symbol": "NAS100",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-21T23:15:51.631013+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-21T23:20:54.183334+00:00",
+      "session_id": "d7149680-2ace-41ca-b2e1-554d7a895c55",
+      "model_versions": [],
+      "symbol": "NAS100",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-21T23:20:54.183334+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-21T23:27:55.034474+00:00",
+      "session_id": "d7149680-2ace-41ca-b2e1-554d7a895c55",
+      "model_versions": [],
+      "symbol": "NAS100",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-21T23:27:55.036491+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-21T23:53:48.617915+00:00",
+      "session_id": "bcc59be8-c9d3-4f06-9166-7ac9a064a862",
+      "model_versions": [],
+      "symbol": "NAS100",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-21T23:53:48.617915+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-21T23:59:07.247921+00:00",
+      "session_id": "bcc59be8-c9d3-4f06-9166-7ac9a064a862",
+      "model_versions": [],
+      "symbol": "NAS100",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-21T23:59:07.269937+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-22T00:00:38.214634+00:00",
+      "session_id": "bcc59be8-c9d3-4f06-9166-7ac9a064a862",
+      "model_versions": [],
+      "symbol": "PARADOXUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-22T00:00:38.214634+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-22T00:03:12.776236+00:00",
+      "session_id": "bcc59be8-c9d3-4f06-9166-7ac9a064a862",
+      "model_versions": [],
+      "symbol": "XAUUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-22T00:03:12.776236+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-22T00:05:10.373728+00:00",
+      "session_id": "bcc59be8-c9d3-4f06-9166-7ac9a064a862",
+      "model_versions": [],
+      "symbol": "BTCUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-22T00:05:10.374360+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-29T23:52:23.734764+00:00",
+      "session_id": "e2edd31d-99c6-45ff-a3f5-31cc0bbc0f02",
+      "model_versions": [],
+      "symbol": "EURUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-29T23:52:23.734764+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-29T23:52:23.755418+00:00",
+      "session_id": "e2edd31d-99c6-45ff-a3f5-31cc0bbc0f02",
+      "model_versions": [],
+      "symbol": "XAUUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-29T23:52:23.755418+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-29T23:52:38.034678+00:00",
+      "session_id": "e2edd31d-99c6-45ff-a3f5-31cc0bbc0f02",
+      "model_versions": [],
+      "symbol": "EURUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-29T23:52:38.034678+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-29T23:52:59.229886+00:00",
+      "session_id": "e2edd31d-99c6-45ff-a3f5-31cc0bbc0f02",
+      "model_versions": [],
+      "symbol": "NAS100",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-29T23:52:59.229886+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-29T23:55:15.826240+00:00",
+      "session_id": "e2edd31d-99c6-45ff-a3f5-31cc0bbc0f02",
+      "model_versions": [],
+      "symbol": "PARADOXUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-29T23:55:15.826240+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-29T23:55:18.652778+00:00",
+      "session_id": "e2edd31d-99c6-45ff-a3f5-31cc0bbc0f02",
+      "model_versions": [],
+      "symbol": "GBPJPY",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-29T23:55:18.652778+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-30T01:10:57.736132+00:00",
+      "session_id": "4be7417e-7cbd-4cdd-8659-6e0bbba0b732",
+      "model_versions": [],
+      "symbol": "EURUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-30T01:10:57.737268+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-30T01:10:58.004466+00:00",
+      "session_id": "4be7417e-7cbd-4cdd-8659-6e0bbba0b732",
+      "model_versions": [],
+      "symbol": "XAUUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-30T01:10:58.004466+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-30T01:15:57.465504+00:00",
+      "session_id": "4be7417e-7cbd-4cdd-8659-6e0bbba0b732",
+      "model_versions": [],
+      "symbol": "EURUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-30T01:15:57.465504+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-30T01:15:57.502724+00:00",
+      "session_id": "4be7417e-7cbd-4cdd-8659-6e0bbba0b732",
+      "model_versions": [],
+      "symbol": "XAUUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-30T01:15:57.502724+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-30T01:23:21.920920+00:00",
+      "session_id": "4be7417e-7cbd-4cdd-8659-6e0bbba0b732",
+      "model_versions": [],
+      "symbol": "EURUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-30T01:23:21.920920+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-30T01:23:22.027259+00:00",
+      "session_id": "4be7417e-7cbd-4cdd-8659-6e0bbba0b732",
+      "model_versions": [],
+      "symbol": "XAUUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-30T01:23:22.027259+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-30T01:28:06.885652+00:00",
+      "session_id": "4be7417e-7cbd-4cdd-8659-6e0bbba0b732",
+      "model_versions": [],
+      "symbol": "XAUUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-30T01:28:06.885652+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-30T01:28:06.944951+00:00",
+      "session_id": "4be7417e-7cbd-4cdd-8659-6e0bbba0b732",
+      "model_versions": [],
+      "symbol": "EURUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-30T01:28:06.944951+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-30T01:33:05.914765+00:00",
+      "session_id": "4be7417e-7cbd-4cdd-8659-6e0bbba0b732",
+      "model_versions": [],
+      "symbol": "EURUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-30T01:33:05.914765+00:00"
+  },
+  {
+    "target_collection": "consensus_logs",
+    "document": {
+      "timestamp": "2026-03-30T01:33:05.977071+00:00",
+      "session_id": "4be7417e-7cbd-4cdd-8659-6e0bbba0b732",
+      "model_versions": [],
+      "symbol": "XAUUSD",
+      "final_direction": "HOLD",
+      "consensus_percentage": 0.0,
+      "proceed": false,
+      "rejection_reason": "SENTIMENT_LAYER_FAILED",
+      "votes": []
+    },
+    "failed_at": "2026-03-30T01:33:05.977071+00:00"
   }
 ]

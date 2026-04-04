@@ -43,10 +43,10 @@ class ConsensusBar extends StatelessWidget {
           const SizedBox(width: 12),
           
           // Center: Risk Pill (Hide on very narrow screens or keep flexible)
-          LayoutBuilder(builder: (context, constraints) {
+          Flexible(flex: 2, child: LayoutBuilder(builder: (context, constraints) {
             if (constraints.maxWidth < 100) return const SizedBox.shrink();
-            return Flexible(flex: 2, child: _buildRiskPill());
-          }),
+            return _buildRiskPill();
+          })),
           const SizedBox(width: 12),
           
           // Right: Action Button (Flexible)
@@ -154,32 +154,30 @@ class ConsensusBar extends StatelessWidget {
   }
 
   Widget _buildRiskPill() {
-    return Flexible(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: MehdAiTheme.bgSecondary,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: MehdAiTheme.borderColor),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.shield, size: 14, color: MehdAiTheme.purple),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                'Risk Cap: 1.0%', 
-                overflow: TextOverflow.ellipsis,
-                style: MehdAiTheme.labelStyle.copyWith(
-                  fontSize: 10,
-                  color: MehdAiTheme.textPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: MehdAiTheme.bgSecondary,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: MehdAiTheme.borderColor),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.shield, size: 14, color: MehdAiTheme.purple),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              'Risk Cap: 1.0%', 
+              overflow: TextOverflow.ellipsis,
+              style: MehdAiTheme.labelStyle.copyWith(
+                fontSize: 10,
+                color: MehdAiTheme.textPrimary,
+                fontWeight: FontWeight.bold,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

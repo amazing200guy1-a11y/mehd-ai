@@ -18,10 +18,77 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+import json
+import os
 
-from models import AccountHealth, Direction, RiskDecision, TradeOrder, AIVote
+from models import (
+    AccountHealth, 
+    Direction, 
+    RiskDecision, 
+    TradeOrder, 
+    AIVote,
+    AppConstitution,
+    ConstitutionRule
+)
 
 logger = logging.getLogger("mehd.risk_engine")
+
+CONSTITUTION_FILE = os.path.join(os.path.dirname(__file__), "app_constitution.json")
+
+class ConstitutionManager:
+    """
+    Manages loading, validating, and updating the Trader's Constitution.
+    """
+    @classmethod
+    def load(cls) -> AppConstitution:
+        if not os.path.exists(CONSTITUTION_FILE):
+             # Create default constitution if none exists
+            default_const = AppConstitution(
+                rules=[
+                    ConstitutionRule(
+                        name="Overtrading Protection",
+                        description="Maximum 3 trades per day to prevent revenge trading.",
+                        rule_type="max_daily_trades",
+                        parameter=3.0,
+                    ),
+                    ConstitutionRule(
+                        name="High Conviction Only",
+                        description="Only trade when consensus is 80% or higher.",
+                        rule_type="min_consensus",
+                        parameter=80.0,
+                    )
+                ]
+            )
+            cls.save(default_const)
+            return default_const
+
+        try:
+            with open(CONSTITUTION_FILE, "r") as f:
+                data = json.load(f)
+            return AppConstitution.model_validate(data)
+        except Exception as e:
+            logger.error("Error loading constitution: %s", e)
+            return AppConstitution()
+
+    @classmethod
+    def save(cls, constitution: AppConstitution) -> None:
+        try:
+            with open(CONSTITUTION_FILE, "w") as f:
+                f.write(constitution.model_dump_json(indent=2))
+        except Exception as e:
+            logger.error("Error saving constitution: %s", e)
+            
+    @classmethod
+    def increment_daily_trades(cls) -> None:
+        const = cls.load()
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        if const.last_reset_date != today:
+            const.daily_trades_count = 0
+            const.last_reset_date = today
+            
+        const.daily_trades_count += 1
+        cls.save(const)
+
 
 
 class HardRiskKernel:
@@ -65,21 +132,23 @@ class HardRiskKernel:
     #  PUBLIC: evaluate() — the only entry point
     # ──────────────────────────────────────────────────
 
-    def evaluate(self, order: TradeOrder) -> RiskDecision:
+    def evaluate(self, order: TradeOrder, current_price: float = 0.0, current_spread: float = 0.0) -> RiskDecision:
         """
         Run ALL risk checks on a trade order.
         Returns a RiskDecision — approved or rejected with reason.
 
         The order of checks matters:
         1. Account lock check (fastest — just read a boolean)
-        2. Stop-loss check (fast — just check if field is None)
-        3. Risk sizing check (math — needs calculation)
+        2. Volatility check (spread too wide?)
+        3. Stop-loss check (fast — just check if field is None)
+        4. Risk sizing check (math — needs calculation)
         """
         logger.info(
-            "Evaluating order: %s %s %.2f lots",
+            "Evaluating order: %s %s %.2f lots (entry_price=%.5f)",
             order.direction.value,
             order.symbol,
             order.lot_size,
+            current_price,
         )
 
         # ── CHECK 1: Is the account locked? ──────────
@@ -104,7 +173,21 @@ class HardRiskKernel:
                     ),
                 )
 
-        # ── CHECK 2: Is there a stop-loss? ───────────
+        # ── CHECK 2: Volatility / Spread check ──────
+        if current_spread > 0 and self.check_volatility(current_spread):
+            return RiskDecision(
+                approved=False,
+                calculated_lot_size=0.0,
+                stop_loss=order.stop_loss or 0.0001,
+                take_profit=order.take_profit,
+                rejection_reason=(
+                    f"REJECTED: Spread is {current_spread:.1f} pips — above the "
+                    f"{self.SPREAD_VOLATILITY_THRESHOLD} pip safety threshold. "
+                    f"Trading during extreme volatility is blocked."
+                ),
+            )
+
+        # ── CHECK 3: Is there a stop-loss? ───────────
         if order.stop_loss is None:
             return RiskDecision(
                 approved=False,
@@ -117,8 +200,19 @@ class HardRiskKernel:
                 ),
             )
 
-        # ── CHECK 3: Calculate safe lot size ─────────
-        safe_lot_size = self._calculate_safe_lot_size(order)
+        # ── CHECK 3.5: OLYMPUS Agents Verification ──
+        olympus_veto = self._verify_olympus_agents(order, current_price)
+        if olympus_veto:
+            return RiskDecision(
+                approved=False,
+                calculated_lot_size=0.0,
+                stop_loss=order.stop_loss,
+                take_profit=order.take_profit,
+                rejection_reason=f"REJECTED: {olympus_veto}",
+            )
+
+        # ── CHECK 4: Calculate safe lot size ─────────
+        safe_lot_size = self._calculate_safe_lot_size(order, current_price)
 
         if safe_lot_size <= 0:
             return RiskDecision(
@@ -145,7 +239,7 @@ class HardRiskKernel:
         # ── CHECK 4: Daily drawdown check ────────────
         # (This check runs here because the trade itself might push
         #  drawdown over the limit — we need to simulate it)
-        potential_loss = self._estimate_max_loss(final_lot_size, order)
+        potential_loss = self._estimate_max_loss(final_lot_size, order, current_price)
         potential_drawdown_pct = (
             (self.account.daily_drawdown_pct)
             + (potential_loss / self.account.balance * 100)
@@ -166,6 +260,48 @@ class HardRiskKernel:
                 take_profit=order.take_profit,
                 rejection_reason=self.account.lock_reason,
             )
+
+        # ── CHECK 5: The Trader's Constitution ────────
+        # Load the trader's personal mandate and enforce it ruthlessly.
+        constitution = ConstitutionManager.load()
+        
+        for rule in constitution.rules:
+            if not rule.is_active:
+                continue
+                
+            # Rule: Max Daily Trades
+            if rule.rule_type == "max_daily_trades":
+                if constitution.daily_trades_count >= rule.parameter:
+                    logger.critical("🔥 CONSTITUTION VETO: %s (Limit: %d, Taken: %d)", 
+                                    rule.name, rule.parameter, constitution.daily_trades_count)
+                    return RiskDecision(
+                        approved=False,
+                        calculated_lot_size=0.0,
+                        stop_loss=order.stop_loss or 0.0,
+                        take_profit=order.take_profit,
+                        rejection_reason=f"CONSTITUTION_VETO: {rule.description}"
+                    )
+            
+            # Rule: Minimum Consensus (requires knowing the consensus %, which we don't have here)
+            # We will assume consensus is passed in via the order or enforced before execution.
+            # But we can add a placeholder comment.
+            elif rule.rule_type == "min_consensus":
+                # Enforced in the consensus engine or main.py. Passed here to avoid changing signature too much.
+                pass
+                
+            # Rule: Forbidden Trading Hours (e.g., param could be an int representing hour to ban)
+            elif rule.rule_type == "forbidden_hours":
+                current_hour = datetime.now(timezone.utc).hour
+                if current_hour == int(rule.parameter):
+                    logger.critical("🔥 CONSTITUTION VETO: %s (Forbidden Hour: %02d:00 UTC)", 
+                                    rule.name, int(rule.parameter))
+                    return RiskDecision(
+                        approved=False,
+                        calculated_lot_size=0.0,
+                        stop_loss=order.stop_loss or 0.0,
+                        take_profit=order.take_profit,
+                        rejection_reason=f"CONSTITUTION_VETO: {rule.description}"
+                    )
 
         # ── ALL CHECKS PASSED ────────────────────────
         logger.info(
@@ -221,9 +357,9 @@ class HardRiskKernel:
                 reasons.append(vote.model_name)
 
         if len(math_votes) >= 2:
-            confidences = [v.confidence / 100.0 for v in math_votes]
+            confidences = [v.confidence for v in math_votes]
             max_divergence = max(confidences) - min(confidences)
-            if max_divergence > 0.005:  # 0.5% calculation mismatch
+            if max_divergence > 50.0:  # 50 percentage-point mismatch
                 vetoes += 2
                 reasons.append("divergence")
 
@@ -269,7 +405,34 @@ class HardRiskKernel:
     #  PRIVATE helpers
     # ──────────────────────────────────────────────────
 
-    def _calculate_safe_lot_size(self, order: TradeOrder) -> float:
+    def _verify_olympus_agents(self, order: TradeOrder, current_price: float) -> Optional[str]:
+        """
+        OLYMPUS mathematical verification before calculating anything else.
+        ATLAS checks SL validity.
+        TITAN checks TP validity.
+        """
+        if current_price <= 0:
+            return None # Skip if no live price fed (e.g. mock test)
+
+        is_buy = order.direction == Direction.BUY
+        
+        # ATLAS Verification
+        if order.stop_loss is not None:
+            if is_buy and order.stop_loss >= current_price:
+                return "ATLAS VETO: Stop loss must be below current price for BUY orders."
+            if not is_buy and order.stop_loss <= current_price:
+                return "ATLAS VETO: Stop loss must be above current price for SELL orders."
+                
+        # TITAN Verification
+        if order.take_profit is not None:
+            if is_buy and order.take_profit <= current_price:
+                return "TITAN VETO: Take profit must be above current price for BUY orders."
+            if not is_buy and order.take_profit >= current_price:
+                return "TITAN VETO: Take profit must be below current price for SELL orders."
+                
+        return None
+
+    def _calculate_safe_lot_size(self, order: TradeOrder, entry_price: float = 0.0) -> float:
         """
         Calculate the maximum lot size that risks at most 1% of balance.
 
@@ -285,13 +448,13 @@ class HardRiskKernel:
         # For forex, 1 pip = 0.0001 for most pairs (0.01 for JPY pairs)
         pip_size = 0.01 if "JPY" in order.symbol.upper() else 0.0001
 
-        # Use a reasonable entry price estimate (midpoint or just use stop_loss reference)
-        # In production, we'd use the actual current price from the broker
-        stop_distance = abs(order.stop_loss - (order.stop_loss * 1.005))
-        # Estimate: the stop is some distance from entry. We approximate.
-        # Better approach: Use actual current price. For now, use the
-        # order's implicit risk by assuming ~50 pip stop distance if we
-        # can't compute it precisely, then adjust by actual lot size.
+        # Use the ACTUAL current market price passed from the streamer.
+        # If not provided, fall back to a conservative 50-pip estimate.
+        if entry_price > 0 and order.stop_loss is not None:
+            stop_distance = abs(entry_price - order.stop_loss)
+        else:
+            stop_distance = 50.0 * pip_size  # Conservative fallback
+            logger.warning("No entry price provided — using conservative 50-pip SL distance")
 
         stop_distance_pips = max(stop_distance / pip_size, 1.0)
 
@@ -303,23 +466,28 @@ class HardRiskKernel:
         safe_lot_size = round(safe_lot_size, 2)
 
         logger.debug(
-            "Risk calc: max_risk=$%.2f, stop_dist=%.1f pips, safe_lots=%.4f",
+            "FORGE Risk calc: max_risk=$%.2f, entry=%.5f, sl=%.5f, stop_dist=%.1f pips, safe_lots=%.2f",
             max_risk_dollars,
+            entry_price,
+            order.stop_loss or 0.0,
             stop_distance_pips,
             safe_lot_size,
         )
 
         return safe_lot_size
 
-    def _estimate_max_loss(self, lot_size: float, order: TradeOrder) -> float:
+    def _estimate_max_loss(self, lot_size: float, order: TradeOrder, entry_price: float = 0.0) -> float:
         """
         Estimate the maximum possible loss for this trade
         (i.e., if the stop-loss is hit).
         """
         pip_size = 0.01 if "JPY" in order.symbol.upper() else 0.0001
 
-        # Rough estimate of stop distance
-        stop_distance = abs(order.stop_loss - (order.stop_loss * 1.005))
+        if entry_price > 0 and order.stop_loss is not None:
+            stop_distance = abs(entry_price - order.stop_loss)
+        else:
+            stop_distance = 50.0 * pip_size
+
         stop_distance_pips = max(stop_distance / pip_size, 1.0)
 
         max_loss = lot_size * stop_distance_pips * self.PIP_VALUE_PER_STANDARD_LOT

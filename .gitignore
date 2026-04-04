@@ -1,0 +1,26 @@
+# Environment - NEVER commit these
+.env
+.env.local
+backend/.env
+**/.env
+
+# Debug dump files - delete these
+analyze*.txt
+build_out*.txt
+errors.txt
+pub_err*.txt
+git_changes.txt
+setstate_results.txt
+dart_analyze.txt
+*.py
+*.log
+out.txt
+output.txt
+
+# Old backup files
+old_home.dart
+old_*.dart
+
+# Build
+build/
+.dart_tool/

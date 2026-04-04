@@ -1,24 +1,7 @@
-# Mehd AI Backend Dependencies
-# Pinned versions for reproducible builds
-
-# Web framework
-fastapi==0.115.6
-uvicorn[standard]==0.34.0
-
-# Data validation
-pydantic==2.10.4
-
-# Environment variables
-python-dotenv==1.0.1
-
-# Firebase Firestore
-firebase-admin==6.6.0
-
-# HTTP client (for Phase 2 — live AI API calls)
-httpx==0.28.1
-
-# SSE Streaming
-sse-starlette==2.1.0
-
-# Broker APIs
-MetaTrader5; sys_platform == 'win32'
+fastapi
+uvicorn
+httpx
+pydantic
+slowapi
+python-dotenv
+sse-starlette

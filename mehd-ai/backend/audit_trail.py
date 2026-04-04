@@ -32,6 +32,7 @@ from typing import Any, Optional
 from dotenv import load_dotenv
 
 from models import AccountHealth, ConsensusResult, RiskDecision, TradeOrder
+from consensus_engine import DEN_IDENTITY
 
 logger = logging.getLogger("mehd.audit_trail")
 
@@ -146,7 +147,9 @@ class AuditLogger:
             "rejection_reason": result.rejection_reason,
             "votes": [
                 {
-                    "model_name": vote.model_name,
+                    "display_name": DEN_IDENTITY.get(vote.model_name, {}).get("display_name", vote.model_name.upper()),
+                    "real_model": vote.model_name,
+                    "layer": DEN_IDENTITY.get(vote.model_name, {}).get("layer", "UNKNOWN"),
                     "direction": vote.direction.value,
                     "confidence": vote.confidence,
                     "reasoning": vote.reasoning,

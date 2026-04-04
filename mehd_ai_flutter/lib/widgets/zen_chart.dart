@@ -8,12 +8,8 @@ import 'package:mehd_ai_flutter/models/candle.dart';
 import 'package:mehd_ai_flutter/models/consensus_result.dart';
 import 'package:mehd_ai_flutter/widgets/den_animation.dart';
 import 'package:mehd_ai_flutter/models/automated_drawing.dart';
-import 'package:mehd_ai_flutter/models/manual_drawing.dart';
 import 'package:mehd_ai_flutter/core/drawing_engine.dart';
 import 'package:mehd_ai_flutter/widgets/drawing_engine.dart';
-import 'package:mehd_ai_flutter/widgets/drawing_toolbar.dart';
-import 'package:mehd_ai_flutter/core/api_service.dart';
-import 'package:mehd_ai_flutter/widgets/manual_drawing_painter.dart';
 
 enum DrawingMode { auto, manual }
 enum DrawingTool { none, line, hline, zone, fib }
@@ -75,8 +71,6 @@ class _ZenChartState extends State<ZenChart> with SingleTickerProviderStateMixin
   
   DrawingMode _drawingMode = DrawingMode.auto;
   double _baseZoom = 1.0;
-  
-  final ApiService _api = ApiService();
 
   // ── Drawing Engine State ──
   late AnimationController _drawingsAnim;
@@ -93,16 +87,14 @@ class _ZenChartState extends State<ZenChart> with SingleTickerProviderStateMixin
   List<Candle> _candleCache = [];
 
   DrawingTool _activeTool = DrawingTool.none;
-  List<Offset> _pendingPoints = [];
-  List<ManualDrawing> _drawings = [];
-  Offset? _firstTapPoint;
-  int _nextId = 0;
+  final List<Offset> _pendingPoints = [];
+  final List<ManualDrawing> _drawings = [];
+
 
   @override
   void initState() {
     super.initState();
     _drawingsAnim = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500));
-    _loadManualDrawings();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _generateCandles(widget.currentPrice.symbol);
@@ -175,18 +167,7 @@ class _ZenChartState extends State<ZenChart> with SingleTickerProviderStateMixin
     });
   }
 
-  Future<void> _loadManualDrawings() async {
-    final drawings = await _api.loadDrawings(widget.currentPrice.symbol);
-    if (mounted) {
-      setState(() {
-        _manualDrawings.addAll(drawings);
-      });
-    }
-  }
 
-  void _saveManualDrawings() {
-    _api.saveDrawings(widget.currentPrice.symbol, _manualDrawings);
-  }
 
   @override
   void didUpdateWidget(ZenChart oldWidget) {
@@ -572,86 +553,7 @@ class _ZenChartState extends State<ZenChart> with SingleTickerProviderStateMixin
     );
   }
 
-  // ── Manual Drawing Gesture Handling ──
-  void _handleChartTap(TapUpDetails details, BuildContext context) {
-    final chartBox = context.findRenderObject() as RenderBox?;
-    if (chartBox == null) return;
-    final localPoint = details.localPosition;
-    final chartSize = chartBox.size;
-    
-    // Convert screen point to price-domain coordinates
-    final rangeX = 30.0;
-    final rangeY = _maxHighCache - _minLowCache;
-    final domainX = (localPoint.dx / chartSize.width) * rangeX;
-    final domainY = _minLowCache + (1.0 - localPoint.dy / chartSize.height) * rangeY;
 
-    setState(() {
-      switch (_activeTool) {
-        case ManualDrawingTool.trendline:
-          if (_firstTapPoint == null) {
-            _firstTapPoint = Offset(domainX, domainY);
-          } else {
-            _manualDrawings.add(ManualTrendline(
-              id: 'manual_${_nextId++}',
-              startX: _firstTapPoint!.dx,
-              startY: _firstTapPoint!.dy,
-              endX: domainX,
-              endY: domainY,
-            ));
-            _firstTapPoint = null;
-          }
-          break;
-
-        case ManualDrawingTool.horizontalLine:
-          _manualDrawings.add(ManualHorizontalLine(
-            id: 'manual_${_nextId++}',
-            priceLevel: domainY,
-          ));
-          break;
-
-        case ManualDrawingTool.zone:
-          if (_firstTapPoint == null) {
-            _firstTapPoint = Offset(domainX, domainY);
-          } else {
-            final top = domainY > _firstTapPoint!.dy ? domainY : _firstTapPoint!.dy;
-            final bot = domainY < _firstTapPoint!.dy ? domainY : _firstTapPoint!.dy;
-            _manualDrawings.add(ManualZone(
-              id: 'manual_${_nextId++}',
-              topPrice: top,
-              bottomPrice: bot,
-            ));
-            _firstTapPoint = null;
-          }
-          break;
-
-        case ManualDrawingTool.fibonacci:
-          if (_firstTapPoint == null) {
-            _firstTapPoint = Offset(domainX, domainY);
-          } else {
-            final high = domainY > _firstTapPoint!.dy ? domainY : _firstTapPoint!.dy;
-            final low = domainY < _firstTapPoint!.dy ? domainY : _firstTapPoint!.dy;
-            _manualDrawings.add(ManualFibonacci(
-              id: 'manual_${_nextId++}',
-              highPrice: high,
-              lowPrice: low,
-            ));
-            _firstTapPoint = null;
-          }
-          break;
-
-        case ManualDrawingTool.none:
-          break;
-      }
-      _saveManualDrawings();
-    });
-  }
-
-  void _deleteSelected() {
-    setState(() {
-      _manualDrawings.removeWhere((d) => d.isSelected);
-      _saveManualDrawings();
-    });
-  }
 
   Widget _buildDrawingsToggleOverlay() {
     return PopupMenuButton<String>(
@@ -1249,7 +1151,8 @@ class ZenChartPainter extends CustomPainter {
            oldDelegate.symbol != symbol ||
            oldDelegate.consensus?.finalDirection != consensus?.finalDirection ||
            oldDelegate.isCandles != isCandles ||
-           oldDelegate.timeframe != timeframe;
+           oldDelegate.timeframe != timeframe ||
+           oldDelegate.manualDrawings.length != manualDrawings.length;
   }
 }
 
