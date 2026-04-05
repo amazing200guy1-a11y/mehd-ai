@@ -30,37 +30,36 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 3000), // Extended for grandness
     );
 
-
-    // 0.1s - 0.4s (8.3% to 33%)
+    // Logo scale and fade (0.0 to 0.4)
     _tigerScale = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.08, 0.33, curve: Curves.easeOutBack)),
+      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.4, curve: Curves.easeOutBack)),
     );
     _tigerFade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.08, 0.33, curve: Curves.easeOut)),
+      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.4, curve: Curves.easeOut)),
     );
 
-    // 0.4s - 1.0s (33% to 83%)
+    // Typing animation (0.4 to 0.7)
     _typingAnim = IntTween(begin: 0, end: 7).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.33, 0.65, curve: Curves.linear)),
+      CurvedAnimation(parent: _controller, curve: const Interval(0.4, 0.7, curve: Curves.linear)),
     );
-    _typingColor = ColorTween(begin: const Color(0xFF1A1A1A), end: const Color(0xFF2A2A2A)).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.33, 0.83, curve: Curves.linear)),
+    _typingColor = ColorTween(begin: const Color(0xFF003D80), end: const Color(0xFF58A6FF)).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.4, 0.7, curve: Curves.easeOut)),
     );
 
-    // 1.0s - 1.1s (83% to 91.6%)
+    // Tagline fade (0.7 to 0.9)
     _taglineFade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.83, 0.916, curve: Curves.easeIn)),
+      CurvedAnimation(parent: _controller, curve: const Interval(0.7, 0.9, curve: Curves.easeIn)),
     );
 
-    // 1.1s - 1.2s (91.6% to 100%)
+    // Cursor blink (0.7 to 1.0)
     _cursorFade = TweenSequence<double>([
       TweenSequenceItem(tween: ConstantTween<double>(1.0), weight: 30),
       TweenSequenceItem(tween: ConstantTween<double>(0.0), weight: 40),
       TweenSequenceItem(tween: ConstantTween<double>(1.0), weight: 30),
-    ]).animate(CurvedAnimation(parent: _controller, curve: const Interval(0.916, 1.0, curve: Curves.linear)));
+    ]).animate(CurvedAnimation(parent: _controller, curve: const Interval(0.7, 1.0, curve: Curves.linear)));
 
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
@@ -125,7 +124,14 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   scale: _tigerScale.value,
                   child: Opacity(
                     opacity: _tigerFade.value,
-                    child: const Text('🐯', style: TextStyle(fontSize: 80)),
+                    child: Hero(
+                      tag: 'tigerLogo',
+                      child: Image.asset(
+                        'assets/images/mehd_logo.png',
+                        width: 140, // Perfect size for splash screen
+                        errorBuilder: (_, __, ___) => const Text('🐯', style: TextStyle(fontSize: 80)),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 28),
@@ -137,9 +143,15 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       typedText,
                       style: TextStyle(
                         color: _typingColor.value,
-                        fontSize: 20,
+                        fontSize: 22,
                         letterSpacing: 8,
-                        fontFamily: 'Courier New',
+                        fontWeight: FontWeight.bold,
+                        shadows: [
+                          BoxShadow(
+                            color: const Color(0xFF58A6FF).withOpacity(0.3 * _taglineFade.value),
+                            blurRadius: 12,
+                          ),
+                        ],
                       ),
                     ),
                     // Blinking cursor
@@ -148,24 +160,23 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       child: Text(
                         '▌',
                         style: TextStyle(
-                          color: _typingColor.value,
-                          fontSize: 20,
-                          fontFamily: 'Courier New',
+                          color: const Color(0xFF58A6FF),
+                          fontSize: 22,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 // Tagline fade-in
                 Opacity(
                   opacity: _taglineFade.value,
                   child: const Text(
                     'Capital is a seed, not a sacrifice',
                     style: TextStyle(
-                      color: Color(0xFF0D0D0D),
-                      fontSize: 10,
-                      letterSpacing: 2,
+                      color: Color(0xFF888888),
+                      fontSize: 11,
+                      letterSpacing: 3,
                     ),
                   ),
                 ),
