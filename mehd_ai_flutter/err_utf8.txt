@@ -1,0 +1,21 @@
+﻿Analyzing mehd_ai_flutter...                                    
+
+  error - The named parameter 'isAnalyzing' is required, but there's no corresponding argument - lib\layouts\home_desktop_layout.dart:42:80 - missing_required_argument
+  error - The named parameter 'isAnalyzing' is required, but there's no corresponding argument - lib\widgets\zen_chart.dart:531:151 - missing_required_argument
+
+flutter : 2 issues found. 
+(ran in 2.6s)
+At line:1 char:1
++ flutter analyze --no-pub > 
+err.txt 2>&1 ; Get-Content 
+err.txt | Selec ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: (2 issue  
+  s found. (ran in 2.6s):S   
+ tring) [], RemoteExcepti    
+on
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 

@@ -1,0 +1,58 @@
+﻿import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:mehd_ai_flutter/core/theme.dart';
+import 'package:mehd_ai_flutter/controllers/trading_controller.dart';
+import 'package:mehd_ai_flutter/controllers/market_data_controller.dart';
+import 'package:mehd_ai_flutter/layouts/home_desktop_layout.dart';
+import 'package:mehd_ai_flutter/layouts/home_tablet_layout.dart';
+import 'package:mehd_ai_flutter/layouts/home_mobile_layout.dart';
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Shortcuts(
+      shortcuts: <ShortcutActivator, Intent>{
+        const SingleActivator(LogicalKeyboardKey.enter, control: true): const ActivateIntent(),
+        const SingleActivator(LogicalKeyboardKey.keyK, control: true): const SearchIntent(),
+        const SingleActivator(LogicalKeyboardKey.keyH, control: true, shift: true): const HelpIntent(),
+      },
+      child: Actions(
+        actions: <Type, Action<Intent>>{
+          ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (_) => null),
+          SearchIntent: CallbackAction<SearchIntent>(onInvoke: (_) => null),
+          HelpIntent: CallbackAction<HelpIntent>(onInvoke: (_) => null),
+        },
+        child: Focus(
+          autofocus: true,
+          child: Consumer2<TradingController, MarketDataController>(
+            builder: (ctx, trading, market, _) {
+              return Scaffold(
+                backgroundColor: MehdAiTheme.bgPrimary,
+                body: SafeArea(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      if (constraints.maxWidth > 1200) {
+                        return HomeDesktopLayout(trading: trading, market: market);
+                      }
+                      if (constraints.maxWidth > 768) {
+                        return HomeTabletLayout(trading: trading, market: market);
+                      }
+                      return HomeMobileLayout(trading: trading, market: market);
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class ActivateIntent extends Intent { const ActivateIntent(); }
+class SearchIntent extends Intent { const SearchIntent(); }
+class HelpIntent extends Intent { const HelpIntent(); }

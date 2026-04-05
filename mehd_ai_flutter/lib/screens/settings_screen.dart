@@ -4,6 +4,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
 import 'package:mehd_ai_flutter/controllers/trading_controller.dart';
 import 'package:mehd_ai_flutter/screens/broker_screen.dart';
+import 'package:mehd_ai_flutter/screens/language_screen.dart';
+import 'package:mehd_ai_flutter/screens/privacy_screen.dart';
+import 'package:mehd_ai_flutter/screens/terms_screen.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -20,13 +24,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final trading = context.watch<TradingController>();
     final isPaperMode = trading.isPaperMode;
 
     return Scaffold(
       backgroundColor: MehdAiTheme.bgPrimary,
       appBar: AppBar(
-        title: Text('SETTINGS', style: MehdAiTheme.headingStyle.copyWith(letterSpacing: 2)),
+        title: Text(l10n.settings.toUpperCase(), style: MehdAiTheme.headingStyle.copyWith(letterSpacing: 2)),
         backgroundColor: MehdAiTheme.bgSecondary,
         elevation: 0,
         iconTheme: const IconThemeData(color: MehdAiTheme.white),
@@ -128,32 +133,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const Divider(color: Color(0xFF111111), height: 32),
           
           // Language
-          _buildSectionTitle('LANGUAGE'),
-          _buildListTile('Application Language', 'English', Icons.language, onTap: () {}),
+          _buildSectionTitle(l10n.language.toUpperCase()),
+          _buildListTile(l10n.applicationLanguage, 'English', Icons.language, onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const LanguageScreen()));
+          }),
 
           const Divider(color: Color(0xFF111111), height: 32),
           
           // Appearance
-          _buildSectionTitle('APPEARANCE'),
-          _buildSwitchTile('Dark/Light Mode', true, Icons.dark_mode_outlined), // true = dark mode
-          _buildSwitchTile('Show Agent Names', true, Icons.visibility_outlined),
+          _buildSectionTitle(l10n.appearanceHeader),
+          _buildSwitchTile(l10n.darkLightMode, true, Icons.dark_mode_outlined, key: 'darkMode'), // true = dark mode
+          _buildSwitchTile(l10n.showAgentNames, true, Icons.visibility_outlined, key: 'showAgentNames'),
 
           const Divider(color: Color(0xFF111111), height: 32),
 
           // About
-          _buildSectionTitle('ABOUT THE DEN'),
-          _buildListTile('Version', '2.0.4 (Institutional)', Icons.info_outline),
-          _buildListTile('Built By', 'Usman', Icons.code),
-          _buildListTile('Privacy Policy', '', Icons.privacy_tip_outlined, onTap: (){}),
-          _buildListTile('Terms of Service', '', Icons.gavel_outlined, onTap: (){}),
-          _buildListTile('Rate App', '', Icons.star_border_outlined, onTap: (){}),
+          _buildSectionTitle(l10n.aboutHeader),
+          _buildListTile(l10n.versionLabel, '2.0.4 (Institutional)', Icons.info_outline),
+          _buildListTile(l10n.builtByLabel, 'Usman', Icons.code),
+          _buildListTile(l10n.privacyPolicy, '', Icons.privacy_tip_outlined, onTap: (){
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyScreen()));
+          }),
+          _buildListTile(l10n.termsOfService, '', Icons.gavel_outlined, onTap: (){
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const TermsScreen()));
+          }),
+          _buildListTile(l10n.rateApp, '', Icons.star_border_outlined, onTap: (){
+            _showRateDialog(context);
+          }),
 
           const Divider(color: Color(0xFF111111), height: 32),
 
           // Danger Zone
-          _buildSectionTitle('DANGER ZONE', color: const Color(0xFFFF3B3B)),
-          _buildDangerTile('Clear All Local Data', Icons.delete_outline),
-          _buildDangerTile('Sign Out', Icons.logout),
+          _buildSectionTitle(l10n.dangerZoneHeader, color: const Color(0xFFFF3B3B)),
+          _buildDangerTile(l10n.clearLocalData, Icons.delete_outline, onTap: () => _confirmClearData(context)),
+          _buildDangerTile(l10n.signOut, Icons.logout, onTap: () => _handleSignOut(context)),
           
           const SizedBox(height: 32),
         ],
@@ -190,23 +203,81 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSwitchTile(String title, bool value, IconData icon) {
-    return SwitchListTile(
-      value: value,
-      onChanged: (v) {},
-      secondary: Icon(icon, color: const Color(0xFF888888)),
-      title: Text(title, style: const TextStyle(color: Color(0xFFDDDDDD), fontSize: 13)),
-      activeColor: const Color(0xFF58A6FF),
-      inactiveThumbColor: const Color(0xFF444444),
-      inactiveTrackColor: const Color(0xFF111111),
+  Widget _buildSwitchTile(String title, bool defaultValue, IconData icon, {String? key}) {
+    return FutureBuilder<bool>(
+      future: key != null ? SharedPreferences.getInstance().then((p) => p.getBool(key) ?? defaultValue) : Future.value(defaultValue),
+      builder: (context, snapshot) {
+        final val = snapshot.data ?? defaultValue;
+        return SwitchListTile(
+          value: val,
+          onChanged: (v) async {
+            if (key != null) {
+              final p = await SharedPreferences.getInstance();
+              await p.setBool(key, v);
+              setState(() {});
+            }
+          },
+          secondary: Icon(icon, color: const Color(0xFF888888)),
+          title: Text(title, style: const TextStyle(color: Color(0xFFDDDDDD), fontSize: 13)),
+          activeColor: const Color(0xFF58A6FF),
+          inactiveThumbColor: const Color(0xFF444444),
+          inactiveTrackColor: const Color(0xFF111111),
+        );
+      }
     );
   }
 
-  Widget _buildDangerTile(String title, IconData icon) {
+  Widget _buildDangerTile(String title, IconData icon, {VoidCallback? onTap}) {
     return ListTile(
       leading: Icon(icon, color: const Color(0xFFFF3B3B)),
       title: Text(title, style: const TextStyle(color: Color(0xFFFF3B3B), fontSize: 13)),
-      onTap: () {},
+      onTap: onTap,
+    );
+  }
+
+  void _handleSignOut(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: MehdAiTheme.bgSecondary,
+        title: const Text('SIGN OUT', style: TextStyle(color: Colors.white, fontSize: 14, letterSpacing: 2)),
+        content: const Text('Are you sure you want to end this session?', style: TextStyle(color: Color(0xFF888888), fontSize: 12)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('CANCEL', style: TextStyle(color: Color(0xFF444444)))),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.of(context).pushNamedAndRemoveUntil('/splash', (route) => false);
+            }, 
+            child: const Text('SIGN OUT', style: TextStyle(color: Color(0xFFFF3B3B)))
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmClearData(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: MehdAiTheme.bgSecondary,
+        title: const Text('CLEAR ALL DATA', style: TextStyle(color: Color(0xFFFF3B3B), fontSize: 14, letterSpacing: 2)),
+        content: const Text('This will delete all saved credentials and preferences. This action cannot be undone.', style: TextStyle(color: Color(0xFF888888), fontSize: 12)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('CANCEL', style: TextStyle(color: Color(0xFF444444)))),
+          TextButton(
+            onPressed: () async {
+              final p = await SharedPreferences.getInstance();
+              await p.clear();
+              if (context.mounted) {
+                Navigator.pop(ctx);
+                Navigator.of(context).pushNamedAndRemoveUntil('/splash', (route) => false);
+              }
+            }, 
+            child: const Text('DELETE EVERYTHING', style: TextStyle(color: Color(0xFFFF3B3B)))
+          ),
+        ],
+      ),
     );
   }
 
@@ -313,5 +384,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       );
     }
+  }
+
+  void _showRateDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: MehdAiTheme.bgSecondary,
+        title: const Text('RATE MEHD AI', style: TextStyle(color: Colors.white, fontSize: 14, letterSpacing: 2)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Your feedback helps us sharpen The Den.', style: TextStyle(color: Color(0xFF888888), fontSize: 12)),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(5, (i) => const Icon(Icons.star, color: MehdAiTheme.gold, size: 32)),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(backgroundColor: MehdAiTheme.blue, content: Text('Thank you for your 5-star review!'))
+              );
+            }, 
+            child: const Text('SUBMIT', style: TextStyle(color: MehdAiTheme.blue))
+          ),
+        ],
+      ),
+    );
   }
 }

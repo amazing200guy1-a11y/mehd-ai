@@ -23,6 +23,30 @@ class MarketDataController extends ChangeNotifier {
   StreamSubscription<MarketSnapshot>? _priceSub;
   StreamSubscription<QuerySnapshot>? _firestoreSub;
 
+  static const Map<String, double> _spreads = {
+    'EUR/USD': 0.8,
+    'GBP/USD': 1.2,
+    'GBP/JPY': 1.5,
+    'XAU/USD': 2.5,
+    'BTC/USD': 8.0,
+    'ETH/USD': 5.0,
+    'NAS100':  1.0,
+    'US30':    2.0,
+  };
+
+  /// Base prices for realistic demo data
+  static const Map<String, double> _basePrices = {
+    'EUR/USD': 1.08420,
+    'GBP/USD': 1.26340,
+    'GBP/JPY': 189.420,
+    'XAU/USD': 2318.50,
+    'BTC/USD': 67420.0,
+    'ETH/USD': 3240.0,
+    'NAS100':  17842.0,
+    'US30':    38910.0,
+    'PARADOX/USD': 1.0,
+  };
+
   void selectSymbol(String rawSymbol, {required Function(String) onStatusMsg}) {
     final symbol = rawSymbol.replaceAll('/', '');
     activeSymbol = rawSymbol;
@@ -31,28 +55,33 @@ class MarketDataController extends ChangeNotifier {
     latestSnapshot = null;
     notifyListeners();
 
+    // ── INSTANT DEMO SNAPSHOT ──
+    // Provide chart data immediately so the UI never hangs on "Entering the Den..."
+    // If real data arrives from the stream, it will override this.
+    final basePrice = _basePrices[rawSymbol] ?? 1.0;
+    final currentSpread = _spreads[rawSymbol] ?? 1.0;
+    final spreadDecimal = currentSpread / 10000; // rough representation
+    latestSnapshot = MarketSnapshot(
+      id: 'demo_${symbol}_${DateTime.now().millisecondsSinceEpoch}',
+      symbol: rawSymbol,
+      bid: basePrice,
+      ask: basePrice + spreadDecimal,
+      open: basePrice * 0.999,
+      high: basePrice * 1.002,
+      low: basePrice * 0.997,
+      close: basePrice,
+      spread: currentSpread, // Keep in pips!
+      volume: 1000,
+      timestamp: DateTime.now().toUtc(),
+    );
+    notifyListeners();
+
+    // Try real price stream (will override demo if backend is live)
     _priceSub?.cancel();
     _priceSub = _apiService.streamPrices(symbol).listen((snapshot) {
       latestSnapshot = snapshot;
       notifyListeners();
     });
-
-    if (isBackendOffline) {
-      latestSnapshot = MarketSnapshot(
-        id: 'mock_demo',
-        symbol: symbol,
-        bid: 1.0500,
-        ask: 1.0502,
-        open: 1.0500,
-        high: 1.0550,
-        low: 1.0450,
-        close: 1.0500,
-        spread: 0.0002,
-        volume: 1000,
-        timestamp: DateTime.now().toUtc(),
-      );
-      notifyListeners();
-    }
 
     _listenToFirestore(symbol, onStatusMsg);
     _triggerAnalysis(symbol, onStatusMsg);
@@ -91,7 +120,7 @@ class MarketDataController extends ChangeNotifier {
          'symbol': symbol,
          'userId': userId,
          'tier': 'sovereign',
-      });
+      }).timeout(const Duration(seconds: 8)); // Fast timeout — don't hang
       
       if (result.data != null) {
         finalResult = ConsensusResult.fromJson(Map<String, dynamic>.from(result.data));
@@ -101,9 +130,10 @@ class MarketDataController extends ChangeNotifier {
       finalResult = _buildDemoConsensus(symbol);
     }
 
+    // Minimum 3s "thinking" feel (was 8s — too slow)
     final elapsed = DateTime.now().difference(startTime);
-    if (elapsed.inMilliseconds < 8000) {
-      await Future.delayed(Duration(milliseconds: 8000 - elapsed.inMilliseconds));
+    if (elapsed.inMilliseconds < 3000) {
+      await Future.delayed(Duration(milliseconds: 3000 - elapsed.inMilliseconds));
     }
 
     if (finalResult != null) {

@@ -30,9 +30,21 @@ class ConsensusBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       constraints: const BoxConstraints(minHeight: 74),
-      decoration: const BoxDecoration(
-        color: MehdAiTheme.bgPrimary,
-        border: Border(top: BorderSide(color: MehdAiTheme.borderColor)),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF000000).withOpacity(0.85),
+            const Color(0xFF0A0A12).withOpacity(0.92),
+          ],
+        ),
+        border: Border(
+          top: BorderSide(
+            color: const Color(0xFF58A6FF).withOpacity(0.12),
+            width: 0.5,
+          ),
+        ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
       child: Row(
@@ -268,7 +280,18 @@ class ConsensusBar extends StatelessWidget {
           borderRadius: BorderRadius.circular(4),
           border: Border.all(color: borderColor),
           boxShadow: enabled 
-            ? (isSovereignLock ? MehdAiTheme.whiteGlow : (buttonState == ButtonState.readyBuy ? MehdAiTheme.greenGlow : MehdAiTheme.blueGlow)) 
+            ? [
+                BoxShadow(
+                  color: isSovereignLock 
+                      ? MehdAiTheme.white.withOpacity(0.12) 
+                      : (buttonState == ButtonState.readyBuy ? MehdAiTheme.green.withOpacity(0.12) : MehdAiTheme.red.withOpacity(0.12)),
+                  blurRadius: 20,
+                  offset: const Offset(0, 4)),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2)),
+              ] 
             : [],
         ),
         child: Padding(

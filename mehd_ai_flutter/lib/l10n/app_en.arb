@@ -16,5 +16,26 @@
   "strikeNow": "The Den agrees. Strike now.",
   "sovereignStrike": "Unanimous. All 11 layers aligned. This is the rarest signal in The Den. Strike with full force.",
   "awaitingCommand": "11 AGENTS AWAITING COMMAND",
-  "selectSymbol": "Select a symbol from the sidebar to begin multi-agent analysis."
+  "selectSymbol": "Select a symbol from the sidebar to begin multi-agent analysis.",
+
+  "zoomIn": "Zoom In",
+  "zoomOut": "Zoom Out",
+  "resetView": "Reset View",
+  "drawingMode": "Drawing Mode",
+  "autoMode": "AUTO",
+  "manualMode": "MANUAL",
+  "clearDrawings": "Clear Drawings",
+  "darkLightMode": "Dark/Light Mode",
+  "showAgentNames": "Show Agent Names",
+  "applicationLanguage": "Application Language",
+  "appearanceHeader": "APPEARANCE",
+  "aboutHeader": "ABOUT THE DEN",
+  "versionLabel": "Version",
+  "builtByLabel": "Built By",
+  "dangerZoneHeader": "DANGER ZONE",
+  "clearLocalData": "Clear All Local Data",
+  "signOut": "Sign Out",
+  "rateApp": "Rate App",
+  "privacyPolicy": "Privacy Policy",
+  "termsOfService": "Terms of Service"
 }

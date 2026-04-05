@@ -6,7 +6,9 @@ import 'package:mehd_ai_flutter/core/constants.dart';
 import 'package:mehd_ai_flutter/widgets/zen_chart.dart';
 import 'package:mehd_ai_flutter/widgets/consensus_bar.dart';
 import 'package:mehd_ai_flutter/widgets/den_loading_widget.dart';
+import 'package:mehd_ai_flutter/widgets/den_animation.dart';
 import 'package:mehd_ai_flutter/screens/settings_screen.dart';
+import 'package:mehd_ai_flutter/utils/titan_animations.dart';
 
 class HomeTabletLayout extends StatelessWidget {
   final TradingController trading;
@@ -75,10 +77,16 @@ class HomeTabletLayout extends StatelessWidget {
                   ? const Center(child: Text('Empty', style: TextStyle(color: Colors.white)))
                   : (market.latestSnapshot == null 
                     ? const Center(child: DenLoadingWidget(message: 'Entering the Den...'))
-                    : ZenChart(
-                        currentPrice: market.latestSnapshot!, 
-                        currentConsensus: market.consensus,
-                        onDrawingsUpdated: (d) {},
+                    : AnimatedSwitcher(
+                        duration: TitanAnimations.medium,
+                        transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
+                        child: ZenChart(
+                          key: ValueKey(market.activeSymbol),
+                          currentPrice: market.latestSnapshot!, 
+                          currentConsensus: market.consensus,
+                          denState: market.isAnalyzing ? DenState.activation : DenState.idle,
+                          onDrawingsUpdated: (d) {},
+                        ),
                       )),
               ),
               if (market.activeSymbol != null)

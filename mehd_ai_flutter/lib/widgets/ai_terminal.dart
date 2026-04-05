@@ -48,6 +48,12 @@ class _AiTerminalState extends State<AiTerminal> {
   }
 
   @override
+  void dispose() {
+    _terminalScroll.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final bool unanimous = widget.consensusResult?.proceed == true;
 
@@ -220,14 +226,37 @@ class _AiTerminalState extends State<AiTerminal> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                '[$timeStr] ',
-                style: GoogleFonts.jetBrainsMono(color: const Color(0xFF8B949E), fontSize: 11), // 8b949e for timestamps
-              ),
-              Expanded(
+              SizedBox(
+                width: 70,
                 child: Text(
-                  '<${id.displayName.toUpperCase()}> ${vote.reasoning}',
-                  style: GoogleFonts.jetBrainsMono(color: const Color(0xFFCCCCCC), fontSize: 11), // standard log
+                  '[$timeStr]',
+                  style: const TextStyle(
+                    color: Color(0xFF333333),
+                    fontSize: 7),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 4),
+              SizedBox(
+                width: 64,
+                child: Text(
+                  '<${id.displayName.toUpperCase()}>',
+                  style: TextStyle(
+                    color: id.nodeColor,
+                    fontSize: 7,
+                    fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  vote.reasoning,
+                  style: const TextStyle(
+                    color: Color(0xFF555555),
+                    fontSize: 8),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
                 ),
               ),
             ],

@@ -1,4 +1,7 @@
+import 'dart:ui';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:mehd_ai_flutter/core/api_service.dart';
 import 'package:mehd_ai_flutter/core/constants.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
@@ -91,30 +94,50 @@ class TradingController extends ChangeNotifier {
     if (paperTradesCompleted < 10) {
       showDialog(
         context: context,
-        builder: (ctx) => AlertDialog(
-          backgroundColor: MehdAiTheme.bgSecondary,
-          title: Text('Paper Trading Required', style: MehdAiTheme.headingStyle),
-          content: Text(
-            'You have completed $paperTradesCompleted/10 paper trades.\n\n'
-            'Complete at least 10 paper trades before live trading. '
-            'This protects you from mistakes while you learn.',
-            style: MehdAiTheme.labelStyle,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text('Understood', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.blue)),
+        builder: (ctx) => BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: AlertDialog(
+            backgroundColor: const Color(0xCC000000), // rgba(0,0,0,0.8) equivalent approx
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: const Color(0xFF58A6FF).withOpacity(0.15), width: 0.5),
             ),
-          ],
+            title: Text('Paper Trading Required', style: MehdAiTheme.headingStyle),
+            content: Text(
+              'You have completed $paperTradesCompleted/10 paper trades.\n\n'
+              'Complete at least 10 paper trades before live trading. '
+              'This protects you from mistakes while you learn.',
+              style: MehdAiTheme.labelStyle,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text('Understood', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.blue)),
+              ),
+            ],
+          ),
         ),
       );
-      paperTradesCompleted++;
-      notifyListeners();
       return;
     }
 
-    final lotSize = 1.0;
-    final stopLoss = consensus.finalDirection == 'BUY' ? latestSnapshot.bid - 0.0050 : latestSnapshot.ask + 0.0050;
+    // FIX: Dynamic Lot Calculation (1% Risk)
+    // Formula: LotSize = (Equity * 0.01) / (StopLossDistanceInPips * PipValue)
+    // Assume 1 pip = $10 for 1.0 lot (Standard). 
+    final double equity = context.read<AccountHealth?>()?.equity ?? 10000.0;
+    
+    // Default stop loss if not provided
+    final double stopLoss = (consensus.finalDirection == 'BUY' ? latestSnapshot.bid - 0.0050 : latestSnapshot.ask + 0.0050);
+    
+    final double slDistance = (latestSnapshot.bid - stopLoss).abs();
+    final double slPips = slDistance * (latestSnapshot.symbol.contains('JPY') ? 100 : 10000);
+    
+    // Calculate lot size to risk exactly 1% of equity
+    // RiskAmount = Equity * 0.01
+    // LotSize = RiskAmount / (slPips * 10) [assuming $10/pip for 1.0 lot]
+    double calculatedLot = (equity * 0.01) / (math.max(slPips, 5.0) * 10);
+    final lotSize = calculatedLot.clamp(0.01, 100.0);
+
     final validationError = InputValidator.validateTradeOrder(
       symbol: latestSnapshot.symbol,
       direction: consensus.finalDirection,
@@ -130,41 +153,48 @@ class TradingController extends ChangeNotifier {
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: MehdAiTheme.bgSecondary,
-        title: Row(
-          children: [
-            Icon(consensus.finalDirection == 'BUY' ? Icons.trending_up : Icons.trending_down,
-              color: consensus.finalDirection == 'BUY' ? MehdAiTheme.green : MehdAiTheme.red),
-            const SizedBox(width: 12),
-            Text('Confirm Trade Execution', style: MehdAiTheme.headingStyle),
+      builder: (ctx) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: AlertDialog(
+          backgroundColor: const Color(0xCC000000), // rgba(0,0,0,0.8) approx
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: const Color(0xFF58A6FF).withOpacity(0.15), width: 0.5),
+          ),
+          title: Row(
+            children: [
+              Icon(consensus.finalDirection == 'BUY' ? Icons.trending_up : Icons.trending_down,
+                color: consensus.finalDirection == 'BUY' ? MehdAiTheme.green : MehdAiTheme.red),
+              const SizedBox(width: 12),
+              Text('Confirm Trade Execution', style: MehdAiTheme.headingStyle),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${consensus.finalDirection} ${latestSnapshot.symbol}', style: MehdAiTheme.terminalStyle.copyWith(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              Text('Entry: ${latestSnapshot.bid.toStringAsFixed(5)}', style: MehdAiTheme.labelStyle),
+              Text('SL: ${stopLoss.toStringAsFixed(5)}', style: MehdAiTheme.labelStyle),
+              Text('Lot Size: ${lotSize.toStringAsFixed(2)}', style: MehdAiTheme.labelStyle),
+              Text('Consensus: ${consensus.consensusPercentage.toStringAsFixed(1)}%', style: MehdAiTheme.labelStyle),
+              const SizedBox(height: 16),
+              Text('Risk: 1.0% maximum enforced by HardRiskKernel.', style: MehdAiTheme.labelStyle.copyWith(color: MehdAiTheme.gold)),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text('Cancel', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.textSecondary)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: consensus.finalDirection == 'BUY' ? MehdAiTheme.green : MehdAiTheme.red),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text('EXECUTE ${consensus.finalDirection}', style: MehdAiTheme.terminalStyle.copyWith(fontWeight: FontWeight.bold)),
+            ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('${consensus.finalDirection} ${latestSnapshot.symbol}', style: MehdAiTheme.terminalStyle.copyWith(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            Text('Entry: ${latestSnapshot.bid.toStringAsFixed(5)}', style: MehdAiTheme.labelStyle),
-            Text('SL: ${stopLoss.toStringAsFixed(5)}', style: MehdAiTheme.labelStyle),
-            Text('Lot Size: ${lotSize.toStringAsFixed(2)}', style: MehdAiTheme.labelStyle),
-            Text('Consensus: ${consensus.consensusPercentage.toStringAsFixed(1)}%', style: MehdAiTheme.labelStyle),
-            const SizedBox(height: 16),
-            Text('Risk: 1.0% maximum enforced by HardRiskKernel.', style: MehdAiTheme.labelStyle.copyWith(color: MehdAiTheme.gold)),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.textSecondary)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: consensus.finalDirection == 'BUY' ? MehdAiTheme.green : MehdAiTheme.red),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text('EXECUTE ${consensus.finalDirection}', style: MehdAiTheme.terminalStyle.copyWith(fontWeight: FontWeight.bold)),
-          ),
-        ],
       ),
     );
 
@@ -191,7 +221,14 @@ class TradingController extends ChangeNotifier {
     if (!decision.approved) {
       showError('Trade Rejected: ${decision.rejectionReason}');
     } else {
-      final bool isWin = DateTime.now().millisecond % 2 == 0;
+      // Increment counter ONLY on successful execution
+      paperTradesCompleted++;
+      
+      // Improved Win/Loss Logic: Based on Consensus Strength
+      // Higher consensus = higher probability of "simulated" win
+      final rand = math.Random().nextDouble() * 100;
+      final bool isWin = rand < consensus.consensusPercentage; 
+      
       final double entry = latestSnapshot.bid;
       final double exit = isWin 
           ? (consensus.finalDirection == 'BUY' ? entry + 0.0050 : entry - 0.0050)

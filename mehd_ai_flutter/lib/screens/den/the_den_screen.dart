@@ -6,6 +6,7 @@ import 'package:mehd_ai_flutter/screens/den/strategy_room.dart';
 import 'package:mehd_ai_flutter/screens/den/math_room.dart';
 import 'package:mehd_ai_flutter/screens/vibe_trading_screen.dart';
 import 'package:mehd_ai_flutter/screens/journey_screen.dart';
+import 'package:mehd_ai_flutter/utils/titan_animations.dart';
 
 /// FILE — the_den_screen.dart
 ///
@@ -54,8 +55,8 @@ class _TheDenScreenState extends State<TheDenScreen> {
   void _navTo(int index) {
     _pageController.animateToPage(
       index, 
-      duration: const Duration(milliseconds: 400), 
-      curve: Curves.fastOutSlowIn,
+      duration: TitanAnimations.medium, 
+      curve: TitanAnimations.emphasized,
     );
   }
 

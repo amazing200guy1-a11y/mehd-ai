@@ -13,7 +13,7 @@ class DrawingEngine {
     if (candles.isEmpty) return drawings;
 
     // ── CATEGORY 1: Trendlines (TITAN) ──
-    if (activeToggles['Lines'] == true) {
+    if (activeToggles['Lines'] ?? true) {
       final swingLows = _findSwingPoints(candles, isHigh: false);
       if (swingLows.length >= 2) {
         final lastTwo = swingLows.sublist(math.max(0, swingLows.length - 2));
@@ -40,7 +40,7 @@ class DrawingEngine {
     }
 
     // ── CATEGORY 2: S/R Lines ──
-    if (activeToggles['Lines'] == true) {
+    if (activeToggles['Lines'] ?? true) {
       final last30 = candles.sublist(math.max(0, candles.length - 30));
       if (last30.isNotEmpty) {
         double highestClose = last30.map((c) => c.close).reduce(math.max);
@@ -63,7 +63,7 @@ class DrawingEngine {
     }
 
     // ── CATEGORY 3: Fibonacci (ATLAS) ──
-    if (activeToggles['Fibonacci'] == true) {
+    if (activeToggles['Fibonacci'] ?? true) {
       double high = candles.map((c) => c.high).reduce(math.max);
       double low = candles.map((c) => c.low).reduce(math.min);
       double diff = high - low;
@@ -85,7 +85,7 @@ class DrawingEngine {
     }
 
     // ── CATEGORY 4: FVGs (ORACLE) ──
-    if (activeToggles['Zones'] == true) {
+    if (activeToggles['Zones'] ?? true) {
       for (int i = 2; i < candles.length; i++) {
         // Bullish FVG
         if (candles[i].low > candles[i - 2].high) {

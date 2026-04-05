@@ -187,36 +187,61 @@ class _SymbolSidebarState extends State<SymbolSidebar> {
   Widget _buildSymbolRow(String symbol) {
     final isActive = symbol == widget.activeSymbol;
     final hasAlert = _alerts.containsKey(symbol);
-    return InkWell(
-      onTap: () => widget.onSymbolSelected(symbol),
-      child: Container(
-        color: isActive ? MehdAiTheme.blue.withOpacity(0.1) : Colors.transparent,
-        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 6.0),
-        child: Row(
+    final isUp = symbol.length % 2 == 0;
+    final priceStr = '0.0000';
+    final changeStr = isUp ? '+0.15%' : '-0.12%';
+
+    return Container(
+      color: isActive ? MehdAiTheme.blue.withOpacity(0.1) : Colors.transparent,
+      child: ListTile(
+        onTap: () => widget.onSymbolSelected(symbol),
+        dense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
+        title: Row(
           children: [
-            Icon(
-              Icons.show_chart,
-              size: 14,
-              color: isActive ? MehdAiTheme.blue : MehdAiTheme.textSecondary,
-            ),
-            const SizedBox(width: 8),
-            Expanded(
+            Flexible(
               child: Text(
                 symbol,
-                style: MehdAiTheme.terminalStyle.copyWith(
-                  color: isActive ? MehdAiTheme.blue : MehdAiTheme.textPrimary,
-                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                style: const TextStyle(
+                  color: Color(0xFF888888),
+                  fontSize: 13,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const Spacer(),
-            InkWell(
-              onTap: () => _showAlertDialog(symbol),
-              child: Icon(
-                hasAlert ? Icons.notifications_active : Icons.notifications_none,
-                size: 14,
-                color: hasAlert ? MehdAiTheme.yellow : (isActive ? MehdAiTheme.blue.withOpacity(0.5) : MehdAiTheme.textSecondary.withOpacity(0.3)),
+          ],
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              priceStr,
+              style: const TextStyle(
+                color: Color(0xFFCCCCCC),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              changeStr,
+              style: TextStyle(
+                color: isUp ? const Color(0xFF00FF88) : const Color(0xFFFF3B3B),
+                fontSize: 10,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(width: 8),
+            Tooltip(
+              message: hasAlert ? 'Edit Price Alert' : 'Set Price Alert',
+              child: InkWell(
+                onTap: () => _showAlertDialog(symbol),
+                child: Icon(
+                  hasAlert ? Icons.notifications_active : Icons.notifications_none,
+                  size: 14,
+                  color: hasAlert ? MehdAiTheme.yellow : (isActive ? MehdAiTheme.blue.withOpacity(0.5) : MehdAiTheme.textSecondary.withOpacity(0.3)),
+                ),
               ),
             ),
           ],

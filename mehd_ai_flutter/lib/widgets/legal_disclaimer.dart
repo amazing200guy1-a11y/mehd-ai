@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
 
@@ -32,24 +33,40 @@ class LegalDisclaimer extends StatelessWidget {
         onTap: () {
           showModalBottomSheet(
             context: context,
-            backgroundColor: MehdAiTheme.bgSecondary,
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-            ),
-            builder: (ctx) => Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(child: Text('Legal Notice', style: MehdAiTheme.headingStyle, overflow: TextOverflow.ellipsis)),
-                  const SizedBox(height: 16),
-                  Flexible(child: Text(fullText, style: MehdAiTheme.labelStyle.copyWith(fontSize: 12, height: 1.6), overflow: TextOverflow.ellipsis)),
-                  const SizedBox(height: 24),
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    child: Text('Close', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.blue), overflow: TextOverflow.ellipsis),
-                  ),
-                ],
+            backgroundColor: Colors.transparent,
+            builder: (ctx) => BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: const Color(0xDD000000), // Glass deep black
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  border: Border.all(color: Colors.white.withOpacity(0.1), width: 0.5),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 40, height: 4,
+                      margin: const EdgeInsets.only(bottom: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    Flexible(child: Text('Legal Notice', style: MehdAiTheme.headingStyle, overflow: TextOverflow.ellipsis)),
+                    const SizedBox(height: 16),
+                    Flexible(child: Text(fullText, style: MehdAiTheme.labelStyle.copyWith(fontSize: 12, height: 1.6), overflow: TextOverflow.ellipsis)),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: Text('Close Acknowledgement', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.blue, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );

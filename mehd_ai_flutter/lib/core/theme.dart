@@ -38,11 +38,30 @@ class MehdAiTheme {
   static const Color border = borderColor;
 
   // Body text style
-  static TextStyle get bodyStyle => GoogleFonts.inter(
+  static TextStyle get bodyStyle => GoogleFonts.outfit(
     color: textSecondary,
     fontWeight: FontWeight.w400,
     fontSize: 14,
   );
+
+  // Main UI font — clean and premium
+  static TextStyle get labelLarge => GoogleFonts.outfit(
+    fontSize: 13,
+    letterSpacing: 0.5,
+    color: const Color(0xFF888888));
+
+  // Data/numbers font — technical
+  static TextStyle get dataMono => GoogleFonts.jetBrainsMono(
+    fontSize: 12,
+    letterSpacing: 0.3,
+    color: const Color(0xFFCCCCCC));
+
+  // Headlines — institutional
+  static TextStyle get headline => GoogleFonts.plusJakartaSans(
+    fontSize: 20,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 3,
+    color: const Color(0xFF58A6FF));
 
   // Glow Effects
   static List<BoxShadow> get greenGlow => [
@@ -103,7 +122,7 @@ class MehdAiTheme {
         shadows: [Shadow(color: red.withOpacity(0.5), blurRadius: 4)],
       );
 
-  static TextStyle get labelStyle => GoogleFonts.inter(
+  static TextStyle get labelStyle => GoogleFonts.outfit(
         color: textSecondary,
         fontWeight: FontWeight.w500,
         fontSize: 12,
@@ -115,7 +134,7 @@ class MehdAiTheme {
         fontSize: 13,
       );
 
-  static TextStyle get headingStyle => GoogleFonts.inter(
+  static TextStyle get headingStyle => GoogleFonts.plusJakartaSans(
         color: textPrimary,
         fontWeight: FontWeight.w600,
         fontSize: 18,
@@ -135,9 +154,9 @@ class MehdAiTheme {
         onSurface: textPrimary,
       ),
       textTheme: TextTheme(
-        displayLarge: GoogleFonts.jetBrainsMono(
+        displayLarge: GoogleFonts.plusJakartaSans(
           fontSize: 28, color: green, shadows: textGlowGreen),
-        bodyMedium: GoogleFonts.inter(
+        bodyMedium: GoogleFonts.outfit(
           fontSize: 14, color: textSecondary),
         bodySmall: GoogleFonts.jetBrainsMono(
           fontSize: 11, color: textSecondary),
