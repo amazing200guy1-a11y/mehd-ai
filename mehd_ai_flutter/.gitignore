@@ -33,3 +33,18 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# Dump / debug files — NEVER commit
+*.log
+*.py
+analyze*.txt
+analysis*.txt
+build_out*.txt
+dart_analyzer.txt
+drawing_analyze.txt
+git_diff.txt
+out.txt
+output.txt
+pub_err*.txt
+analyze.json
+flutter_lint.txt

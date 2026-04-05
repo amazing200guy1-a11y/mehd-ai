@@ -33,3 +33,6 @@ class AppConstants {
   static const double maxRiskPercent = 1.0;
   static const double killSwitchPercent = 3.0;
 }
+
+/// App-wide button state enum for trade execution flow.
+enum ButtonState { locked, readyBuy, readySell, executing, filled, developing, vetoed }

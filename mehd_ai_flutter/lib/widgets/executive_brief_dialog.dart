@@ -41,7 +41,7 @@ class ExecutiveBriefDialog extends StatelessWidget {
                     ),
                   ],
                 ),
-                Text('Consensus-Verified™ by Mehd AI', style: MehdAiTheme.labelStyle, overflow: TextOverflow.ellipsis),
+                Text('Den Analysis™ by Mehd AI', style: MehdAiTheme.labelStyle, overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 12),
                 const Divider(color: MehdAiTheme.borderColor),
                 
@@ -66,7 +66,7 @@ class ExecutiveBriefDialog extends StatelessWidget {
                 _buildRow('SENTINEL:', 'All clear ✓'),
                 _buildRow('KERNEL:', 'Risk approved ✓'),
                 const SizedBox(height: 8),
-                Text('Consensus-Verified™ Certificate', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.textSecondary, fontStyle: FontStyle.italic), overflow: TextOverflow.ellipsis),
+                Text('Den Analysis™ Certificate', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.textSecondary, fontStyle: FontStyle.italic), overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 24),
                 
                 ElevatedButton(

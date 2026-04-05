@@ -24,7 +24,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
         },
         {
           'q': 'What is The Den?',
-          'a': 'The Den is the core AI engine comprising 11 specialized agents. When you analyze a symbol, The Den holds a secure boardroom meeting where all 11 agents argue the merits of the trade before returning a Consensus-Verified result.',
+          'a': 'The Den is the core AI engine comprising 11 specialized agents. When you analyze a symbol, The Den holds a secure boardroom meeting where all 11 agents argue the merits of the trade before returning a Den Analysis result.',
           'related': ['What is Mehd AI?', 'What is Atomic Consensus?']
         },
         {

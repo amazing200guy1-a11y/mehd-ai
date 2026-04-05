@@ -12,6 +12,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:mehd_ai_flutter/firebase_options.dart';
 
+import 'package:mehd_ai_flutter/controllers/trading_controller.dart';
+import 'package:mehd_ai_flutter/controllers/market_data_controller.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   debugPrint("DEN_BOOT: Launching App...");
@@ -63,6 +66,8 @@ class MehdAiApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService(prefs: prefs), lazy: false),
         ChangeNotifierProvider(create: (_) => LanguageService(prefs: prefs)),
+        ChangeNotifierProvider(create: (_) => TradingController()),
+        ChangeNotifierProvider(create: (_) => MarketDataController()),
       ],
       child: Consumer<LanguageService>(
         builder: (context, languageOpts, child) {
@@ -96,7 +101,7 @@ class MehdAiApp extends StatelessWidget {
                 child: child,
               );
             },
-            home: const SplashScreen(),
+            home: SplashScreen(prefs: prefs),
           );
         },
       ),

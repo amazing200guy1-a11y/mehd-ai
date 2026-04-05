@@ -1,0 +1,243 @@
+import 'package:flutter/material.dart';
+import 'package:mehd_ai_flutter/core/api_service.dart';
+import 'package:mehd_ai_flutter/core/constants.dart';
+import 'package:mehd_ai_flutter/core/theme.dart';
+import 'package:mehd_ai_flutter/models/account_health.dart';
+import 'package:mehd_ai_flutter/models/consensus_result.dart';
+import 'package:mehd_ai_flutter/models/market_snapshot.dart';
+import 'package:mehd_ai_flutter/models/trade.dart';
+import 'package:mehd_ai_flutter/core/input_validator.dart';
+import 'package:mehd_ai_flutter/core/performance_tracker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class TradingController extends ChangeNotifier {
+  bool _paperMode = true;
+  bool get isPaperMode => _paperMode;
+  
+  void setPaperMode(bool paper) {
+    _paperMode = paper;
+    notifyListeners();
+  }
+
+  bool legalAccepted = false;
+  int paperTradesCompleted = 0;
+  ButtonState btnState = ButtonState.locked;
+  bool isTradeProcessing = false;
+  
+  final ApiService _apiService = ApiService();
+  final PerformanceTracker _perf = PerformanceTracker();
+  final List<Trade> recentTrades = [];
+
+  TradingController() {
+    _loadLegalStatus();
+  }
+
+  Future<void> init() async {
+    final prefs = await SharedPreferences.getInstance();
+    _paperMode = prefs.getBool('paperMode') ?? true;
+    notifyListeners();
+  }
+
+  Future<void> _loadLegalStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    legalAccepted = prefs.getBool('legal_accepted') ?? false;
+    _paperMode = prefs.getBool('paperMode') ?? true;
+    notifyListeners();
+  }
+
+  Future<void> acceptLegal() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('legal_accepted', true);
+    legalAccepted = true;
+    notifyListeners();
+  }
+
+  void togglePaperMode() {
+    setPaperMode(!_paperMode);
+  }
+  
+  void validateTrade(AccountHealth? health) {
+    // move existing validation here
+  }
+
+  Future<void> executeTrade({
+    required BuildContext context,
+    required ConsensusResult? consensus,
+    required MarketSnapshot? latestSnapshot,
+    required Function(String) showError,
+    required VoidCallback onSuccess,
+    required Function(dynamic) onShowBrief,
+    required Function(dynamic) onShowAudit,
+  }) async {
+    if (consensus == null || latestSnapshot == null) return;
+
+    if (isTradeProcessing) return;
+
+    if (_perf.isPriceStale) {
+      showError('Price data is stale (>5s old). Trading locked for your safety.');
+      return;
+    }
+
+    if (DuplicateTradeGuard.isDuplicate(latestSnapshot.symbol, consensus.finalDirection)) {
+      showError('Duplicate trade blocked. Wait 5 seconds between identical trades.');
+      return;
+    }
+
+    if (!legalAccepted) {
+      showError('You must accept the Terms of Service before trading.');
+      return;
+    }
+
+    if (paperTradesCompleted < 10) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: MehdAiTheme.bgSecondary,
+          title: Text('Paper Trading Required', style: MehdAiTheme.headingStyle),
+          content: Text(
+            'You have completed $paperTradesCompleted/10 paper trades.\n\n'
+            'Complete at least 10 paper trades before live trading. '
+            'This protects you from mistakes while you learn.',
+            style: MehdAiTheme.labelStyle,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Understood', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.blue)),
+            ),
+          ],
+        ),
+      );
+      paperTradesCompleted++;
+      notifyListeners();
+      return;
+    }
+
+    final lotSize = 1.0;
+    final stopLoss = consensus.finalDirection == 'BUY' ? latestSnapshot.bid - 0.0050 : latestSnapshot.ask + 0.0050;
+    final validationError = InputValidator.validateTradeOrder(
+      symbol: latestSnapshot.symbol,
+      direction: consensus.finalDirection,
+      lotSize: lotSize,
+      entryPrice: latestSnapshot.bid,
+      stopLoss: stopLoss,
+    );
+    
+    if (validationError != null) {
+      showError(validationError);
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: MehdAiTheme.bgSecondary,
+        title: Row(
+          children: [
+            Icon(consensus.finalDirection == 'BUY' ? Icons.trending_up : Icons.trending_down,
+              color: consensus.finalDirection == 'BUY' ? MehdAiTheme.green : MehdAiTheme.red),
+            const SizedBox(width: 12),
+            Text('Confirm Trade Execution', style: MehdAiTheme.headingStyle),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('${consensus.finalDirection} ${latestSnapshot.symbol}', style: MehdAiTheme.terminalStyle.copyWith(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Text('Entry: ${latestSnapshot.bid.toStringAsFixed(5)}', style: MehdAiTheme.labelStyle),
+            Text('SL: ${stopLoss.toStringAsFixed(5)}', style: MehdAiTheme.labelStyle),
+            Text('Lot Size: ${lotSize.toStringAsFixed(2)}', style: MehdAiTheme.labelStyle),
+            Text('Consensus: ${consensus.consensusPercentage.toStringAsFixed(1)}%', style: MehdAiTheme.labelStyle),
+            const SizedBox(height: 16),
+            Text('Risk: 1.0% maximum enforced by HardRiskKernel.', style: MehdAiTheme.labelStyle.copyWith(color: MehdAiTheme.gold)),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: consensus.finalDirection == 'BUY' ? MehdAiTheme.green : MehdAiTheme.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('EXECUTE ${consensus.finalDirection}', style: MehdAiTheme.terminalStyle.copyWith(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    btnState = ButtonState.executing;
+    isTradeProcessing = true;
+    notifyListeners();
+    
+    final order = TradeOrder(
+      symbol: latestSnapshot.symbol,
+      direction: consensus.finalDirection,
+      lotSize: lotSize, 
+      stopLoss: stopLoss,
+      votes: consensus.votes,
+    );
+    
+    final decision = await _apiService.executeTrade(order);
+
+    isTradeProcessing = false;
+    btnState = decision.approved ? ButtonState.filled : ButtonState.locked;
+    notifyListeners();
+    
+    if (!decision.approved) {
+      showError('Trade Rejected: ${decision.rejectionReason}');
+    } else {
+      final bool isWin = DateTime.now().millisecond % 2 == 0;
+      final double entry = latestSnapshot.bid;
+      final double exit = isWin 
+          ? (consensus.finalDirection == 'BUY' ? entry + 0.0050 : entry - 0.0050)
+          : (consensus.finalDirection == 'BUY' ? entry - 0.0020 : entry + 0.0020);
+
+      recentTrades.add(Trade(
+        symbol: latestSnapshot.symbol,
+        direction: consensus.finalDirection,
+        entryPrice: entry,
+        latestPrice: exit,
+        timestamp: DateTime.now(),
+        consensusScore: consensus.consensusPercentage,
+      ));
+      
+      if (isWin && consensus.consensusPercentage >= 75.0) {
+        Future.delayed(const Duration(seconds: 1), () async {
+          final brief = await _apiService.getExecutiveBrief(decision.id);
+          if (brief != null) onShowBrief(brief);
+        });
+      } else if (!isWin) {
+        Future.delayed(const Duration(milliseconds: 500), () async {
+          try {
+            final auditData = {
+              "trade_id": decision.id,
+              "symbol": latestSnapshot.symbol,
+              "direction": consensus.finalDirection,
+              "entry_price": entry,
+              "exit_price": exit,
+              "pnl": -50.0,
+              "user_notes": "Trade went against consensus momentum."
+            };
+            
+            final response = await _apiService.performAudit(auditData);
+            if (response != null) onShowAudit(response);
+          } catch (e) {
+            debugPrint("Audit failed: \$e");
+          }
+        });
+      }
+      
+      Future.delayed(const Duration(seconds: 2), () {
+        btnState = ButtonState.locked;
+        notifyListeners();
+      });
+      
+      onSuccess();
+    }
+  }
+}

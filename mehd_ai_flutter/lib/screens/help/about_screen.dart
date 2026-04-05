@@ -56,7 +56,7 @@ class AboutScreen extends StatelessWidget {
               SizedBox(
                 width: 500,
                 child: Text(
-                  'Mehd AI is a Consensus-Verified trading assistant powered by The Den — an 11-agent Synthetic Institutional Intelligence system.\n\nBuilt to protect traders globally from losing money through unbreakable risk rules and multi-model AI consensus.',
+                  'Mehd AI is a Den Analysis trading assistant powered by The Den — an 11-agent Synthetic Institutional Intelligence system.\n\nBuilt to protect traders globally from losing money through unbreakable risk rules and multi-model AI consensus.',
                   style: MehdAiTheme.labelStyle.copyWith(fontSize: 16, height: 1.6, color: Colors.white),
                   textAlign: TextAlign.center,
                 ),

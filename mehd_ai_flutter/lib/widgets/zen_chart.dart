@@ -10,6 +10,7 @@ import 'package:mehd_ai_flutter/widgets/den_animation.dart';
 import 'package:mehd_ai_flutter/models/automated_drawing.dart';
 import 'package:mehd_ai_flutter/core/drawing_engine.dart';
 import 'package:mehd_ai_flutter/widgets/drawing_engine.dart';
+import 'package:mehd_ai_flutter/screens/settings_screen.dart';
 
 enum DrawingMode { auto, manual }
 enum DrawingTool { none, line, hline, zone, fib }
@@ -264,8 +265,19 @@ class _ZenChartState extends State<ZenChart> with SingleTickerProviderStateMixin
   Widget build(BuildContext context) {
     return Container(
       color: MehdAiTheme.bgPrimary,
-      child: Stack(
+      child: Row(
         children: [
+          AnimatedSize(
+            duration: const Duration(milliseconds: 200),
+            alignment: Alignment.centerLeft,
+            curve: Curves.easeOutCubic,
+            child: _drawingMode == DrawingMode.manual
+                ? _buildDrawSidebar()
+                : const SizedBox.shrink(),
+          ),
+          Expanded(
+            child: Stack(
+              children: [
           // 1. Tiger Logo Watermark (Deepest Background)
           Center(
             child: Opacity(
@@ -414,6 +426,11 @@ class _ZenChartState extends State<ZenChart> with SingleTickerProviderStateMixin
                   _buildDemoBadge(),
                   const SizedBox(width: 8),
                   _buildChartToggle(),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.settings, size: 16, color: Color(0xFF333333)),
+                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
+                  ),
                 ],
               ),
             ),
@@ -490,38 +507,7 @@ class _ZenChartState extends State<ZenChart> with SingleTickerProviderStateMixin
             ),
           ),
 
-          if (_drawingMode == DrawingMode.manual)
-            Positioned(
-              left: 8,
-              top: 70,
-              child: Column(
-                children: [
-                  _toolBtn('Line', DrawingTool.line),
-                  _toolBtn('H-Line', DrawingTool.hline),
-                  _toolBtn('Zone', DrawingTool.zone),
-                  _toolBtn('Fib', DrawingTool.fib),
-                  GestureDetector(
-                    onTap: () => setState(() {
-                      _drawings.clear();
-                      _pendingPoints.clear();
-                      _activeTool = DrawingTool.none;
-                    }),
-                    child: Container(
-                      width: 44, height: 44,
-                      margin: const EdgeInsets.only(bottom: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF080808),
-                        border: Border.all(color: const Color(0xFF111111), width: 0.5),
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                      child: const Center(
-                        child: Text('CLR', style: TextStyle(color: Color(0xFFFF3B3B), fontSize: 9)),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          // Removed floating sidebar as it is now in Row
 
 
 
@@ -545,6 +531,43 @@ class _ZenChartState extends State<ZenChart> with SingleTickerProviderStateMixin
                   size: 18,
                   color: MehdAiTheme.textSecondary,
                 ),
+              ),
+            ), // closes GestureDetector
+          ), // closes Positioned
+        ],
+      ),
+    ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrawSidebar() {
+    return Container(
+      width: 60,
+      padding: const EdgeInsets.only(top: 70, left: 8),
+      child: Column(
+        children: [
+          _toolBtn('Line', DrawingTool.line),
+          _toolBtn('H-Line', DrawingTool.hline),
+          _toolBtn('Zone', DrawingTool.zone),
+          _toolBtn('Fib', DrawingTool.fib),
+          GestureDetector(
+            onTap: () => setState(() {
+              _drawings.clear();
+              _pendingPoints.clear();
+              _activeTool = DrawingTool.none;
+            }),
+            child: Container(
+              width: 44, height: 44,
+              margin: const EdgeInsets.only(bottom: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF080808),
+                border: Border.all(color: const Color(0xFF111111), width: 0.5),
+                borderRadius: BorderRadius.circular(3),
+              ),
+              child: const Center(
+                child: Text('CLR', style: TextStyle(color: Color(0xFFFF3B3B), fontSize: 9)),
               ),
             ),
           ),

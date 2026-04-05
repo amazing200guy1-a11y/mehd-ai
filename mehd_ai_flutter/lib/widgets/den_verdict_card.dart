@@ -48,7 +48,7 @@ class DenVerdictCard extends StatelessWidget {
             ],
           ),
           Text(
-            'Consensus-Verified™',
+            'Den Analysis™',
             style: MehdAiTheme.labelStyle.copyWith(color: MehdAiTheme.gold),
             overflow: TextOverflow.ellipsis,
           ),

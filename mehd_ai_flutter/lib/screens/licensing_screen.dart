@@ -52,7 +52,7 @@ class _LicensingScreenState extends State<LicensingScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Deploy the Mehd AI ecosystem on your own servers. Integrate our Consensus-Verified™ engine directly into your prop firm or hedge fund infrastructure.',
+              'Deploy the Mehd AI ecosystem on your own servers. Integrate our Den Analysis™ engine directly into your prop firm or hedge fund infrastructure.',
               style: MehdAiTheme.labelStyle.copyWith(fontSize: 14, height: 1.5),
               textAlign: TextAlign.center,
             ),

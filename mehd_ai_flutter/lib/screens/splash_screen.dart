@@ -7,7 +7,8 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final SharedPreferences prefs;
+  const SplashScreen({super.key, required this.prefs});
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
@@ -29,8 +30,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 800),
     );
+
 
     // 0.1s - 0.4s (8.3% to 33%)
     _tigerScale = Tween<double>(begin: 0.8, end: 1.0).animate(
@@ -74,8 +76,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   void _navigate() async {
     if (!mounted || _isDisposed) return;
 
-    final prefs = await SharedPreferences.getInstance();
-    final done = prefs.getBool('onboarding_complete') ?? false;
+    final done = widget.prefs.getBool('onboarding_complete') ?? false;
     
     if (!mounted) return;
     
@@ -98,6 +99,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       MaterialPageRoute(builder: (_) => nextPage),
     );
   }
+
 
   @override
   void dispose() {

@@ -1,7 +1,0 @@
-Analyzing mehd_ai_flutter...                                    
-
-   info - The declaration '_startPolling' isn't referenced - lib\screens\home_screen.dart:101:8 - unused_element
-   info - Don't use 'BuildContext's across async gaps - lib\screens\splash_screen.dart:64:20 - use_build_context_synchronously
-   info - Unnecessary escape in string literal - lib\widgets\consensus_bar.dart:115:38 - unnecessary_string_escapes
-   info - Use 'whereType' to select elements of a given type - lib\widgets\drawing_engine.dart:39:38 - prefer_iterable_wheretype
-

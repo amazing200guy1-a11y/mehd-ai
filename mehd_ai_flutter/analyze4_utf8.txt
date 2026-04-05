@@ -1,7 +1,0 @@
-﻿Analyzing mehd_ai_flutter...                                    
-
-  error - Target of URI doesn't exist: 'package:mehd_ai_flutter/widgets/protection_score.dart' - lib\screens\journey_screen.dart:3:8 - uri_does_not_exist
-  error - The name 'ProtectionScore' isn't a class - lib\screens\journey_screen.dart:63:27 - creation_with_non_type
-  error - The getter 'bodyStyle' isn't defined for the type 'MehdAiTheme' - lib\screens\journey_screen.dart:87:30 - undefined_getter
-  error - The getter 'bodyStyle' isn't defined for the type 'MehdAiTheme' - lib\screens\journey_screen.dart:226:39 - undefined_getter
-

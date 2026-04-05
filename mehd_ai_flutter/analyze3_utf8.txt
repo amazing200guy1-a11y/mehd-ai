@@ -1,6 +1,0 @@
-﻿Analyzing mehd_ai_flutter...                                    
-
-  error - The named parameter 'timestamp' is required, but there's no corresponding argument - lib\screens\vibe_trading_screen.dart:137:12 - missing_required_argument
-  error - The getter 'bodyStyle' isn't defined for the type 'MehdAiTheme' - lib\screens\vibe_trading_screen.dart:239:40 - undefined_getter
-   info - A value for optional parameter 'consensusWidget' isn't ever given - lib\screens\vibe_trading_screen.dart:355:10 - unused_element
-

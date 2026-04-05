@@ -55,7 +55,7 @@ class ComplianceScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'This institution is operating under Mehd AI Consensus-Verified™ execution standards.\nAll algorithmic risk limits are strictly enforced by the HardRiskKernel.',
+            'This institution is operating under Mehd AI Den Analysis™ execution standards.\nAll algorithmic risk limits are strictly enforced by the HardRiskKernel.',
             style: MehdAiTheme.labelStyle.copyWith(fontSize: 14, height: 1.5),
             textAlign: TextAlign.center,
           ),

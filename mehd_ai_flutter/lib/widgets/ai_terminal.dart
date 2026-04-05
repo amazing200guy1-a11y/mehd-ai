@@ -141,7 +141,7 @@ class _AiTerminalState extends State<AiTerminal> {
       return Padding(
         padding: const EdgeInsets.all(16.0),
         child: Text(
-          '> AWAITING SYSTEM INITIALIZATION...',
+          '> AWAITING SYSTEM INITIALIZATION...\n\nWelcome to The Den — Demo Mode. All analysis is simulated. Add API keys to enable real intelligence.',
           style: GoogleFonts.jetBrainsMono(color: const Color(0xFF555555), fontSize: 11),
         ),
       );

@@ -9,6 +9,7 @@ import 'package:mehd_ai_flutter/models/consensus_result.dart';
 import 'package:mehd_ai_flutter/models/market_snapshot.dart';
 import 'package:mehd_ai_flutter/models/executive_brief.dart';
 import 'package:mehd_ai_flutter/models/manual_drawing.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 /// FILE 3 — api_service.dart
 ///
@@ -30,6 +31,20 @@ class ApiService {
   final http.Client _client = http.Client();
   static final Map<String, _CacheEntry> _cache = {};
 
+  Future<String?> _getAuthToken() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return null;
+    return await user.getIdToken();
+  }
+
+  Future<Map<String, String>> _getHeaders([Map<String, String>? extra]) async {
+    final token = await _getAuthToken();
+    final h = <String, String>{};
+    if (token != null) h['Authorization'] = 'Bearer $token';
+    if (extra != null) h.addAll(extra);
+    return h;
+  }
+
   /// Expose the cache so UI can clear it if needed
   void clearCache() => _cache.clear();
 
@@ -39,7 +54,7 @@ class ApiService {
   /// Pings the backend to see if it's alive.
   Future<bool> healthCheck() async {
     try {
-      final response = await _client.get(Uri.parse('${AppConstants.baseUrl}/health')).timeout(const Duration(seconds: 5));
+      final response = await _client.get(Uri.parse('${AppConstants.baseUrl}/health'), headers: await _getHeaders()).timeout(const Duration(seconds: 5));
       return response.statusCode == 200;
     } catch (e) {
       return false; // Backend unreachable
@@ -50,6 +65,7 @@ class ApiService {
     try {
       final response = await _client.get(
         Uri.parse('${AppConstants.baseUrl}/compliance'),
+        headers: await _getHeaders(),
       ).timeout(const Duration(seconds: 5));
       return jsonDecode(response.body);
     } catch (e) {
@@ -62,7 +78,7 @@ class ApiService {
     try {
       final response = await _client.post(
         Uri.parse('${AppConstants.baseUrl}/den/audit'),
-        headers: {'Content-Type': 'application/json'},
+        headers: await _getHeaders({'Content-Type': 'application/json'}),
         body: jsonEncode(auditData),
       ).timeout(const Duration(seconds: 15));
       
@@ -86,6 +102,7 @@ class ApiService {
       final cleanSymbol = symbol.replaceAll('/', '');
       final response = await _client.get(
         Uri.parse('${AppConstants.baseUrl}/analyze/$cleanSymbol'),
+        headers: await _getHeaders(),
       ).timeout(const Duration(seconds: 35)); // Give room for 30s ML timeout
 
       if (response.statusCode == 200) {
@@ -113,7 +130,7 @@ class ApiService {
     try {
       final response = await _client.post(
         Uri.parse('${AppConstants.baseUrl}/execute'),
-        headers: {'Content-Type': 'application/json'},
+        headers: await _getHeaders({'Content-Type': 'application/json'}),
         body: jsonEncode(order.toJson()),
       ).timeout(const Duration(seconds: 10));
 
@@ -143,7 +160,7 @@ class ApiService {
     }
 
     try {
-      final response = await _client.get(Uri.parse('${AppConstants.baseUrl}/account_health')).timeout(const Duration(seconds: 10));
+      final response = await _client.get(Uri.parse('${AppConstants.baseUrl}/account_health'), headers: await _getHeaders()).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         final health = AccountHealth.fromJson(jsonDecode(response.body));
         _cache[cacheKey] = _CacheEntry(health, DateTime.now());
@@ -166,7 +183,7 @@ class ApiService {
   /// Fetches system health and advanced technical telemetry
   Future<Map<String, dynamic>> getSystemHealth() async {
     try {
-      final response = await _client.get(Uri.parse('${AppConstants.baseUrl}/health')).timeout(const Duration(seconds: 5));
+      final response = await _client.get(Uri.parse('${AppConstants.baseUrl}/health'), headers: await _getHeaders()).timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       }
@@ -181,7 +198,8 @@ class ApiService {
     // Sanitize symbol: 'EUR/USD' -> 'EURUSD' so FastAPI path parameter works
     final cleanSymbol = symbol.replaceAll('/', '');
     final request = http.Request('GET', Uri.parse('${AppConstants.wsUrl}/$cleanSymbol'));
-    // We send Accept: text/event-stream so the server handles it properly
+    final authHeaders = await _getHeaders();
+    request.headers.addAll(authHeaders);
     request.headers['Accept'] = 'text/event-stream';
 
     try {
@@ -223,7 +241,7 @@ class ApiService {
     try {
       final response = await _client.post(
         Uri.parse('${AppConstants.baseUrl}/den/research'),
-        headers: {'Content-Type': 'application/json'},
+        headers: await _getHeaders({'Content-Type': 'application/json'}),
         body: jsonEncode({"query": query}),
       ).timeout(const Duration(seconds: 10));
       final data = jsonDecode(response.body);
@@ -242,7 +260,7 @@ class ApiService {
     try {
       final response = await _client.post(
         Uri.parse('${AppConstants.baseUrl}/den/strategy'),
-        headers: {'Content-Type': 'application/json'},
+        headers: await _getHeaders({'Content-Type': 'application/json'}),
         body: jsonEncode({"query": query}),
       ).timeout(const Duration(seconds: 10));
       final data = jsonDecode(response.body);
@@ -261,7 +279,7 @@ class ApiService {
     try {
       final response = await _client.post(
         Uri.parse('${AppConstants.baseUrl}/den/math'),
-        headers: {'Content-Type': 'application/json'},
+        headers: await _getHeaders({'Content-Type': 'application/json'}),
         body: jsonEncode({"query": query}),
       ).timeout(const Duration(seconds: 10));
       final data = jsonDecode(response.body);
@@ -276,7 +294,7 @@ class ApiService {
     try {
       final response = await _client.post(
         Uri.parse('${AppConstants.baseUrl}/den/vibe'),
-        headers: {'Content-Type': 'application/json'},
+        headers: await _getHeaders({'Content-Type': 'application/json'}),
         body: jsonEncode({"query": query}),
       ).timeout(const Duration(seconds: 10));
       return jsonDecode(response.body);
@@ -291,7 +309,7 @@ class ApiService {
 
   Future<ExecutiveBrief?> getExecutiveBrief(String tradeId) async {
     try {
-      final response = await _client.get(Uri.parse('${AppConstants.baseUrl}/den/brief/$tradeId')).timeout(const Duration(seconds: 5));
+      final response = await _client.get(Uri.parse('${AppConstants.baseUrl}/den/brief/$tradeId'), headers: await _getHeaders()).timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
         return ExecutiveBrief.fromJson(jsonDecode(response.body));
       }
@@ -309,7 +327,7 @@ class ApiService {
       final data = drawings.map((d) => d.toJson()).toList();
       await _client.post(
         Uri.parse('${AppConstants.baseUrl}/drawings/$cleanSymbol'),
-        headers: {'Content-Type': 'application/json'},
+        headers: await _getHeaders({'Content-Type': 'application/json'}),
         body: jsonEncode({"drawings": data}),
       ).timeout(const Duration(seconds: 5));
     } catch (e) {
@@ -322,6 +340,7 @@ class ApiService {
       final cleanSymbol = symbol.replaceAll('/', '');
       final response = await _client.get(
         Uri.parse('${AppConstants.baseUrl}/drawings/$cleanSymbol'),
+        headers: await _getHeaders(),
       ).timeout(const Duration(seconds: 5));
       
       if (response.statusCode == 200) {

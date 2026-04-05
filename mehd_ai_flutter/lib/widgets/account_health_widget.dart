@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
 import 'package:mehd_ai_flutter/models/account_health.dart';
+import 'package:mehd_ai_flutter/models/trade.dart';
 import 'package:mehd_ai_flutter/widgets/trade_history_item.dart';
 
 /// FILE 9 — account_health_widget.dart

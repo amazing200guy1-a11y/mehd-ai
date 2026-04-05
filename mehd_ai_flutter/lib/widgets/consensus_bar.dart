@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
+import 'package:mehd_ai_flutter/core/constants.dart';
 import 'package:mehd_ai_flutter/models/consensus_result.dart';
 
 /// FILE 8 — consensus_bar.dart
@@ -10,8 +11,6 @@ import 'package:mehd_ai_flutter/models/consensus_result.dart';
 /// determined the direction, and the HardRiskKernel determines the lot size and 
 /// stop loss behind the scenes. This button only unlocks when the mathematical threshold 
 /// (70% consensus) is reached. It visually communicates "Wait" vs "Execute".
-
-enum ButtonState { locked, readyBuy, readySell, executing, filled, developing, vetoed }
 
 class ConsensusBar extends StatelessWidget {
   final ConsensusResult? consensus;

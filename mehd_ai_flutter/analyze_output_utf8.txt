@@ -1,8 +1,0 @@
-﻿Analyzing mehd_ai_flutter...                                    
-
-  error - Target of URI doesn't exist: 'package:mehd_ai_flutter/widgets/mehd_loading_indicator.dart' - lib\screens\auth\login_screen.dart:17:8 - uri_does_not_exist
-warning - Unused import: 'package:mehd_ai_flutter/services/auth_service.dart' - lib\screens\home_screen.dart:15:8 - unused_import
-   info - The declaration '_currentDenState' isn't referenced - lib\screens\home_screen.dart:51:16 - unused_element
-  error - The non-nullable local variable 'borderColor' must be assigned before it can be used - lib\widgets\consensus_bar.dart:156:35 - not_assigned_potentially_non_nullable_local_variable
-  error - The non-nullable local variable 'borderColor' must be assigned before it can be used - lib\widgets\consensus_bar.dart:168:34 - not_assigned_potentially_non_nullable_local_variable
-
