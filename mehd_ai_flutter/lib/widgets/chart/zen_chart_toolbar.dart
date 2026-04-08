@@ -54,21 +54,27 @@ class ZenChartToolbar extends StatelessWidget {
           top: 16,
           left: 16,
           right: 16,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildTimeframeSelector(),
-                const SizedBox(width: 8),
-                _buildDrawingToggle(l10n),
-                const SizedBox(width: 8),
-                _buildDemoBadge(),
-                const SizedBox(width: 8),
-                _buildChartToggle(),
-                const SizedBox(width: 12),
-                ...navIcons,
-              ],
-            ),
+          child: Row(
+            children: [
+              Flexible(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildTimeframeSelector(),
+                      const SizedBox(width: 8),
+                      _buildDrawingToggle(l10n),
+                      const SizedBox(width: 8),
+                      _buildDemoBadge(),
+                      const SizedBox(width: 8),
+                      _buildChartToggle(),
+                      const SizedBox(width: 12),
+                      ...navIcons,
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],

@@ -54,6 +54,7 @@ class _HistoryScreenState extends State<HistoryScreen> with SingleTickerProvider
         backgroundColor: MehdAiTheme.bgSecondary, elevation: 0,
         title: Text('History', style: MehdAiTheme.headingStyle.copyWith(fontSize: 18)),
         bottom: TabBar(
+          isScrollable: true,
           controller: _tabController,
           indicatorColor: MehdAiTheme.blue, labelColor: MehdAiTheme.textPrimary,
           unselectedLabelColor: MehdAiTheme.textSecondary,

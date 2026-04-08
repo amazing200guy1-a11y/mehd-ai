@@ -182,7 +182,7 @@ class _VectorPainter extends CustomPainter {
         
           _drawAiBadge(canvas, p1.dx + (4 * dpr), p1.dy - (14 * dpr), dpr);
         
-        drawText(d.label, p1.dx + (10 * dpr), p1.dy, d.color, fontSize: 8);
+        // drawText(d.label, p1.dx + (10 * dpr), p1.dy, d.color, fontSize: 8);
       } 
       else if (d is ZoneDrawing) {
         final rect = Rect.fromLTRB(
@@ -206,7 +206,7 @@ class _VectorPainter extends CustomPainter {
         canvas.drawRect(rect, borderPaint);
 
         _drawAiBadge(canvas, rect.left + (4 * dpr), rect.top - (14 * dpr), dpr);
-        drawText(d.label, rect.left + (4 * dpr), rect.top, d.color, fontSize: 7);
+        // drawText(d.label, rect.left + (4 * dpr), rect.top, d.color, fontSize: 7);
       }
       else if (d is FibonacciDrawing) {
         final p1Y = mapY(d.startY);
@@ -256,7 +256,7 @@ class _VectorPainter extends CustomPainter {
           canvas.drawCircle(Offset(mapX(d.points[i].dx), mapY(d.points[i].dy)), 3, dotPaint);
         }
 
-        drawText('${d.label} [${(d.probability * 100).toInt()}% prob]', mappedStart.dx, mappedStart.dy, MehdAiTheme.blue);
+        // drawText('${d.label} [${(d.probability * 100).toInt()}% prob]', mappedStart.dx, mappedStart.dy, MehdAiTheme.blue);
       }
       else if (d is ExclusiveMarker) {
         final mappedX = mapX(d.x).roundToDouble();
@@ -273,7 +273,7 @@ class _VectorPainter extends CustomPainter {
           ..isAntiAlias = true;
         canvas.drawCircle(Offset(mappedX, mappedY), 15 * animValue, ringPaint);
         
-        drawText(d.label, mappedX, mappedY - 10, d.color, align: Alignment.center);
+        // drawText(d.label, mappedX, mappedY - 10, d.color, align: Alignment.center);
       }
       else if (d is KillZoneDrawing) {
         final rect = Rect.fromLTRB(
@@ -289,7 +289,7 @@ class _VectorPainter extends CustomPainter {
             [MehdAiTheme.gold.withOpacity(0.0), MehdAiTheme.gold.withOpacity(0.05), MehdAiTheme.gold.withOpacity(0.0)],
           );
         canvas.drawRect(rect, paint);
-        drawText(d.label, rect.left + 10, scaledSize.height - 20, MehdAiTheme.gold);
+        // drawText(d.label, rect.left + 10, scaledSize.height - 20, MehdAiTheme.gold);
         _drawAiBadge(canvas, rect.left + 10, scaledSize.height - 35, dpr);
       }
     }

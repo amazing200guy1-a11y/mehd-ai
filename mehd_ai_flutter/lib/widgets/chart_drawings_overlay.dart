@@ -130,7 +130,7 @@ class _DrawingsPainter extends CustomPainter {
         }
         
         // Draw Label slightly above line
-        drawText(d.label, p1.dx + 10, p1.dy, d.color);
+        // drawText(d.label, p1.dx + 10, p1.dy, d.color);
       } 
       else if (d is ZoneDrawing) {
         final rect = Rect.fromLTRB(
@@ -154,7 +154,7 @@ class _DrawingsPainter extends CustomPainter {
           drawDashedLine(canvas, rect.bottomLeft, rect.bottomRight, borderPaint);
         }
 
-        drawText(d.label, rect.left + 4, rect.top, d.color);
+        // drawText(d.label, rect.left + 4, rect.top, d.color);
       }
       else if (d is FibonacciDrawing) {
         final p1Y = mapY(d.startY);
@@ -199,7 +199,7 @@ class _DrawingsPainter extends CustomPainter {
           canvas.drawCircle(Offset(mapX(d.points[i].dx), mapY(d.points[i].dy)), 3, dotPaint);
         }
 
-        drawText('${d.label} [${(d.probability * 100).toInt()}% prob]', mappedStart.dx, mappedStart.dy, MehdAiTheme.blue);
+        // drawText('${d.label} [${(d.probability * 100).toInt()}% prob]', mappedStart.dx, mappedStart.dy, MehdAiTheme.blue);
       }
       else if (d is ExclusiveMarker) {
         final mappedX = mapX(d.x);
@@ -215,7 +215,7 @@ class _DrawingsPainter extends CustomPainter {
           ..strokeWidth = 2;
         canvas.drawCircle(Offset(mappedX, mappedY), 15 * animValue, ringPaint);
         
-        drawText(d.label, mappedX, mappedY - 10, d.color, align: Alignment.center);
+        // drawText(d.label, mappedX, mappedY - 10, d.color, align: Alignment.center);
       }
       else if (d is KillZoneDrawing) {
         final rect = Rect.fromLTRB(
@@ -232,7 +232,7 @@ class _DrawingsPainter extends CustomPainter {
             [MehdAiTheme.gold.withOpacity(0.0), MehdAiTheme.gold.withOpacity(0.05), MehdAiTheme.gold.withOpacity(0.0)],
           );
         canvas.drawRect(rect, paint);
-        drawText(d.label, rect.left + 10, size.height - 20, MehdAiTheme.gold);
+        // drawText(d.label, rect.left + 10, size.height - 20, MehdAiTheme.gold);
       }
     }
   }

@@ -64,7 +64,7 @@ class ZenChartCanvas extends StatelessWidget {
             builder: (_, child) {
               final isSovereignLock = consensus?.tier == 'sovereign' && consensus?.proceed == true;
               if (!isSovereignLock) {
-                return Opacity(opacity: 0.10, child: child);
+                return Opacity(opacity: 0.04, child: child);
               }
               return ShaderMask(
                 shaderCallback: (bounds) => LinearGradient(
@@ -79,7 +79,7 @@ class ZenChartCanvas extends StatelessWidget {
                   begin: Alignment(-1 + 2 * shimmerAnim.value, 0),
                   end: Alignment(1 + 2 * shimmerAnim.value, 0),
                 ).createShader(bounds),
-                child: Opacity(opacity: 0.3, child: child),
+                child: Opacity(opacity: 0.04, child: child),
               );
             },
             child: Image.asset(
@@ -87,33 +87,6 @@ class ZenChartCanvas extends StatelessWidget {
               width: 300,
               height: 300,
               fit: BoxFit.contain,
-            ),
-          ),
-        ),
-
-        // 2. Eye Glow Overlay
-        Center(
-          child: ShaderMask(
-            shaderCallback: (rect) {
-              return RadialGradient(
-                center: const Alignment(0, -0.2),
-                radius: 0.2,
-                colors: [
-                  Colors.white.withOpacity(0.15),
-                  Colors.transparent,
-                ],
-                stops: const [0.4, 1.0],
-              ).createShader(rect);
-            },
-            blendMode: BlendMode.srcATop,
-            child: Opacity(
-              opacity: 0.05,
-              child: Image.asset(
-                'assets/images/mehd_logo.png',
-                width: 300,
-                height: 300,
-                fit: BoxFit.contain,
-              ),
             ),
           ),
         ),

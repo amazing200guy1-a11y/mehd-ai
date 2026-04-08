@@ -171,24 +171,26 @@ class _VibeTradingScreenState extends State<VibeTradingScreen> {
           child: Container(color: MehdAiTheme.borderColor, height: 1),
         ),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(20),
-              itemCount: _messages.length + (_isTyping ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == _messages.length && _isTyping) {
-                  return _buildTypingIndicator();
-                }
-                final msg = _messages[index];
-                return _buildMessageBubble(msg);
-              },
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(20),
+                itemCount: _messages.length + (_isTyping ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index == _messages.length && _isTyping) {
+                    return _buildTypingIndicator();
+                  }
+                  final msg = _messages[index];
+                  return _buildMessageBubble(msg);
+                },
+              ),
             ),
-          ),
-          _buildInputArea(),
-        ],
+            _buildInputArea(),
+          ],
+        ),
       ),
     );
   }

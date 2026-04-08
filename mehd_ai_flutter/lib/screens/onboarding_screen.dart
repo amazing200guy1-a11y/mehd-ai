@@ -188,18 +188,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 100, height: 100,
+            width: 120, height: 120,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: const Color(0xFF58A6FF)
-                  .withOpacity(0.4),
+                color: const Color(0xFF58A6FF).withOpacity(0.4),
                 width: 1.5,
               ),
             ),
-            child: const Center(
-              child: Text('🐯',
-                style: TextStyle(fontSize: 52)),
+            child: ClipOval(
+              child: Image.asset(
+                'assets/images/mehd_logo.png',
+                width: 120,
+                height: 120,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const Text('🐯', style: TextStyle(fontSize: 52)),
+              ),
             ),
           ),
           const SizedBox(height: 64),

@@ -165,11 +165,7 @@ class _DenAnimationState extends State<DenAnimation> with TickerProviderStateMix
                         child: Stack(
                           alignment: Alignment.center,
                           children: [
-                            // Tiger Ghost
-                            Opacity(
-                              opacity: currentOpacity.clamp(0.0, 1.0),
-                              child: Image.asset('assets/images/mehd_logo.png', width: 200, height: 200),
-                            ),
+                            // Tiger Ghost removed to prevent duplicate tiger watermark
                             
                             // The 11 Predators Circling
                             if (widget.state == DenState.activation && widget.animateModels)
@@ -221,18 +217,7 @@ class _DenAnimationState extends State<DenAnimation> with TickerProviderStateMix
             return Positioned(
               left: 130 + (x * value) - 30, // center + offset - half width
               top: 130 + (y * value) - 10,
-              child: Opacity(
-                opacity: value,
-                child: Text(
-                  _predators[index],
-                  style: MehdAiTheme.terminalStyle.copyWith(
-                    color: MehdAiTheme.blue.withOpacity(0.6 + (value * 0.4)),
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-              ),
+              child: SizedBox(), // Removed agent text overlay
             );
           },
         );

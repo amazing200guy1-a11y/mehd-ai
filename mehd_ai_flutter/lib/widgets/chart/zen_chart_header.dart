@@ -17,16 +17,36 @@ class ZenChartHeader extends StatelessWidget {
     return Positioned(
       top: 16,
       right: 16,
+      left: 140, // Ensure it doesn't overlap with left toolbar
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Text(
-            currentPrice.symbol,
-            style: MehdAiTheme.headingStyle.copyWith(fontSize: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  currentPrice.symbol,
+                  style: MehdAiTheme.headingStyle.copyWith(fontSize: 24),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ),
+            ],
           ),
-          _LivePriceFlashText(price: currentPrice.bid),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: _LivePriceFlashText(price: currentPrice.bid),
+              ),
+            ],
+          ),
           Row(
             mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
               if (spread > 5.0)
                 const Padding(
@@ -44,6 +64,7 @@ class ZenChartHeader extends StatelessWidget {
                         : const Color(0xFFFF3B3B),
                     fontSize: 9),
                   overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ),
             ],

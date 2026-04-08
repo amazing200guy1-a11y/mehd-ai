@@ -114,7 +114,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       body: AnimatedBuilder(
         animation: _controller,
         builder: (context, child) {
-          final typedText = 'THE DEN'.substring(0, _typingAnim.value);
+          final typedText = 'MEHD AI'.substring(0, _typingAnim.value);
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -172,7 +172,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 Opacity(
                   opacity: _taglineFade.value,
                   child: const Text(
-                    'Capital is a seed, not a sacrifice',
+                    'SYNCHRONIZING KERNEL...',
                     style: TextStyle(
                       color: Color(0xFF888888),
                       fontSize: 11,
