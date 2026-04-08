@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport"
+  content="width=device-width,
+  initial-scale=1.0,
+  maximum-scale=1.0">
+<script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+  * { margin:0; padding:0;
+      box-sizing:border-box; }
+  body {
+    background: #000000;
+    overflow: hidden;
+  }
+  #chart {
+    width: 100vw;
+    height: 100vh;
+  }
+</style>
+</head>
+<body>
+<div id="chart"></div>
+<script>
+
+// ═══════════════════════
+// CHART SETUP
+// ═══════════════════════
+
+const chart = LightweightCharts
+  .createChart(
+    document.getElementById('chart'),
+  {
+  width: window.innerWidth,
+  height: window.innerHeight,
+  layout: {
+    background: {
+      type: 'solid',
+      color: '#000000'
+    },
+    textColor: '#444444',
+    fontFamily: 'Courier New',
+  },
+  grid: {
+    vertLines: {
+      color: 'rgba(255,255,255,0.03)'
+    },
+    horzLines: {
+      color: 'rgba(255,255,255,0.03)'
+    },
+  },
+  crosshair: {
+    vertLine: {
+      color: 'rgba(88,166,255,0.5)',
+      width: 1,
+      style: 2,
+      labelBackgroundColor: '#020810',
+    },
+    horzLine: {
+      color: 'rgba(88,166,255,0.5)',
+      width: 1,
+      style: 2,
+      labelBackgroundColor: '#020810',
+    },
+  },
+  rightPriceScale: {
+    borderColor:
+      'rgba(255,255,255,0.05)',
+    textColor: '#444444',
+  },
+  timeScale: {
+    borderColor:
+      'rgba(255,255,255,0.05)',
+    textColor: '#444444',
+    timeVisible: true,
+  },
+  watermark: {
+    visible: true,
+    fontSize: 32,
+    horzAlign: 'center',
+    vertAlign: 'center',
+    color: 'rgba(88,166,255,0.03)',
+    text: 'MEHD AI — THE DEN',
+  },
+});
+
+// Candlestick series
+const candles = chart
+  .addCandlestickSeries({
+  upColor: '#00FF88',
+  downColor: '#FF3B3B',
+  borderUpColor: '#00FF88',
+  borderDownColor: '#FF3B3B',
+  wickUpColor: '#00FF88',
+  wickDownColor: '#FF3B3B',
+});
+
+// ═══════════════════════
+// STATE
+// ═══════════════════════
+
+let currentSymbol = 'EUR/USD';
+let currentPrice = 1.08420;
+let drawingMode = 'auto';
+let activeTool = null;
+let pendingClick = null;
+const drawnLines = [];
+const drawnSeries = [];
+
+// ═══════════════════════
+// DEMO CANDLE GENERATOR
+// ═══════════════════════
+
+function generateCandles(base) {
+  const data = [];
+  let price = base * 0.995;
+  const now = Math.floor(
+    Date.now() / 1000);
+  
+  for (let i = 99; i >= 0; i--) {
+    const open = price;
+    const move = (Math.random()-0.48)
+      * base * 0.003;
+    const close = open + move;
+    const high = Math.max(open,close)
+      + Math.random()*base*0.0008;
+    const low = Math.min(open,close)
+      - Math.random()*base*0.0008;
+    
+    data.push({
+      time: now - (i * 3600),
+      open: +open.toFixed(5),
+      high: +high.toFixed(5),
+      low: +low.toFixed(5),
+      close: +close.toFixed(5),
+    });
+    price = close;
+  }
+  currentPrice = price;
+  return data;
+}
+
+candles.setData(
+  generateCandles(currentPrice));
+
+// ═══════════════════════
+// LIVE PRICE TICK
+// ═══════════════════════
+
+setInterval(() => {
+  const now = Math.floor(
+    Date.now() / 1000);
+  const move = (Math.random()-0.495)
+    * currentPrice * 0.0002;
+  currentPrice += move;
+  
+  candles.update({
+    time: now,
+    open: currentPrice,
+    high: currentPrice
+      + Math.random()*currentPrice
+      *0.0001,
+    low: currentPrice
+      - Math.random()*currentPrice
+      *0.0001,
+    close: currentPrice,
+  });
+  
+  toFlutter({
+    type: 'price',
+    price: currentPrice,
+    symbol: currentSymbol,
+  });
+}, 800);
+
+// ═══════════════════════
+// AI DRAWING COMMANDS
+// The magic — AI paints lines
+// ═══════════════════════
+
+function fromFlutter(jsonStr) {
+  let cmd;
+  try { cmd = JSON.parse(jsonStr); }
+  catch(e) { return; }
+  
+  switch(cmd.action) {
+    
+    // Draw horizontal line
+    // (Support, Resistance)
+    case 'draw_line':
+      const line = candles
+        .createPriceLine({
+        price: cmd.price,
+        color: cmd.color || '#58A6FF',
+        lineWidth: 1,
+        lineStyle: 2, // dashed
+        axisLabelVisible: true,
+        title: cmd.label || '',
+      });
+      drawnLines.push(line);
+      break;
+    
+    // Draw Fibonacci levels
+    case 'draw_fib':
+      const range = cmd.high - cmd.low;
+      [0,0.236,0.382,0.5,
+       0.618,0.786,1.0].forEach(f => {
+        const p = cmd.high - range * f;
+        const star = f === 0.618;
+        const l = candles.createPriceLine({
+          price: p,
+          color: star
+            ? 'rgba(212,175,55,0.7)'
+            : 'rgba(212,175,55,0.2)',
+          lineWidth: star ? 1.2 : 0.5,
+          lineStyle: 2,
+          axisLabelVisible: star,
+          title: star ? '61.8% ★' : '',
+        });
+        drawnLines.push(l);
+      });
+      break;
+    
+    // Change symbol
+    case 'set_symbol':
+      currentSymbol = cmd.symbol;
+      currentPrice = cmd.price;
+      candles.setData(
+        generateCandles(cmd.price));
+      clearAll();
+      break;
+    
+    // Clear all AI drawings
+    case 'clear':
+      clearAll();
+      break;
+    
+    // Set drawing mode
+    case 'set_mode':
+      drawingMode = cmd.mode;
+      activeTool = null;
+      pendingClick = null;
+      break;
+    
+    // Set active manual tool
+    case 'set_tool':
+      activeTool = cmd.tool;
+      pendingClick = null;
+      break;
+    
+    // Validate user's manual line
+    // AI says agree or disagree
+    case 'validate':
+      candles.createPriceLine({
+        price: cmd.price,
+        color: cmd.agree
+          ? '#00FF88' : '#FF3B3B',
+        lineWidth: 1.5,
+        lineStyle: 0, // solid
+        axisLabelVisible: true,
+        title: cmd.agree
+          ? '✓ Den agrees'
+          : '✗ Trap — be careful',
+      });
+      break;
+  }
+}
+
+function clearAll() {
+  drawnLines.forEach(l =>
+    candles.removePriceLine(l));
+  drawnLines.length = 0;
+  drawnSeries.forEach(s =>
+    chart.removeSeries(s));
+  drawnSeries.length = 0;
+}
+
+// ═══════════════════════
+// MANUAL DRAWING
+// User clicks chart to draw
+// ═══════════════════════
+
+chart.subscribeClick((param) => {
+  if (drawingMode !== 'manual') return;
+  if (!activeTool) return;
+  if (!param.point) return;
+  
+  const price = candles
+    .coordinateToPrice(param.point.y);
+  
+  if (activeTool === 'hline') {
+    // One click = horizontal line
+    candles.createPriceLine({
+      price: price,
+      color: '#58A6FF',
+      lineWidth: 1,
+      lineStyle: 2,
+      title: 'M', // Manual
+    });
+    // Ask AI to validate
+    toFlutter({
+      type: 'validate_request',
+      price: price,
+      tool: 'hline',
+    });
+    
+  } else if (activeTool === 'trend') {
+    if (!pendingClick) {
+      // First click
+      pendingClick = price;
+    } else {
+      // Second click = draw line
+      // TradingView doesn't have
+      // diagonal lines natively
+      // So we approximate with
+      // two horizontal markers
+      candles.createPriceLine({
+        price: pendingClick,
+        color: '#58A6FF',
+        lineWidth: 1,
+        lineStyle: 2,
+        title: 'P1',
+      });
+      candles.createPriceLine({
+        price: price,
+        color: '#58A6FF',
+        lineWidth: 1,
+        lineStyle: 2,
+        title: 'P2',
+      });
+      toFlutter({
+        type: 'trendline',
+        price1: pendingClick,
+        price2: price,
+      });
+      pendingClick = null;
+    }
+    
+  } else if (activeTool === 'fib') {
+    if (!pendingClick) {
+      pendingClick = price;
+    } else {
+      fromFlutter(JSON.stringify({
+        action: 'draw_fib',
+        high: Math.max(
+          pendingClick, price),
+        low: Math.min(
+          pendingClick, price),
+      }));
+      pendingClick = null;
+    }
+  }
+});
+
+// ═══════════════════════
+// SEND TO FLUTTER
+// ═══════════════════════
+
+function toFlutter(data) {
+  if (window.FlutterBridge) {
+    window.FlutterBridge.postMessage(
+      JSON.stringify(data));
+  }
+}
+
+// ═══════════════════════
+// RESIZE
+// ═══════════════════════
+
+window.addEventListener('resize', () => {
+  chart.resize(
+    window.innerWidth,
+    window.innerHeight);
+});
+
+// Tell Flutter ready
+setTimeout(() => {
+  toFlutter({ type: 'ready' });
+}, 500);
+
+</script>
+</body>
+</html>

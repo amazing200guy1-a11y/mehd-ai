@@ -65,8 +65,11 @@ class ConsensusResult {
     this.rejectionReason,
     this.panicProtocolActive = false,
     required this.timestamp,
+    this.drawings = const [],
     Map<String, bool>? sovereignConditions,
   }) : sovereignConditions = sovereignConditions ?? const {};
+
+  final List<Map<String, dynamic>> drawings;
 
   /// The 9 Sovereign Lock conditions — all must be true for SOVEREIGN tier.
   /// Keys: unanimity, spread_ok, volatility_ok, session_ok, drawdown_ok,
@@ -93,6 +96,7 @@ class ConsensusResult {
       rejectionReason: json['rejection_reason'] as String?,
       panicProtocolActive: json['panic_protocol_active'] as bool? ?? false,
       timestamp: DateTime.parse(json['timestamp'] as String),
+      drawings: (json['drawings'] as List<dynamic>?)?.map((d) => Map<String, dynamic>.from(d)).toList() ?? [],
       sovereignConditions: (json['sovereign_conditions'] as Map<String, dynamic>?)?.map(
         (k, v) => MapEntry(k, v as bool),
       ),
@@ -111,6 +115,7 @@ class ConsensusResult {
       'rejection_reason': rejectionReason,
       'panic_protocol_active': panicProtocolActive,
       'timestamp': timestamp.toIso8601String(),
+      'drawings': drawings,
       'sovereign_conditions': sovereignConditions,
     };
   }

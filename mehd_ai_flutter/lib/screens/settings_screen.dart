@@ -4,10 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
 import 'package:mehd_ai_flutter/controllers/trading_controller.dart';
 import 'package:mehd_ai_flutter/screens/broker_screen.dart';
-import 'package:mehd_ai_flutter/screens/language_screen.dart';
-import 'package:mehd_ai_flutter/screens/privacy_screen.dart';
-import 'package:mehd_ai_flutter/screens/terms_screen.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -17,21 +13,48 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  // Using true as default for brokerConnected, as the logic checks in warning
-  // In a real app we would check Firebase. We assume true here to let user bypass.
-  // Wait, let's just make it false by default. Let the user connect.
   bool _brokerConnected = false; 
+
+  bool _tradeSignals = true;
+  bool _autoStopLoss = true;
+  bool _guardianAlerts = true;
+  bool _showAgentNames = true;
+  bool _isDarkMode = true;
+  bool _shadowMode = false;
+  bool _paperMode = true;
+  String _currentLang = 'English 🇬🇧';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAll();
+  }
+
+  Future _loadAll() async {
+    final p = await SharedPreferences.getInstance();
+    setState(() {
+      _tradeSignals = p.getBool('tradeSignals') ?? true;
+      _autoStopLoss = p.getBool('autoStopLoss') ?? true;
+      _guardianAlerts = p.getBool('guardianAlerts') ?? true;
+      _showAgentNames = p.getBool('showAgentNames') ?? true;
+      _isDarkMode = p.getBool('isDarkMode') ?? true;
+      _shadowMode = p.getBool('shadowMode') ?? false;
+      _paperMode = p.getBool('paperMode') ?? true;
+      _currentLang = p.getString('language') ?? 'English 🇬🇧';
+    });
+  }
+
+  Future _save(String key, bool value) async {
+    final p = await SharedPreferences.getInstance();
+    await p.setBool(key, value);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final trading = context.watch<TradingController>();
-    final isPaperMode = trading.isPaperMode;
-
     return Scaffold(
       backgroundColor: MehdAiTheme.bgPrimary,
       appBar: AppBar(
-        title: Text(l10n.settings.toUpperCase(), style: MehdAiTheme.headingStyle.copyWith(letterSpacing: 2)),
+        title: Text('SETTINGS', style: MehdAiTheme.headingStyle.copyWith(letterSpacing: 2)),
         backgroundColor: MehdAiTheme.bgSecondary,
         elevation: 0,
         iconTheme: const IconThemeData(color: MehdAiTheme.white),
@@ -73,11 +96,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const Text('Trading Mode', style: TextStyle(color: Color(0xFF888888), fontSize: 13)),
                     const SizedBox(height: 4),
                     Text(
-                      isPaperMode
+                      _paperMode
                         ? 'Paper Trading — \$10,000 demo'
                         : 'Live Trading — Real money',
                       style: TextStyle(
-                        color: isPaperMode
+                        color: _paperMode
                           ? const Color(0xFF58A6FF)
                           : const Color(0xFFFF3B3B),
                         fontSize: 10,
@@ -87,7 +110,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const Spacer(),
                 Switch(
-                  value: !isPaperMode, // ON = live
+                  value: !_paperMode, // ON = live
                   activeColor: const Color(0xFFFF3B3B),
                   inactiveThumbColor: const Color(0xFF58A6FF),
                   onChanged: (goLive) {
@@ -103,15 +126,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           _buildListTile('Default Lot Size', '1.00', Icons.pie_chart_outline),
           _buildListTile('Risk Per Trade', '1% Enforced', Icons.security, locked: true),
-          _buildSwitchTile('Auto Stop-Loss', true, Icons.shield_outlined),
+          _buildSwitchTile('Auto Stop-Loss', _autoStopLoss, Icons.shield_outlined, (v) {
+            setState(() => _autoStopLoss = v);
+            _save('autoStopLoss', v);
+          }),
           
           const Divider(color: Color(0xFF111111), height: 32),
           
           // Notifications
           _buildSectionTitle('NOTIFICATIONS'),
-          _buildSwitchTile('Trade Signals', true, Icons.notifications_active_outlined),
+          _buildSwitchTile('Trade Signals', _tradeSignals, Icons.notifications_active_outlined, (v) {
+            setState(() => _tradeSignals = v);
+            _save('tradeSignals', v);
+          }),
           _buildListTile('Black Swan Protocol', 'Always ON', Icons.flash_on, locked: true),
-          _buildSwitchTile('Guardian Alerts', false, Icons.admin_panel_settings_outlined),
+          _buildSwitchTile('Guardian Alerts', _guardianAlerts, Icons.admin_panel_settings_outlined, (v) {
+            setState(() => _guardianAlerts = v);
+            _save('guardianAlerts', v);
+          }),
           
           const Divider(color: Color(0xFF111111), height: 32),
           
@@ -124,7 +156,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: const Icon(Icons.chevron_right, color: Color(0xFF444444)),
             onTap: () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const BrokerScreen())).then((_) {
-                 // Update broker connected state if possible, hardcoding for visual completeness
                  setState((){ _brokerConnected = true; }); 
               });
             },
@@ -133,42 +164,148 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const Divider(color: Color(0xFF111111), height: 32),
           
           // Language
-          _buildSectionTitle(l10n.language.toUpperCase()),
-          _buildListTile(l10n.applicationLanguage, 'English', Icons.language, onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const LanguageScreen()));
-          }),
+          _buildSectionTitle('LANGUAGE'),
+          ListTile(
+            leading: const Icon(Icons.language, color: Color(0xFF888888)),
+            title: const Text('Language', style: TextStyle(color: Color(0xFFDDDDDD), fontSize: 13)),
+            subtitle: Text(_currentLang, style: const TextStyle(color: Color(0xFF666666), fontSize: 11)),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 12, color: Color(0xFF333333)),
+            onTap: _showLangSheet,
+          ),
 
           const Divider(color: Color(0xFF111111), height: 32),
           
           // Appearance
-          _buildSectionTitle(l10n.appearanceHeader),
-          _buildSwitchTile(l10n.darkLightMode, true, Icons.dark_mode_outlined, key: 'darkMode'), // true = dark mode
-          _buildSwitchTile(l10n.showAgentNames, true, Icons.visibility_outlined, key: 'showAgentNames'),
+          _buildSectionTitle('APPEARANCE'),
+          _buildSwitchTile('Dark Mode', _isDarkMode, Icons.dark_mode_outlined, (v) {
+            setState(() => _isDarkMode = v);
+            _save('isDarkMode', v);
+          }),
+          _buildSwitchTile('Show Agent Names', _showAgentNames, Icons.visibility_outlined, (v) {
+            setState(() => _showAgentNames = v);
+            _save('showAgentNames', v);
+          }),
+          _buildSwitchTile('Shadow Mode', _shadowMode, Icons.nightlight_outlined, (v) {
+            setState(() => _shadowMode = v);
+            _save('shadowMode', v);
+          }),
 
           const Divider(color: Color(0xFF111111), height: 32),
 
           // About
-          _buildSectionTitle(l10n.aboutHeader),
-          _buildListTile(l10n.versionLabel, '2.0.4 (Institutional)', Icons.info_outline),
-          _buildListTile(l10n.builtByLabel, 'Usman', Icons.code),
-          _buildListTile(l10n.privacyPolicy, '', Icons.privacy_tip_outlined, onTap: (){
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyScreen()));
-          }),
-          _buildListTile(l10n.termsOfService, '', Icons.gavel_outlined, onTap: (){
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const TermsScreen()));
-          }),
-          _buildListTile(l10n.rateApp, '', Icons.star_border_outlined, onTap: (){
-            _showRateDialog(context);
+          _buildSectionTitle('ABOUT'),
+          _buildListTile('Version', '2.0.4 (Institutional)', Icons.info_outline),
+          _buildListTile('Built By', 'Usman', Icons.code),
+          _buildListTile('Privacy Policy', '', Icons.privacy_tip_outlined, onTap: _showTermsPrivacy),
+          _buildListTile('Terms of Service', '', Icons.gavel_outlined, onTap: _showTermsPrivacy),
+          _buildListTile('Rate App', '', Icons.star_border_outlined, onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Rate us when we launch! 🐯 Coming to App Store soon.'))
+            );
           }),
 
           const Divider(color: Color(0xFF111111), height: 32),
 
           // Danger Zone
-          _buildSectionTitle(l10n.dangerZoneHeader, color: const Color(0xFFFF3B3B)),
-          _buildDangerTile(l10n.clearLocalData, Icons.delete_outline, onTap: () => _confirmClearData(context)),
-          _buildDangerTile(l10n.signOut, Icons.logout, onTap: () => _handleSignOut(context)),
+          _buildSectionTitle('DANGER ZONE', color: const Color(0xFFFF3B3B)),
+          _buildDangerTile('Clear Local Data', Icons.delete_outline, onTap: () {
+            showDialog(
+              context: context,
+              builder: (_) => AlertDialog(
+                backgroundColor: const Color(0xFF080808),
+                title: const Text('Clear Data?', style: TextStyle(color: Color(0xFFCCCCCC))),
+                content: const Text(
+                  'Clears local cache only.\nFirebase data stays safe.',
+                  style: TextStyle(color: Color(0xFF666666))
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () async {
+                      final nav = Navigator.of(context);
+                      final scaffoldMsg = ScaffoldMessenger.of(context);
+                      final p = await SharedPreferences.getInstance();
+                      await p.clear();
+                      nav.pop();
+                      scaffoldMsg.showSnackBar(
+                        const SnackBar(content: Text('Cache cleared.'))
+                      );
+                    },
+                    child: const Text('CLEAR', style: TextStyle(color: Color(0xFFFF3B3B)))
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('CANCEL', style: TextStyle(color: Color(0xFF444444)))
+                  ),
+                ],
+              ),
+            );
+          }),
+          _buildDangerTile('Sign Out', Icons.logout, onTap: () => _handleSignOut(context)),
           
           const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+
+  void _showTermsPrivacy() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF080808),
+        title: const Text('Terms of Service', style: TextStyle(color: Color(0xFF58A6FF))),
+        content: const SingleChildScrollView(
+          child: Text(
+            'Mehd AI is for educational purposes only.\n\n'
+            'Not financial advice.\n\n'
+            'Trade at your own risk.\n\n'
+            'Past performance does not guarantee future results.\n\n'
+            'Capital is a seed, not a sacrifice.',
+            style: TextStyle(color: Color(0xFF666666), height: 1.7)
+          )
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK', style: TextStyle(color: Color(0xFF58A6FF)))
+          )
+        ],
+      ),
+    );
+  }
+
+  void _showLangSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF080808),
+      builder: (_) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text('LANGUAGE',
+              style: TextStyle(
+                color: Color(0xFF58A6FF),
+                letterSpacing: 2,
+                fontSize: 12))),
+          ...[
+            'English 🇬🇧',
+            'Arabic 🇸🇦',
+            'French 🇫🇷',
+            'Spanish 🇪🇸',
+            'Portuguese 🇧🇷',
+            'Indonesian 🇮🇩',
+            'Mandarin 🇨🇳',
+            'Russian 🇷🇺',
+          ].map((lang) => ListTile(
+            title: Text(lang, style: const TextStyle(color: Color(0xFF666666), fontSize: 12)),
+            onTap: () {
+              setState(() => _currentLang = lang);
+              Navigator.pop(context);
+              SharedPreferences.getInstance().then((p) => p.setString('language', lang));
+            },
+          )),
+          const SizedBox(height: 16),
         ],
       ),
     );
@@ -203,27 +340,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSwitchTile(String title, bool defaultValue, IconData icon, {String? key}) {
-    return FutureBuilder<bool>(
-      future: key != null ? SharedPreferences.getInstance().then((p) => p.getBool(key) ?? defaultValue) : Future.value(defaultValue),
-      builder: (context, snapshot) {
-        final val = snapshot.data ?? defaultValue;
-        return SwitchListTile(
-          value: val,
-          onChanged: (v) async {
-            if (key != null) {
-              final p = await SharedPreferences.getInstance();
-              await p.setBool(key, v);
-              setState(() {});
-            }
-          },
-          secondary: Icon(icon, color: const Color(0xFF888888)),
-          title: Text(title, style: const TextStyle(color: Color(0xFFDDDDDD), fontSize: 13)),
-          activeColor: const Color(0xFF58A6FF),
-          inactiveThumbColor: const Color(0xFF444444),
-          inactiveTrackColor: const Color(0xFF111111),
-        );
-      }
+  Widget _buildSwitchTile(String title, bool value, IconData icon, ValueChanged<bool> onChanged) {
+    return SwitchListTile(
+      value: value,
+      onChanged: onChanged,
+      secondary: Icon(icon, color: const Color(0xFF888888)),
+      title: Text(title, style: const TextStyle(color: Color(0xFFDDDDDD), fontSize: 13)),
+      activeColor: const Color(0xFF58A6FF),
+      inactiveThumbColor: const Color(0xFF444444),
+      inactiveTrackColor: const Color(0xFF111111),
     );
   }
 
@@ -256,31 +381,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _confirmClearData(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: MehdAiTheme.bgSecondary,
-        title: const Text('CLEAR ALL DATA', style: TextStyle(color: Color(0xFFFF3B3B), fontSize: 14, letterSpacing: 2)),
-        content: const Text('This will delete all saved credentials and preferences. This action cannot be undone.', style: TextStyle(color: Color(0xFF888888), fontSize: 12)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('CANCEL', style: TextStyle(color: Color(0xFF444444)))),
-          TextButton(
-            onPressed: () async {
-              final p = await SharedPreferences.getInstance();
-              await p.clear();
-              if (context.mounted) {
-                Navigator.pop(ctx);
-                Navigator.of(context).pushNamedAndRemoveUntil('/splash', (route) => false);
-              }
-            }, 
-            child: const Text('DELETE EVERYTHING', style: TextStyle(color: Color(0xFFFF3B3B)))
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showLiveTradingWarning(BuildContext context) {
     showDialog(
       context: context,
@@ -291,10 +391,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           borderRadius: BorderRadius.circular(8),
           side: const BorderSide(color: Color(0xFFFF3B3B), width: 1),
         ),
-        title: Row(children: [
-          const Icon(Icons.warning_amber, color: Color(0xFFFF3B3B)),
-          const SizedBox(width: 8),
-          const Text('LIVE TRADING',
+        title: Row(children: const [
+          Icon(Icons.warning_amber, color: Color(0xFFFF3B3B)),
+          SizedBox(width: 8),
+          Text('LIVE TRADING',
             style: TextStyle(color: Color(0xFFFF3B3B), fontSize: 14, letterSpacing: 2, fontWeight: FontWeight.bold)),
         ]),
         content: Column(
@@ -353,8 +453,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await prefs.setBool('paperMode', false);
     
     if (context.mounted) {
+      setState(() => _paperMode = false);
       context.read<TradingController>().setPaperMode(false);
-      
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           backgroundColor: Color(0xFF1A0000),
@@ -372,8 +472,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await prefs.setBool('paperMode', true);
     
     if (context.mounted) {
+      setState(() => _paperMode = true);
       context.read<TradingController>().setPaperMode(true);
-      
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           backgroundColor: Color(0xFF020810),
@@ -384,37 +484,5 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       );
     }
-  }
-
-  void _showRateDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: MehdAiTheme.bgSecondary,
-        title: const Text('RATE MEHD AI', style: TextStyle(color: Colors.white, fontSize: 14, letterSpacing: 2)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Your feedback helps us sharpen The Den.', style: TextStyle(color: Color(0xFF888888), fontSize: 12)),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(5, (i) => const Icon(Icons.star, color: MehdAiTheme.gold, size: 32)),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(backgroundColor: MehdAiTheme.blue, content: Text('Thank you for your 5-star review!'))
-              );
-            }, 
-            child: const Text('SUBMIT', style: TextStyle(color: MehdAiTheme.blue))
-          ),
-        ],
-      ),
-    );
   }
 }

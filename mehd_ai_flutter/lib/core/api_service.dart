@@ -352,4 +352,22 @@ class ApiService {
     }
     return [];
   }
+
+  Future<Map<String, dynamic>> validateManualLevel(String symbol, double price) async {
+    try {
+      final cleanSymbol = symbol.replaceAll('/', '');
+      final response = await _client.post(
+        Uri.parse('${AppConstants.baseUrl}/drawings/validate'),
+        headers: await _getHeaders({'Content-Type': 'application/json'}),
+        body: jsonEncode({"symbol": cleanSymbol, "price": price}),
+      ).timeout(const Duration(seconds: 5));
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint("API - Validation failed: $e");
+    }
+    return {"is_valid": false, "label": "validation_failed", "strength": 0.0};
+  }
 }

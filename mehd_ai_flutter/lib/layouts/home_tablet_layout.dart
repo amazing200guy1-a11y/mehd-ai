@@ -3,21 +3,30 @@ import 'package:mehd_ai_flutter/controllers/trading_controller.dart';
 import 'package:mehd_ai_flutter/controllers/market_data_controller.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
 import 'package:mehd_ai_flutter/core/constants.dart';
-import 'package:mehd_ai_flutter/widgets/zen_chart.dart';
+import 'package:mehd_ai_flutter/widgets/den_chart.dart';
 import 'package:mehd_ai_flutter/widgets/consensus_bar.dart';
 import 'package:mehd_ai_flutter/widgets/den_loading_widget.dart';
-import 'package:mehd_ai_flutter/widgets/den_animation.dart';
 import 'package:mehd_ai_flutter/screens/settings_screen.dart';
 import 'package:mehd_ai_flutter/utils/titan_animations.dart';
 
-class HomeTabletLayout extends StatelessWidget {
+class HomeTabletLayout extends StatefulWidget {
   final TradingController trading;
   final MarketDataController market;
 
   const HomeTabletLayout({super.key, required this.trading, required this.market});
 
   @override
+  State<HomeTabletLayout> createState() => _HomeTabletLayoutState();
+}
+
+class _HomeTabletLayoutState extends State<HomeTabletLayout> {
+  final GlobalKey<DenChartState> _chartKey = GlobalKey<DenChartState>();
+
+  @override
   Widget build(BuildContext context) {
+    final market = widget.market;
+    final trading = widget.trading;
+    
     return Row(
       children: [
         Container(
@@ -47,28 +56,12 @@ class HomeTabletLayout extends StatelessWidget {
           child: Column(
             children: [
               Container(
-                height: 50,
                 color: MehdAiTheme.bgSecondary,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
                   children: [
-                    Text(market.activeSymbol ?? 'Workspace', style: MehdAiTheme.headingStyle),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Builder(
-                          builder: (ctx) => IconButton(
-                            icon: const Icon(Icons.terminal, color: MehdAiTheme.blue),
-                            onPressed: () => Scaffold.of(ctx).openEndDrawer(),
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.settings, size: 16, color: Color(0xFF333333)),
-                          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
-                        ),
-                      ],
-                    ),
+                    _buildTopHeader(market),
+                    if (market.drawingMode == "MANUAL")
+                      _buildManualToolbar(),
                   ],
                 ),
               ),
@@ -80,12 +73,19 @@ class HomeTabletLayout extends StatelessWidget {
                     : AnimatedSwitcher(
                         duration: TitanAnimations.medium,
                         transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
-                        child: ZenChart(
-                          key: ValueKey(market.activeSymbol),
-                          currentPrice: market.latestSnapshot!, 
-                          currentConsensus: market.consensus,
-                          denState: market.isAnalyzing ? DenState.activation : DenState.idle,
-                          onDrawingsUpdated: (d) {},
+                        child: DenChart(
+                          key: _chartKey,
+                          symbol: market.activeSymbol!,
+                          basePrice: market.latestSnapshot!.close,
+                          isAutoMode: market.drawingMode != 'MANUAL',
+                          activeTool: market.activeTool,
+                          commands: market.aiCommands,
+                          onEvent: (data) async {
+                            if (data['type'] == 'validate_request') {
+                              final price = (data['price'] as num).toDouble();
+                              await market.validateManualLevel(price);
+                            }
+                          },
                         ),
                       )),
               ),
@@ -108,6 +108,115 @@ class HomeTabletLayout extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildTopHeader(MarketDataController market) {
+    return Container(
+      height: 50,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        border: const Border(bottom: BorderSide(color: MehdAiTheme.borderColor)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(market.activeSymbol ?? 'Workspace', style: MehdAiTheme.headingStyle),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildToggleBtn("AUTO", market),
+              const SizedBox(width: 8),
+              _buildToggleBtn("MANUAL", market),
+              const SizedBox(width: 12),
+              Builder(
+                builder: (ctx) => IconButton(
+                  icon: const Icon(Icons.terminal, color: MehdAiTheme.blue),
+                  onPressed: () => Scaffold.of(ctx).openEndDrawer(),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.settings, size: 16, color: Color(0xFF333333)),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildManualToolbar() {
+    return Container(
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: MehdAiTheme.bgSecondary,
+        border: Border(bottom: BorderSide(color: MehdAiTheme.borderColor)),
+      ),
+      child: Row(
+        children: [
+          _buildToolBtn('H-LINE', 'hline'),
+          _buildToolBtn('FIB', 'fib'),
+          _buildToolBtn('TREND', 'trend'),
+          const Spacer(),
+          GestureDetector(
+            onTap: () {
+              _chartKey.currentState?.clearDrawings();
+              widget.market.clearConsensus();
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                border: Border.all(color: const Color(0xFF1A0000)),
+                borderRadius: BorderRadius.circular(3)
+              ),
+              child: const Text('CLR', style: TextStyle(color: Color(0xFFFF3B3B), fontSize: 9)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToolBtn(String label, String tool) {
+    final isActive = widget.market.activeTool == tool;
+    return GestureDetector(
+      onTap: () => widget.market.setActiveTool(tool),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        margin: const EdgeInsets.only(right: 8),
+        decoration: BoxDecoration(
+          border: Border.all(color: isActive ? const Color(0xFF58A6FF) : const Color(0xFF222222)),
+          color: isActive ? const Color(0xFF020810) : Colors.transparent,
+          borderRadius: BorderRadius.circular(3)
+        ),
+        child: Text(label, style: TextStyle(color: isActive ? const Color(0xFF58A6FF) : const Color(0xFF666666), fontSize: 9, letterSpacing: 0.5, fontWeight: FontWeight.bold)),
+      ),
+    );
+  }
+
+  Widget _buildToggleBtn(String mode, MarketDataController market) {
+    final isSelected = market.drawingMode == mode;
+    return GestureDetector(
+      onTap: () => market.toggleDrawingMode(mode),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF58A6FF).withOpacity(0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: isSelected ? const Color(0xFF58A6FF) : MehdAiTheme.borderColor),
+        ),
+        child: Text(
+          mode, 
+          style: TextStyle(
+            color: isSelected ? const Color(0xFF58A6FF) : MehdAiTheme.textSecondary,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
     );
   }
 }

@@ -19,6 +19,11 @@ class MarketDataController extends ChangeNotifier {
   bool feedbackShown = false;
   bool showFeedbackOption = false;
 
+  // TradingView Bridge State
+  String drawingMode = 'AUTO'; // 'AUTO' or 'MANUAL'
+  String activeTool = 'none';
+  List<Map<String, dynamic>> aiCommands = [];
+
   final ApiService _apiService = ApiService();
   StreamSubscription<MarketSnapshot>? _priceSub;
   StreamSubscription<QuerySnapshot>? _firestoreSub;
@@ -170,6 +175,7 @@ class MarketDataController extends ChangeNotifier {
     bool justFlipped = btnState == ButtonState.developing && result.proceed;
 
     consensus = result;
+    aiCommands = result.drawings;
     isAnalyzing = false;
     isSentinelFrozen = isFrozen;
     
@@ -227,8 +233,40 @@ class MarketDataController extends ChangeNotifier {
   
   void clearConsensus() {
     consensus = null;
+    aiCommands = [];
     notifyListeners();
   }
+
+  void toggleDrawingMode(String mode) {
+    drawingMode = mode;
+    activeTool = 'none';
+    notifyListeners();
+  }
+
+  void setActiveTool(String tool) {
+    activeTool = activeTool == tool ? 'none' : tool;
+    notifyListeners();
+  }
+
+  Future<void> validateManualLevel(double price) async {
+    if (activeSymbol == null || latestSnapshot == null) return;
+    
+    // Simplistic local validation mimicking AI checking levels
+    final double base = latestSnapshot!.close;
+    // Assume previous AI command has some sort of support/resistance, but for demo, let's just make it randomly agree based on price action
+    final bool aiAgrees = (price - base).abs() > (base * 0.001);
+
+    aiCommands.add({
+      'action': 'validate',
+      'price': price,
+      'agree': aiAgrees,
+    });
+    
+    notifyListeners();
+  }
+
+  Map<String, dynamic>? _lastValidationResult;
+  Map<String, dynamic>? get lastValidationResult => _lastValidationResult;
 
   @override
   void dispose() {
