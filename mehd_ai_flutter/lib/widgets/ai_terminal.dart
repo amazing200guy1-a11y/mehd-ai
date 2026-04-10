@@ -6,6 +6,8 @@ import 'package:mehd_ai_flutter/core/den_identity.dart';
 import 'package:mehd_ai_flutter/models/consensus_result.dart';
 import 'package:mehd_ai_flutter/widgets/den_loading_widget.dart';
 import 'package:mehd_ai_flutter/models/automated_drawing.dart';
+import 'package:provider/provider.dart';
+import 'package:mehd_ai_flutter/services/app_settings_provider.dart';
 
 /// FILE 7 — ai_terminal.dart
 /// Grand Master Build Spec implementation.
@@ -154,6 +156,7 @@ class _AiTerminalState extends State<AiTerminal> {
     }
 
     final votes = widget.consensusResult!.votes;
+    final showNames = context.watch<AppSettingsProvider>().showAgentNames;
 
     return ListView.builder(
       controller: _terminalScroll,
@@ -240,7 +243,7 @@ class _AiTerminalState extends State<AiTerminal> {
               SizedBox(
                 width: 64,
                 child: Text(
-                  '<${id.displayName.toUpperCase()}>',
+                  showNames ? '<${id.displayName.toUpperCase()}>' : '<AGENT>',
                   style: TextStyle(
                     color: id.nodeColor,
                     fontSize: 7,

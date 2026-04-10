@@ -4,6 +4,8 @@ import 'package:mehd_ai_flutter/models/consensus_result.dart';
 import 'package:mehd_ai_flutter/core/api_service.dart';
 import 'package:mehd_ai_flutter/core/den_identity.dart';
 import 'package:mehd_ai_flutter/widgets/den_loading_widget.dart';
+import 'package:provider/provider.dart';
+import 'package:mehd_ai_flutter/services/app_settings_provider.dart';
 
 /// FILE — research_room.dart
 ///
@@ -172,6 +174,7 @@ class _ResearchRoomState extends State<ResearchRoom> {
     if (vote.direction == 'SELL') dirColor = MehdAiTheme.red;
 
     final identity = DenIdentity.getIdentity(vote.modelName);
+    final showNames = context.watch<AppSettingsProvider>().showAgentNames;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -193,10 +196,13 @@ class _ResearchRoomState extends State<ResearchRoom> {
                     Icon(identity.icon, color: MehdAiTheme.textPrimary, size: 16),
                     const SizedBox(width: 8),
                     Flexible(
-                      child: Text(
-                        identity.displayName,
-                        style: MehdAiTheme.headingStyle.copyWith(fontSize: 14),
-                        overflow: TextOverflow.ellipsis,
+                      child: Visibility(
+                        visible: showNames,
+                        child: Text(
+                          identity.displayName,
+                          style: MehdAiTheme.headingStyle.copyWith(fontSize: 14),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ),
                   ],

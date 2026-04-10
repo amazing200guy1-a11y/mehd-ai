@@ -363,40 +363,50 @@ class _BrokerScreenState extends State<BrokerScreen> {
   }
 
   void _connectBroker(Broker selectedBroker) async {
-    final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'demo_user';
+    final uid = FirebaseAuth.instance.currentUser?.uid;
     
-    try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUid)
-          .collection('broker')
-          .doc('credentials')
-          .set({
-        'broker': selectedBroker.id,
-        'accountType': _accountType,
-        'connectedAt': FieldValue.serverTimestamp(),
-        'status': 'connected',
-      });
-    } catch (e) {
-      // Ignored if firestore fails
+    if (uid != null) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('broker')
+            .doc('config')
+            .set({
+          'broker': selectedBroker.name,
+          'type': _accountType,
+          'status': 'pending',
+          'savedAt': FieldValue.serverTimestamp(),
+        });
+      } catch (e) {
+        // Ignored
+      }
     }
 
     if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        duration: const Duration(seconds: 5),
+        backgroundColor: const Color(0xFF0A0800),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text('⏳ Credentials Saved',
+              style: TextStyle(
+                color: Color(0xFFD29922),
+                fontWeight: FontWeight.bold)),
+            Text(
+              'Will activate when API key is added to backend.',
+              style: TextStyle(
+                color: Color(0xFF888888),
+                fontSize: 10)),
+          ]),
+      ));
+      
+      // Keep it completely honest, we don't pretend it's connected right now.
       setState(() {
-        _isConnected = true;
-        _connectedBroker = selectedBroker.id;
+        _isConnected = false; 
       });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: const Color(0xFF001208),
-          behavior: SnackBarBehavior.floating,
-          content: Text(
-            '✓ ${selectedBroker.name} connected. The Den is armed.',
-            style: const TextStyle(color: Color(0xFF00FF88)),
-          ),
-        ),
-      );
     }
   }
 }

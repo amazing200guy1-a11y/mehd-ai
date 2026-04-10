@@ -1,5 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class ThemeProvider extends ChangeNotifier {
+  final SharedPreferences prefs;
+  bool _isDark = true;
+  
+  ThemeProvider({required this.prefs}) {
+    _isDark = prefs.getBool('darkMode') ?? true;
+  }
+
+  bool get isDark => _isDark;
+  
+  ThemeData get theme => _isDark
+    ? ThemeData.dark().copyWith(
+        scaffoldBackgroundColor:
+          const Color(0xFF000000),
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFF58A6FF)))
+    : ThemeData.light().copyWith(
+        scaffoldBackgroundColor:
+          const Color(0xFFF8F8F8),
+        colorScheme: const ColorScheme.light(
+          primary: Color(0xFF0066CC)));
+  
+  void setDark(bool dark) async {
+    if (_isDark == dark) return;
+    _isDark = dark;
+    notifyListeners();
+    await prefs.setBool('darkMode', dark);
+  }
+}
 
 /// FILE 1 — theme.dart
 /// Mehd AI Design System
