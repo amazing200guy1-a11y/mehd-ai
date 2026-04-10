@@ -153,7 +153,7 @@ class _TheDenScreenState extends State<TheDenScreen> {
         ),
         centerTitle: true,
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
+          preferredSize: const Size.fromHeight(66),
           child: _buildRoomTabs(),
         ),
       ),
@@ -188,7 +188,7 @@ class _TheDenScreenState extends State<TheDenScreen> {
 
   Widget _buildRoomTabs() {
     return Container(
-      height: 60,
+      height: 66,
       decoration: const BoxDecoration(
         color: MehdAiTheme.bgSecondary,
         border: Border(bottom: BorderSide(color: MehdAiTheme.borderColor)),

@@ -117,14 +117,18 @@ class _SymbolSidebarState extends State<SymbolSidebar> {
               padding: EdgeInsets.zero,
               children: [
                 _buildSectionHeader('FOREX'),
-                ...AppConstants.symbols.take(4).map((s) => _buildSymbolRow(s)),
+                ...AppConstants.symbols.take(3).map((s) => _buildSymbolRow(s)),
                 
                 const SizedBox(height: 12),
                 _buildSectionHeader('COMMODITIES'),
-                ...AppConstants.symbols.skip(4).take(2).map((s) => _buildSymbolRow(s)),
+                ...AppConstants.symbols.skip(3).take(1).map((s) => _buildSymbolRow(s)),
                 
                 const SizedBox(height: 12),
-                _buildSectionHeader('INDICES & CRYPTO'),
+                _buildSectionHeader('CRYPTO'),
+                ...AppConstants.symbols.skip(4).take(2).map((s) => _buildSymbolRow(s)),
+
+                const SizedBox(height: 12),
+                _buildSectionHeader('INDICES'),
                 ...AppConstants.symbols.skip(6).map((s) => _buildSymbolRow(s)),
               ],
             ),
@@ -184,11 +188,25 @@ class _SymbolSidebarState extends State<SymbolSidebar> {
     );
   }
 
+  static const Map<String, double> _basePrices = {
+    'EUR/USD': 1.08420,
+    'GBP/USD': 1.26340,
+    'GBP/JPY': 189.420,
+    'XAU/USD': 2318.50,
+    'BTC/USD': 67420.0,
+    'ETH/USD': 3240.0,
+    'PARADOX/USD': 1.0,
+    'NAS100': 17842.0,
+    'US30': 38910.0,
+  };
+
   Widget _buildSymbolRow(String symbol) {
     final isActive = symbol == widget.activeSymbol;
     final hasAlert = _alerts.containsKey(symbol);
     final isUp = symbol.length % 2 == 0;
-    final priceStr = '0.0000';
+    final basePrice = _basePrices[symbol] ?? 0.0;
+    final int decimals = basePrice < 10 ? 5 : (basePrice < 1000 ? 3 : 2);
+    final priceStr = basePrice.toStringAsFixed(decimals);
     final changeStr = isUp ? '+0.15%' : '-0.12%';
 
     return Container(

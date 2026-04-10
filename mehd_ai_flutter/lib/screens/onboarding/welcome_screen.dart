@@ -83,28 +83,38 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 const SizedBox(height: 60),
 
                 // ── LOGO ──────────────────────────────────────────
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                Column(
                   children: [
                     FadeTransition(
                       opacity: _pulseAnimation,
                       child: Container(
-                        width: 14,
-                        height: 14,
-                        decoration: const BoxDecoration(
-                          color: MehdAiTheme.green,
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
                           shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFF58A6FF).withOpacity(0.3),
+                            width: 1.5,
+                          ),
                           boxShadow: [
                             BoxShadow(
-                              color: Color(0x663FB950),
+                              color: const Color(0xFF58A6FF).withOpacity(0.15),
                               blurRadius: 20,
                               spreadRadius: 4,
                             ),
                           ],
                         ),
+                        child: ClipOval(
+                          child: Image.asset(
+                            'assets/images/mehd_logo.png',
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(height: 20),
                     Text(
                       'MEHD AI',
                       style: MehdAiTheme.headingStyle.copyWith(

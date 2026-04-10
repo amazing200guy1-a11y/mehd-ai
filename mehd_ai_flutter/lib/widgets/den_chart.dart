@@ -32,7 +32,11 @@ class DenChartState extends State<DenChart> {
   @override
   void initState() {
     super.initState();
-    _initChart();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _initChart();
+      }
+    });
   }
   
   void _initChart() {
@@ -58,6 +62,7 @@ class DenChartState extends State<DenChart> {
         },
       )
       ..loadFlutterAsset('assets/chart/chart.html');
+      if (mounted) setState(() {});
   }
   
   @override
@@ -131,7 +136,15 @@ class DenChartState extends State<DenChart> {
   @override
   Widget build(BuildContext context) {
     if (_ctrl == null) {
-      return Container(color: const Color(0xFF000000));
+      return Container(
+        color: const Color(0xFF000000),
+        child: const Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFF58A6FF),
+            strokeWidth: 1.0,
+          ),
+        ),
+      );
     }
     return WebViewWidget(controller: _ctrl!);
   }

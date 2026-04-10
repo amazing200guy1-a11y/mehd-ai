@@ -192,7 +192,9 @@ class _WarRoomCommunityScreenState extends State<WarRoomCommunityScreen> {
           final dirColor = item['direction'] == 'BUY' ? MehdAiTheme.green : MehdAiTheme.red;
           return Padding(
             padding: const EdgeInsets.only(bottom: 12.0),
-            child: Row(
+            child: Wrap(
+              spacing: 4,
+              runSpacing: 2,
               children: [
                 Text('[${item['time']}] ', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.textSecondary, fontSize: 13)),
                 Text('${item['user']} ', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.blue, fontWeight: FontWeight.bold, fontSize: 13)),

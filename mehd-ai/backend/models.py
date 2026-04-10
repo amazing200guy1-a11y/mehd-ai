@@ -205,6 +205,10 @@ class ConsensusResult(BaseModel):
         default_factory=lambda: datetime.now(timezone.utc),
         description="When the consensus was calculated (UTC)",
     )
+    drawings: list[dict] = Field(
+        default_factory=list,
+        description="AI-generated drawing commands for the TradingView chart bridge",
+    )
 
 
 # ──────────────────────────────────────────────

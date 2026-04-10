@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
 import 'package:mehd_ai_flutter/controllers/trading_controller.dart';
 import 'package:mehd_ai_flutter/screens/broker_screen.dart';
+import 'package:mehd_ai_flutter/services/auth_service.dart';
+import 'package:mehd_ai_flutter/screens/splash_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -196,8 +198,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildSectionTitle('ABOUT'),
           _buildListTile('Version', '2.0.4 (Institutional)', Icons.info_outline),
           _buildListTile('Built By', 'Usman', Icons.code),
-          _buildListTile('Privacy Policy', '', Icons.privacy_tip_outlined, onTap: _showTermsPrivacy),
-          _buildListTile('Terms of Service', '', Icons.gavel_outlined, onTap: _showTermsPrivacy),
+          _buildListTile('Privacy Policy', '', Icons.privacy_tip_outlined, onTap: _showPrivacy),
+          _buildListTile('Terms of Service', '', Icons.gavel_outlined, onTap: _showTerms),
           _buildListTile('Rate App', '', Icons.star_border_outlined, onTap: () {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Rate us when we launch! 🐯 Coming to App Store soon.'))
@@ -248,7 +250,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _showTermsPrivacy() {
+  void _showTerms() {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -261,6 +263,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
             'Trade at your own risk.\n\n'
             'Past performance does not guarantee future results.\n\n'
             'Capital is a seed, not a sacrifice.',
+            style: TextStyle(color: Color(0xFF666666), height: 1.7)
+          )
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK', style: TextStyle(color: Color(0xFF58A6FF)))
+          )
+        ],
+      ),
+    );
+  }
+
+  void _showPrivacy() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF080808),
+        title: const Text('Privacy Policy', style: TextStyle(color: Color(0xFF58A6FF))),
+        content: const SingleChildScrollView(
+          child: Text(
+            'Your data stays yours.\n\n'
+            'We collect minimal data needed for the app to function:\n'
+            '• Email for authentication\n'
+            '• Trade history for your account\n'
+            '• App usage patterns to improve the experience\n\n'
+            'We never sell your data. Ever.\n\n'
+            'Your capital information is encrypted.\n\n'
+            'You can delete your data at any time from Settings.',
             style: TextStyle(color: Color(0xFF666666), height: 1.7)
           )
         ),
@@ -370,9 +401,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('CANCEL', style: TextStyle(color: Color(0xFF444444)))),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              Navigator.of(context).pushNamedAndRemoveUntil('/splash', (route) => false);
+              try {
+                final auth = context.read<AuthService>();
+                await auth.signOut();
+              } catch (_) {}
+              if (context.mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const SplashScreen()),
+                  (route) => false,
+                );
+              }
             }, 
             child: const Text('SIGN OUT', style: TextStyle(color: Color(0xFFFF3B3B)))
           ),

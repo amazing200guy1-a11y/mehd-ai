@@ -97,33 +97,61 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
               ),
             ),
             SizedBox(
-              height: 80,
+              height: isLastSlide ? 130 : 80,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Center(
                   child: isLastSlide
-                      ? SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF020810),
-                              side: const BorderSide(
-                                  color: Color(0xFF58A6FF), width: 1.5),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8)),
-                            ),
-                            onPressed: _completeOnboarding,
-                            child: Text(
-                              'ENTER THE DEN →',
-                              style: GoogleFonts.jetBrainsMono(
-                                color: const Color(0xFF58A6FF),
-                                fontSize: 13,
-                                letterSpacing: 2.0,
-                                fontWeight: FontWeight.bold,
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: double.infinity,
+                              height: 48,
+                              child: OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(
+                                      color: Color(0xFF58A6FF), width: 1.5),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8)),
+                                ),
+                                onPressed: _completeOnboarding,
+                                child: Text(
+                                  'PAPER TRADING — \$0 RISK',
+                                  style: GoogleFonts.jetBrainsMono(
+                                    color: const Color(0xFF58A6FF),
+                                    fontSize: 12,
+                                    letterSpacing: 1.5,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 48,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF020810),
+                                  side: const BorderSide(
+                                      color: Color(0xFF00FF88), width: 1.5),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8)),
+                                ),
+                                onPressed: _completeOnboarding,
+                                child: Text(
+                                  'GO LIVE →',
+                                  style: GoogleFonts.jetBrainsMono(
+                                    color: const Color(0xFF00FF88),
+                                    fontSize: 12,
+                                    letterSpacing: 2.0,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         )
                       : Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -171,7 +199,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
           subtitle,
           style: GoogleFonts.jetBrainsMono(
             fontSize: 12,
-            color: const Color(0xFF333333),
+            color: const Color(0xFF888888),
             height: 1.8, // Good line height for readability
           ),
         ),

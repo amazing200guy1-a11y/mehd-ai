@@ -15,11 +15,11 @@ class AppConstants {
   // Symbols
   static const List<String> symbols = [
     'EUR/USD',
+    'GBP/USD',
     'GBP/JPY',
     'XAU/USD',
     'BTC/USD',
     'ETH/USD',
-    'PARADOX/USD', // Testing Sentinel Mock
     'NAS100',
     'US30',
   ];

@@ -148,7 +148,7 @@ class _AuthScreenState extends State<AuthScreen> {
               const SizedBox(height: 6),
               const Text('Sign in to continue',
                 style: TextStyle(
-                  color: Color(0xFF444444),
+                  color: Color(0xFF666666),
                   fontSize: 12,
                   letterSpacing: 0.5)),
               const SizedBox(height: 40),
@@ -174,7 +174,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   child: const Text(
                     'Forgot password?',
                     style: TextStyle(
-                      color: Color(0xFF333333),
+                      color: Color(0xFF555555),
                       fontSize: 11)))),
               const SizedBox(height: 16),
               

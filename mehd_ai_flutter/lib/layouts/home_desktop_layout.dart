@@ -8,7 +8,7 @@ import 'package:mehd_ai_flutter/widgets/consensus_bar.dart';
 import 'package:mehd_ai_flutter/widgets/ai_terminal.dart';
 import 'package:mehd_ai_flutter/screens/history_screen.dart';
 import 'package:mehd_ai_flutter/screens/war_room_screen.dart';
-import 'package:mehd_ai_flutter/screens/war_room_community_screen.dart';
+
 import 'package:mehd_ai_flutter/screens/settings_screen.dart';
 import 'package:mehd_ai_flutter/widgets/den_loading_widget.dart';
 import 'package:mehd_ai_flutter/utils/titan_animations.dart';
@@ -42,8 +42,6 @@ class _HomeDesktopLayoutState extends State<HomeDesktopLayout> {
             } else if (index == 4) {
                Navigator.push(context, MaterialPageRoute(builder: (_) => const WarRoomScreen(isAnalyzing: false)));
             } else if (index == 5) {
-               Navigator.push(context, MaterialPageRoute(builder: (_) => const WarRoomCommunityScreen()));
-            } else if (index == 6) {
                Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
             }
           },
@@ -51,14 +49,13 @@ class _HomeDesktopLayoutState extends State<HomeDesktopLayout> {
           backgroundColor: MehdAiTheme.bgSecondary,
           selectedIconTheme: const IconThemeData(color: Color(0xFF58A6FF)),
           unselectedIconTheme: const IconThemeData(color: MehdAiTheme.textSecondary),
-          destinations: const [
-            NavigationRailDestination(icon: Icon(Icons.candlestick_chart_outlined), selectedIcon: Icon(Icons.candlestick_chart), label: Text('Terminal')),
-            NavigationRailDestination(icon: Icon(Icons.explore_outlined), selectedIcon: Icon(Icons.explore), label: Text('Markets')),
-            NavigationRailDestination(icon: Icon(Icons.work_outline), selectedIcon: Icon(Icons.work), label: Text('Positions')),
-            NavigationRailDestination(icon: Icon(Icons.history), selectedIcon: Icon(Icons.history), label: Text('History')),
-            NavigationRailDestination(icon: Icon(Icons.radar), selectedIcon: Icon(Icons.radar), label: Text('War Room')),
-            NavigationRailDestination(icon: Icon(Icons.groups_outlined), selectedIcon: Icon(Icons.groups), label: Text('Platoon')),
-            NavigationRailDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: Text('Settings')),
+          destinations: [
+            NavigationRailDestination(icon: _buildSideIcon('Terminal', Icons.terminal), selectedIcon: const Icon(Icons.terminal), label: const Text('Terminal')),
+            NavigationRailDestination(icon: _buildSideIcon('Markets', Icons.candlestick_chart_outlined), selectedIcon: const Icon(Icons.candlestick_chart), label: const Text('Markets')),
+            NavigationRailDestination(icon: _buildSideIcon('Positions', Icons.show_chart_rounded), selectedIcon: const Icon(Icons.show_chart_rounded), label: const Text('Positions')),
+            NavigationRailDestination(icon: _buildSideIcon('History', Icons.history_rounded), selectedIcon: const Icon(Icons.history_rounded), label: const Text('History')),
+            NavigationRailDestination(icon: _buildSideIcon('War Room', Icons.radar_rounded), selectedIcon: const Icon(Icons.radar_rounded), label: const Text('War Room')),
+            NavigationRailDestination(icon: _buildSideIcon('Settings', Icons.settings_outlined), selectedIcon: const Icon(Icons.settings), label: const Text('Settings')),
           ],
         ),
         const VerticalDivider(width: 1, color: MehdAiTheme.borderColor),
@@ -132,6 +129,24 @@ class _HomeDesktopLayoutState extends State<HomeDesktopLayout> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSideIcon(String tooltip, IconData icon) {
+    return Tooltip(
+      message: tooltip,
+      preferBelow: false,
+      decoration: BoxDecoration(
+        color: const Color(0xFF0A0A0A),
+        border: Border.all(color: const Color(0xFF1A1A1A)),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      textStyle: const TextStyle(
+        color: Color(0xFF58A6FF),
+        fontSize: 10,
+        letterSpacing: 1,
+      ),
+      child: Icon(icon),
     );
   }
 

@@ -5,3 +5,4 @@ pydantic
 slowapi
 python-dotenv
 sse-starlette
+firebase-admin

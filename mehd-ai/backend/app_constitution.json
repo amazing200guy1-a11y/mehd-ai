@@ -1,0 +1,10 @@
+{
+  "rules": [
+    {
+      "id": "rule_001",
+      "description": "Never buy JPY pairs during explicit BOJ intervention windows.",
+      "action": "VETO",
+      "condition": "symbol.contains('JPY') and news.contains('BOJ intervention')"
+    }
+  ]
+}

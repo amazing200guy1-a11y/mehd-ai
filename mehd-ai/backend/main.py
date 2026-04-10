@@ -24,8 +24,9 @@ import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from firebase_admin import auth as fb_auth
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -33,7 +34,7 @@ from slowapi.errors import RateLimitExceeded
 from sse_starlette.sse import EventSourceResponse
 
 from audit_trail import AuditLogger
-from consensus_engine import AsyncCouncil
+from consensus_engine import AsyncCouncil, generate_drawing_commands, validate_user_level, generate_mock_candles
 from data_streamer import MarketDataStreamer
 from black_swan_monitor import monitor_instance as black_swan
 from models import (
@@ -84,6 +85,22 @@ async def save_drawings(symbol: str, data: DrawingData):
     _manual_drawings[symbol] = data.drawings
     logger.info(f"Saved {len(data.drawings)} drawings for {symbol}")
     return {"status": "ok", "count": len(data.drawings)}
+
+class DrawingValidationRequest(BaseModel):
+    symbol: str
+    price: float
+
+@app.post("/drawings/validate")
+async def validate_drawing(req: DrawingValidationRequest):
+    """Validate a user drawing against market structure."""
+    # In a real app, we'd fetch real candle history. 
+    # For now, we generate the same mock candles used in analysis for consistency.
+    live_snapshot = streamer.get_latest_snapshot(req.symbol)
+    mock_candles = generate_mock_candles(live_snapshot.close)
+    
+    result = validate_user_level(req.price, mock_candles)
+    return result
+
 limiter = Limiter(key_func=get_remote_address)
 
 
@@ -106,9 +123,22 @@ _start_time: float = time.time()
 
 import os as _os
 
+DEMO_MODE = _os.getenv("DEMO_MODE", "true").lower() == "true"
 DAILY_API_BUDGET_USD = float(_os.getenv("DAILY_API_BUDGET_USD", "50"))
 ALERT_THRESHOLD_USD = float(_os.getenv("ALERT_THRESHOLD_USD", "40"))
 AUTO_CACHE_THRESHOLD_USD = float(_os.getenv("AUTO_CACHE_THRESHOLD_USD", "45"))
+
+async def get_current_user(authorization: str = Header(None)) -> str:
+    if DEMO_MODE:
+        return "demo_user"
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        token = authorization.split(' ')[1]
+        decoded = fb_auth.verify_id_token(token)
+        return decoded['uid']
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 USER_TIERS = {
     "free": {"analyses_per_day": 5, "models_per_analysis": 3, "full_consensus": False, "paper_only": True},
@@ -236,7 +266,7 @@ app.add_middleware(
     tags=["Analysis"],
 )
 @limiter.limit("10/minute")
-async def analyze_symbol(request: Request, symbol: str, tier: str = "sovereign") -> ConsensusResult:
+async def analyze_symbol(request: Request, symbol: str, tier: str = "sovereign", uid: str = Depends(get_current_user)) -> ConsensusResult:
     """
     Fires all 11 AI agents to analyze the given currency pair.
     Returns the consensus result with every model's vote,
@@ -271,6 +301,13 @@ async def analyze_symbol(request: Request, symbol: str, tier: str = "sovereign")
         result = await den_engine.analyze(
             symbol, live_snapshot, tier=tier_config, current_drawdown=risk_kernel.account.daily_drawdown_pct
         )
+
+        # Generate AI Drawing Commands for the bridge
+        # In a real app, we fetch historical candles from the provider.
+        # For this bridge, we'll generate realistic mock history so the AI can mark levels.
+        from consensus_engine import generate_mock_candles
+        mock_candles = generate_mock_candles(live_snapshot.close)
+        result.drawings = generate_drawing_commands(symbol, result, mock_candles)
 
         # Upgrade 2: Math Layer pre-check (TITAN, ATLAS, FORGE, THE DON, SENTINEL)
         math_agent_names = ["TITAN", "ATLAS", "FORGE", "THE DON", "SENTINEL"]
@@ -339,7 +376,7 @@ async def stream_prices(symbol: str):
     summary="Execute a trade (risk kernel runs first)",
     tags=["Trading"],
 )
-async def execute_trade(order: TradeOrder) -> RiskDecision:
+async def execute_trade(order: TradeOrder, uid: str = Depends(get_current_user)) -> RiskDecision:
     """
     Submit a trade order. The HardRiskKernel evaluates it FIRST.
     If ANY risk rule fails, the trade is rejected immediately

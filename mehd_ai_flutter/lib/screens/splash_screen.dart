@@ -44,7 +44,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     _scaleCtrl.forward();
     
     Future.delayed(
-      const Duration(milliseconds: 2500),
+      const Duration(milliseconds: 500),
       _navigate);
   }
   
@@ -114,7 +114,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
             const Text(
               'Capital is a seed, not a sacrifice',
               style: TextStyle(
-                color: Color(0xFF222222),
+                color: Color(0xFF555555),
                 fontSize: 11,
                 letterSpacing: 2)),
             const SizedBox(height: 40),
@@ -126,7 +126,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
             const SizedBox(height: 12),
             const Text('SYNCHRONIZING KERNEL...',
               style: TextStyle(
-                color: Color(0xFF1A1A1A),
+                color: Color(0xFF444444),
                 fontSize: 8,
                 letterSpacing: 2)),
           ],
