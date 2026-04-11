@@ -193,8 +193,11 @@ class _TheDenScreenState extends State<TheDenScreen> {
         color: MehdAiTheme.bgSecondary,
         border: Border(bottom: BorderSide(color: MehdAiTheme.borderColor)),
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
+      child: SafeArea(
+        bottom: true,
+        top: false,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
