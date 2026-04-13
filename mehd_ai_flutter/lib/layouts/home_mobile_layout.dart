@@ -275,38 +275,50 @@ class _HomeMobileLayoutState extends State<HomeMobileLayout> {
             children: [
               const SizedBox(height: 12),
               Container(width: 40, height: 4, decoration: BoxDecoration(color: MehdAiTheme.textDim(context).withOpacity(0.3), borderRadius: BorderRadius.circular(2))),
-              const SizedBox(height: 20),
-              _buildMenuAction(
-                context, 
-                'WAR ROOM COMMUNITY', 
-                Icons.groups, 
-                MehdAiTheme.purple,
-                () {
-                  Navigator.pop(context);
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const WarRoomCommunityScreen()));
-                }
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    Expanded(child: _buildMenuCard(
+                      context,
+                      'WAR ROOM',
+                      Icons.groups_rounded,
+                      const [Color(0xFF3A1B5E), Color(0xFF1F0F35)],
+                      MehdAiTheme.purple,
+                      () {
+                        Navigator.pop(context);
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const WarRoomCommunityScreen()));
+                      },
+                    )),
+                    const SizedBox(width: 12),
+                    Expanded(child: _buildMenuCard(
+                      context,
+                      'THE DEN',
+                      Icons.account_tree_rounded,
+                      const [Color(0xFF142840), Color(0xFF0B1825)],
+                      MehdAiTheme.blue,
+                      () {
+                        Navigator.pop(context);
+                        setState(() => _mobileTab = 1);
+                      },
+                    )),
+                    const SizedBox(width: 12),
+                    Expanded(child: _buildMenuCard(
+                      context,
+                      'SETTINGS',
+                      Icons.settings_rounded,
+                      const [Color(0xFF1A2030), Color(0xFF0F1520)],
+                      Colors.white70,
+                      () {
+                        Navigator.pop(context);
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+                      },
+                    )),
+                  ],
+                ),
               ),
-              _buildMenuAction(
-                context, 
-                'THE DEN (ROOMS)', 
-                Icons.account_tree, 
-                MehdAiTheme.blue,
-                () {
-                  Navigator.pop(context);
-                  setState(() => _mobileTab = 1);
-                }
-              ),
-              _buildMenuAction(
-                context, 
-                'GLOBAL SETTINGS', 
-                Icons.settings, 
-                MehdAiTheme.textPrimary,
-                () {
-                  Navigator.pop(context);
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
-                }
-              ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 32),
             ],
           ),
         ),
@@ -314,11 +326,61 @@ class _HomeMobileLayoutState extends State<HomeMobileLayout> {
     );
   }
 
-  Widget _buildMenuAction(BuildContext context, String title, IconData icon, Color color, VoidCallback onTap) {
-    return ListTile(
-      leading: Icon(icon, color: color),
-      title: Text(title, style: MehdAiTheme.headingStyle.copyWith(fontSize: 14, color: color)),
+  Widget _buildMenuCard(BuildContext context, String title, IconData icon, List<Color> gradient, Color accentColor, VoidCallback onTap) {
+    return GestureDetector(
       onTap: onTap,
+      child: Container(
+        height: 110,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: gradient,
+          ),
+          border: Border.all(color: Colors.white.withOpacity(0.06), width: 0.5),
+          boxShadow: [
+            BoxShadow(color: gradient[0].withOpacity(0.25), blurRadius: 16, offset: const Offset(0, 6)),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withOpacity(0.12),
+                    Colors.white.withOpacity(0.03),
+                  ],
+                ),
+                border: Border.all(color: Colors.white.withOpacity(0.08)),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3)),
+                ],
+              ),
+              child: Icon(icon, color: accentColor, size: 22),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.85),
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.2,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
     );
   }
 

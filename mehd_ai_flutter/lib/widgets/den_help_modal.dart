@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
 
 /// Shows a quick-reference help modal explaining core Den concepts.
@@ -18,18 +19,18 @@ class DenHelpModal extends StatelessWidget {
     return Dialog(
       backgroundColor: Colors.transparent,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
           child: Container(
-            width: 500,
-            constraints: const BoxConstraints(maxHeight: 600),
+            width: 440,
+            constraints: const BoxConstraints(maxHeight: 580),
             decoration: BoxDecoration(
-              color: const Color(0xFF080808).withOpacity(0.92),
-              borderRadius: BorderRadius.circular(16),
+              color: const Color(0xFF080808).withOpacity(0.93),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: MehdAiTheme.blue.withOpacity(0.25),
-                width: 1,
+                color: Colors.white.withOpacity(0.06),
+                width: 0.5,
               ),
             ),
             child: Column(
@@ -37,91 +38,108 @@ class DenHelpModal extends StatelessWidget {
               children: [
                 // Header
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.fromLTRB(24, 20, 16, 16),
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(
-                        color: MehdAiTheme.blue.withOpacity(0.15),
+                        color: Colors.white.withOpacity(0.04),
                       ),
                     ),
                   ),
                   child: Row(
                     children: [
                       Container(
-                        width: 36,
-                        height: 36,
+                        width: 40,
+                        height: 40,
                         decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: MehdAiTheme.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF1A2A4A), Color(0xFF0F1A30)],
+                          ),
+                          border: Border.all(color: Colors.white.withOpacity(0.06)),
                         ),
-                        child: const Icon(Icons.help_outline, color: MehdAiTheme.blue, size: 20),
+                        child: const Icon(Icons.help_outline_rounded, color: MehdAiTheme.blue, size: 20),
                       ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('THE DEN — QUICK REFERENCE',
-                            style: MehdAiTheme.headingStyle.copyWith(fontSize: 14, letterSpacing: 2)),
-                          const SizedBox(height: 2),
-                          Text('Mehd AI Intelligence System',
-                            style: MehdAiTheme.labelStyle.copyWith(color: MehdAiTheme.textSecondary)),
-                        ],
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Quick Reference',
+                              style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 2),
+                            Text('Mehd AI Intelligence System',
+                              style: MehdAiTheme.labelStyle.copyWith(color: MehdAiTheme.textSecondary, fontSize: 11)),
+                          ],
+                        ),
                       ),
-                      const Spacer(),
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.close, color: MehdAiTheme.textSecondary, size: 20),
+                        icon: Icon(Icons.close_rounded, color: Colors.white.withOpacity(0.3), size: 20),
                       ),
                     ],
                   ),
                 ),
-                // Content
+                // Content — 3D Card Grid
                 Flexible(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildEntry(
-                          '🐯',
-                          'THE DEN',
-                          'The core AI engine. 11 specialized agents hold a secure boardroom meeting to analyze every trade. No single model decides alone — consensus is law.',
-                          MehdAiTheme.gold,
-                        ),
-                        _buildEntry(
-                          '🤖',
-                          '11 AGENTS (3 LAYERS)',
-                          '• The Underworld — Data layer (DON, PHANTOM, ORACLE)\n'
-                          '• The Empire — Strategy layer (CAESAR, SAGE, GUARDIAN)\n'
-                          '• Olympus — Math + Oversight (TITAN, ATLAS, FORGE, THE DON, SENTINEL)',
-                          MehdAiTheme.blue,
-                        ),
-                        _buildEntry(
-                          '🔒',
-                          'SOVEREIGN LOCK',
-                          'The trade button only unlocks when 7+ of 11 agents agree. If consensus is not reached, execution is physically blocked. No manual override exists.',
-                          MehdAiTheme.purple,
-                        ),
-                        _buildEntry(
-                          '⚙️',
-                          'HARD RISK KERNEL',
-                          'An unbreakable mathematical engine that restricts every trade to max 1% account risk. It calculates lot size, enforces stop-loss placement, and cannot be bypassed.',
-                          MehdAiTheme.green,
-                        ),
-                        _buildEntry(
-                          '🛡️',
-                          'STOP GUARDIAN',
-                          'If you hit 3 consecutive losses or exhibit emotional trading patterns, the Stop Guardian locks your account for 24 hours. This prevents revenge trading from destroying your capital.',
-                          MehdAiTheme.red,
+                        Row(
+                          children: [
+                            Expanded(child: _build3DHelpCard(
+                              'THE DEN',
+                              Icons.pets_rounded,
+                              '11 AI agents hold a boardroom meeting on every trade',
+                              const [Color(0xFF3A2A10), Color(0xFF1F1508)],
+                              MehdAiTheme.gold,
+                            )),
+                            const SizedBox(width: 12),
+                            Expanded(child: _build3DHelpCard(
+                              '11 AGENTS',
+                              Icons.smart_toy_rounded,
+                              '3 layers: Underworld, Empire, Olympus',
+                              const [Color(0xFF142840), Color(0xFF0B1825)],
+                              MehdAiTheme.blue,
+                            )),
+                          ],
                         ),
                         const SizedBox(height: 12),
-                        Center(
-                          child: Text(
-                            'Capital is a seed, not a sacrifice.',
-                            style: MehdAiTheme.terminalStyle.copyWith(
-                              color: MehdAiTheme.gold,
-                              fontStyle: FontStyle.italic,
-                            ),
+                        Row(
+                          children: [
+                            Expanded(child: _build3DHelpCard(
+                              'SOVEREIGN LOCK',
+                              Icons.lock_rounded,
+                              '7+ agents must agree or the trade button stays locked',
+                              const [Color(0xFF2A1540), Color(0xFF150A25)],
+                              MehdAiTheme.purple,
+                            )),
+                            const SizedBox(width: 12),
+                            Expanded(child: _build3DHelpCard(
+                              'RISK KERNEL',
+                              Icons.shield_rounded,
+                              'Max 1% risk per trade. Cannot be bypassed.',
+                              const [Color(0xFF0A2A18), Color(0xFF06180E)],
+                              MehdAiTheme.green,
+                            )),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        _build3DHelpCardWide(
+                          'STOP GUARDIAN',
+                          Icons.front_hand_rounded,
+                          '3 consecutive losses = 24hr account lock. Prevents revenge trading.',
+                          const [Color(0xFF3A1515), Color(0xFF200A0A)],
+                          MehdAiTheme.red,
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          'Capital is a seed, not a sacrifice.',
+                          style: GoogleFonts.outfit(
+                            color: MehdAiTheme.gold.withOpacity(0.6),
+                            fontStyle: FontStyle.italic,
+                            fontSize: 12,
                           ),
                         ),
                       ],
@@ -136,34 +154,87 @@ class DenHelpModal extends StatelessWidget {
     );
   }
 
-  Widget _buildEntry(String emoji, String title, String body, Color color) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Row(
+  Widget _build3DHelpCard(String title, IconData icon, String desc, List<Color> gradient, Color accent) {
+    return Container(
+      height: 140,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: gradient,
+        ),
+        border: Border.all(color: Colors.white.withOpacity(0.05), width: 0.5),
+        boxShadow: [
+          BoxShadow(color: gradient[0].withOpacity(0.2), blurRadius: 12, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 20)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                  style: MehdAiTheme.terminalStyle.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                  )),
-                const SizedBox(height: 4),
-                Text(body,
-                  style: MehdAiTheme.labelStyle.copyWith(
-                    color: MehdAiTheme.textSecondary,
-                    height: 1.5,
-                    fontSize: 12,
-                  )),
-              ],
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(11),
+              gradient: LinearGradient(
+                colors: [Colors.white.withOpacity(0.12), Colors.white.withOpacity(0.03)],
+              ),
+              border: Border.all(color: Colors.white.withOpacity(0.06)),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 6, offset: const Offset(0, 3))],
             ),
+            child: Icon(icon, color: accent, size: 18),
           ),
+          const SizedBox(height: 10),
+          Text(title, style: TextStyle(color: accent, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1)),
+          const SizedBox(height: 4),
+          Text(desc, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 10, height: 1.3), maxLines: 3, overflow: TextOverflow.ellipsis),
+        ],
+      ),
+    );
+  }
+
+  Widget _build3DHelpCardWide(String title, IconData icon, String desc, List<Color> gradient, Color accent) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: gradient,
+        ),
+        border: Border.all(color: Colors.white.withOpacity(0.05), width: 0.5),
+        boxShadow: [
+          BoxShadow(color: gradient[0].withOpacity(0.2), blurRadius: 12, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              gradient: LinearGradient(
+                colors: [Colors.white.withOpacity(0.12), Colors.white.withOpacity(0.03)],
+              ),
+              border: Border.all(color: Colors.white.withOpacity(0.06)),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 6, offset: const Offset(0, 3))],
+            ),
+            child: Icon(icon, color: accent, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: TextStyle(color: accent, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1)),
+              const SizedBox(height: 4),
+              Text(desc, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11, height: 1.3)),
+            ],
+          )),
         ],
       ),
     );
