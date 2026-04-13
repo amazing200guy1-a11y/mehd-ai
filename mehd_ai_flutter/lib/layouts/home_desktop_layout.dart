@@ -8,9 +8,14 @@ import 'package:mehd_ai_flutter/widgets/consensus_bar.dart';
 import 'package:mehd_ai_flutter/widgets/ai_terminal.dart';
 import 'package:mehd_ai_flutter/screens/history_screen.dart';
 import 'package:mehd_ai_flutter/screens/war_room_screen.dart';
+import 'package:mehd_ai_flutter/screens/den/sovereign_feed_screen.dart';
+import 'package:mehd_ai_flutter/screens/den/terminal_screen.dart';
+import 'package:mehd_ai_flutter/screens/den/platoon_screen.dart';
+import 'package:mehd_ai_flutter/screens/den/positions_screen.dart';
 
 import 'package:mehd_ai_flutter/screens/settings_screen.dart';
 import 'package:mehd_ai_flutter/widgets/den_loading_widget.dart';
+import 'package:mehd_ai_flutter/widgets/den_sidebar.dart';
 import 'package:mehd_ai_flutter/utils/titan_animations.dart';
 
 class HomeDesktopLayout extends StatefulWidget {
@@ -31,48 +36,42 @@ class _HomeDesktopLayoutState extends State<HomeDesktopLayout> {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        NavigationRail(
+        DenSidebar(
           selectedIndex: _selectedIndex,
-          onDestinationSelected: (int index) {
+          onSelect: (int index) {
             setState(() => _selectedIndex = index);
-            if (index == 2) {
-               // Positions - maybe open bottom sheet or sidebar? no specific screen given.
-            } else if (index == 3) {
+            if (index == 3) {
                Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryScreen()));
             } else if (index == 4) {
                Navigator.push(context, MaterialPageRoute(builder: (_) => const WarRoomScreen(isAnalyzing: false)));
             } else if (index == 5) {
+               Navigator.push(context, MaterialPageRoute(builder: (_) => const PlatoonScreen()));
+            } else if (index == 6) {
+               Navigator.push(context, MaterialPageRoute(builder: (_) => const SovereignFeedScreen()));
+            } else if (index == 7) {
                Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
             }
           },
-          labelType: NavigationRailLabelType.none,
-          backgroundColor: MehdAiTheme.bgSecondary,
-          selectedIconTheme: const IconThemeData(color: Color(0xFF58A6FF)),
-          unselectedIconTheme: const IconThemeData(color: MehdAiTheme.textSecondary),
-          destinations: [
-            NavigationRailDestination(icon: _buildSideIcon('Terminal', Icons.terminal), selectedIcon: _buildSideIcon('Terminal', Icons.terminal), label: const Text('Terminal')),
-            NavigationRailDestination(icon: _buildSideIcon('Markets', Icons.candlestick_chart_outlined), selectedIcon: _buildSideIcon('Markets', Icons.candlestick_chart), label: const Text('Markets')),
-            NavigationRailDestination(icon: _buildSideIcon('Positions', Icons.show_chart_rounded), selectedIcon: _buildSideIcon('Positions', Icons.show_chart_rounded), label: const Text('Positions')),
-            NavigationRailDestination(icon: _buildSideIcon('History', Icons.history_rounded), selectedIcon: _buildSideIcon('History', Icons.history_rounded), label: const Text('History')),
-            NavigationRailDestination(icon: _buildSideIcon('War Room', Icons.radar_rounded), selectedIcon: _buildSideIcon('War Room', Icons.radar_rounded), label: const Text('War Room')),
-            NavigationRailDestination(icon: _buildSideIcon('Settings', Icons.settings_outlined), selectedIcon: _buildSideIcon('Settings', Icons.settings), label: const Text('Settings')),
-          ],
         ),
-        const VerticalDivider(width: 1, color: MehdAiTheme.borderColor),
-        if (_selectedIndex == 0 || _selectedIndex == 1) ...[
+        VerticalDivider(width: 1, color: MehdAiTheme.border(context)),
+        if (_selectedIndex == 1) ...[
           SymbolSidebar(
             activeSymbol: widget.market.activeSymbol ?? '', 
             onSymbolSelected: (s) => widget.market.selectSymbol(s, onStatusMsg: (_) {})
           ),
-          const VerticalDivider(width: 1, color: MehdAiTheme.borderColor),
+          VerticalDivider(width: 1, color: MehdAiTheme.border(context)),
         ],
         Expanded(
           flex: 7,
-          child: Column(
+          child: _selectedIndex == 0 
+            ? const TerminalScreen() 
+            : _selectedIndex == 2
+              ? const PositionsScreen()
+              : Column(
             children: [
               Expanded(
                 child: widget.market.activeSymbol == null 
-                  ? const Center(child: Text('Select Symbol', style: TextStyle(color: Colors.white))) // placeholder EmptyState
+                  ? Center(child: Text('Select Symbol', style: TextStyle(color: MehdAiTheme.text(context)))) // placeholder EmptyState
                   : (widget.market.latestSnapshot == null 
                     ? const Center(child: DenLoadingWidget(message: 'Entering the Den...'))
                     : Column(
@@ -119,43 +118,28 @@ class _HomeDesktopLayoutState extends State<HomeDesktopLayout> {
             ],
           ),
         ),
-        const VerticalDivider(width: 1, color: MehdAiTheme.borderColor),
-        Expanded(
-          flex: 3,
-          child: AiTerminal(
-            consensusResult: widget.market.consensus, 
-            isAnalyzing: widget.market.isAnalyzing, 
-            drawings: const []
+        VerticalDivider(width: 1, color: MehdAiTheme.border(context)),
+        if (_selectedIndex != 0 && _selectedIndex != 2) // Dont show AiTerminal if in Terminal Matrix or Positions Ledger
+          Expanded(
+            flex: 3,
+            child: AiTerminal(
+              consensusResult: widget.market.consensus, 
+              isAnalyzing: widget.market.isAnalyzing, 
+              drawings: const []
+            ),
           ),
-        ),
       ],
     );
   }
 
-  Widget _buildSideIcon(String tooltip, IconData icon) {
-    return Tooltip(
-      message: tooltip,
-      preferBelow: false,
-      decoration: BoxDecoration(
-        color: const Color(0xFF0A0A0A),
-        border: Border.all(color: const Color(0xFF1A1A1A)),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      textStyle: const TextStyle(
-        color: Color(0xFF58A6FF),
-        fontSize: 10,
-        letterSpacing: 1,
-      ),
-      child: Icon(icon),
-    );
-  }
+
 
   Widget _buildChartHeaderArea() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: const BoxDecoration(
-        color: MehdAiTheme.bgSecondary,
-        border: Border(bottom: BorderSide(color: MehdAiTheme.borderColor)),
+      decoration: BoxDecoration(
+        color: MehdAiTheme.surface(context),
+        border: Border(bottom: BorderSide(color: MehdAiTheme.border(context))),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -189,8 +173,8 @@ class _HomeDesktopLayoutState extends State<HomeDesktopLayout> {
       height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: MehdAiTheme.bgPrimary.withOpacity(0.5),
-        border: const Border(bottom: BorderSide(color: MehdAiTheme.borderColor)),
+        color: MehdAiTheme.background(context).withOpacity(0.5),
+        border: Border(bottom: BorderSide(color: MehdAiTheme.border(context))),
       ),
       child: Row(
         children: [
@@ -244,7 +228,7 @@ class _HomeDesktopLayoutState extends State<HomeDesktopLayout> {
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF58A6FF).withOpacity(0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: isSelected ? const Color(0xFF58A6FF) : MehdAiTheme.borderColor),
+          border: Border.all(color: isSelected ? const Color(0xFF58A6FF) : MehdAiTheme.border(context)),
         ),
         child: Text(
           mode, 

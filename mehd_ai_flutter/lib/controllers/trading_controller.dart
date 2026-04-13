@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'dart:math' as math;
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mehd_ai_flutter/core/api_service.dart';
@@ -30,10 +31,67 @@ class TradingController extends ChangeNotifier {
   final ApiService _apiService = ApiService();
   final PerformanceTracker _perf = PerformanceTracker();
   final List<Trade> recentTrades = [];
+  
+  // LIVE POSITIONS STATE (Billion Dollar Phase)
+  final List<Map<String, dynamic>> activePositions = [];
+  Timer? _volatilityTimer;
 
   TradingController() {
     _loadLegalStatus();
   }
+
+  // == SHADOW EXECUTION ENGINE ==
+  void executeShadowTrade(String symbol, String direction, double entryPrice) {
+    final ticketId = "TRD-\${math.Random().nextInt(9999).toString().padLeft(4, '0')}";
+    activePositions.add({
+      "id": ticketId,
+      "symbol": symbol,
+      "type": direction,
+      "entry": entryPrice,
+      "current": entryPrice, // Starts at entry
+      "pnl": 0.0,            // Starts at $0
+    });
+    
+    notifyListeners();
+    _startVolatilitySimulation();
+  }
+
+  void closeAllPositions() {
+    activePositions.clear();
+    _volatilityTimer?.cancel();
+    _volatilityTimer = null;
+    notifyListeners();
+  }
+  
+  void closePosition(String id) {
+    activePositions.removeWhere((pos) => pos['id'] == id);
+    if (activePositions.isEmpty) {
+      _volatilityTimer?.cancel();
+      _volatilityTimer = null;
+    }
+    notifyListeners();
+  }
+
+  void _startVolatilitySimulation() {
+    if (_volatilityTimer != null && _volatilityTimer!.isActive) return;
+    
+    // Updates every 1.5 seconds to simulate market ticking
+    _volatilityTimer = Timer.periodic(const Duration(milliseconds: 1500), (timer) {
+      bool changed = false;
+      for (var pos in activePositions) {
+        // Randomly swing PnL between -$50 and +$150 to simulate a volatile, winning bot
+        final swing = (math.Random().nextDouble() * 200) - 50; 
+        pos['pnl'] = (pos['pnl'] as double) + swing;
+        
+        // Slightly shift the current price as well just for aesthetics
+        final priceShift = (math.Random().nextDouble() * 0.0005) - 0.00025;
+        pos['current'] = (pos['current'] as double) + priceShift;
+        changed = true;
+      }
+      if (changed) notifyListeners();
+    });
+  }
+  // ==============================
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();

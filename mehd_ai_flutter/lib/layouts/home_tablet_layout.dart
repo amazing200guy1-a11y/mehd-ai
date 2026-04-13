@@ -31,7 +31,7 @@ class _HomeTabletLayoutState extends State<HomeTabletLayout> {
       children: [
         Container(
           width: 60,
-          color: MehdAiTheme.bgSecondary,
+          color: MehdAiTheme.surface(context),
           child: ListView(
             children: AppConstants.symbols.map((s) => InkWell(
               onTap: () => market.selectSymbol(s, onStatusMsg: (_) {}),
@@ -51,12 +51,12 @@ class _HomeTabletLayoutState extends State<HomeTabletLayout> {
             )).toList(),
           ),
         ),
-        const VerticalDivider(width: 1, color: MehdAiTheme.borderColor),
+        VerticalDivider(width: 1, color: MehdAiTheme.border(context)),
         Expanded(
           child: Column(
             children: [
               Container(
-                color: MehdAiTheme.bgSecondary,
+                color: MehdAiTheme.surface(context),
                 child: Column(
                   children: [
                     _buildTopHeader(market),
@@ -67,7 +67,7 @@ class _HomeTabletLayoutState extends State<HomeTabletLayout> {
               ),
               Expanded(
                 child: market.activeSymbol == null 
-                  ? const Center(child: Text('Empty', style: TextStyle(color: Colors.white)))
+                  ? Center(child: Text('Empty', style: TextStyle(color: MehdAiTheme.text(context))))
                   : (market.latestSnapshot == null 
                     ? const Center(child: DenLoadingWidget(message: 'Entering the Den...'))
                     : AnimatedSwitcher(
@@ -116,7 +116,7 @@ class _HomeTabletLayoutState extends State<HomeTabletLayout> {
       height: 50,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        border: const Border(bottom: BorderSide(color: MehdAiTheme.borderColor)),
+        border: Border(bottom: BorderSide(color: MehdAiTheme.border(context))),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -151,8 +151,8 @@ class _HomeTabletLayoutState extends State<HomeTabletLayout> {
       height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: MehdAiTheme.bgSecondary,
-        border: Border(bottom: BorderSide(color: MehdAiTheme.borderColor)),
+        color: MehdAiTheme.surface(context),
+        border: Border(bottom: BorderSide(color: MehdAiTheme.border(context))),
       ),
       child: Row(
         children: [
@@ -206,7 +206,7 @@ class _HomeTabletLayoutState extends State<HomeTabletLayout> {
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF58A6FF).withOpacity(0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: isSelected ? const Color(0xFF58A6FF) : MehdAiTheme.borderColor),
+          border: Border.all(color: isSelected ? const Color(0xFF58A6FF) : MehdAiTheme.border(context)),
         ),
         child: Text(
           mode, 

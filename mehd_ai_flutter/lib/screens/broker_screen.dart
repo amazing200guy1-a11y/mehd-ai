@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mehd_ai_flutter/controllers/trading_controller.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class Broker {
   final String id;
@@ -32,6 +33,10 @@ class _BrokerScreenState extends State<BrokerScreen> {
   bool _isConnected = false;
   String _connectedBroker = '';
   String _accountType = ''; // demo/live
+  
+  final _secureStorage = const FlutterSecureStorage();
+  final _apiKeyCtrl = TextEditingController();
+  final _accountIdCtrl = TextEditingController();
 
   final List<Broker> brokers = [
     const Broker(id: 'oanda', name: 'OANDA', initials: 'OA', type: 'API Direct', color: Color(0xFF58A6FF)),
@@ -241,14 +246,14 @@ class _BrokerScreenState extends State<BrokerScreen> {
                   const SizedBox(height: 24),
                   
                   if (broker.id == 'oanda') ...[
-                    _brokerField('API Key', obscure: true),
-                    _brokerField('Account ID'),
+                    _brokerField('API Key', controller: _apiKeyCtrl, obscure: true),
+                    _brokerField('Account ID', controller: _accountIdCtrl),
                     _accountTypeToggle(setModalState),
                   ],
                   
                   if (broker.id != 'oanda') ...[
-                    _brokerField('MT5 Login'),
-                    _brokerField('MT5 Password', obscure: true),
+                    _brokerField('MT5 Login', controller: _accountIdCtrl),
+                    _brokerField('MT5 Password', controller: _apiKeyCtrl, obscure: true),
                     _brokerField('Server', hint: 'e.g. Exness-MT5Real'),
                     _accountTypeToggle(setModalState),
                   ],
@@ -302,10 +307,11 @@ class _BrokerScreenState extends State<BrokerScreen> {
     );
   }
 
-  Widget _brokerField(String label, {bool obscure = false, String? hint}) {
+  Widget _brokerField(String label, {bool obscure = false, String? hint, TextEditingController? controller}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
+        controller: controller,
         obscureText: obscure,
         style: const TextStyle(color: Color(0xFF888888), fontSize: 13),
         decoration: InputDecoration(
@@ -365,6 +371,10 @@ class _BrokerScreenState extends State<BrokerScreen> {
   void _connectBroker(Broker selectedBroker) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     
+    // Protection 5: Save raw credentials securely on device, NOT in Firebase
+    await _secureStorage.write(key: 'broker_api_key', value: _apiKeyCtrl.text);
+    await _secureStorage.write(key: 'broker_account_id', value: _accountIdCtrl.text);
+    
     if (uid != null) {
       try {
         await FirebaseFirestore.instance
@@ -382,6 +392,9 @@ class _BrokerScreenState extends State<BrokerScreen> {
         // Ignored
       }
     }
+
+    _apiKeyCtrl.clear();
+    _accountIdCtrl.clear();
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(

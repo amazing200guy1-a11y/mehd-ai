@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
 import 'package:mehd_ai_flutter/services/auth_service.dart';
 import 'package:mehd_ai_flutter/services/language_service.dart';
-import 'package:mehd_ai_flutter/services/app_settings_provider.dart';
+import 'package:mehd_ai_flutter/services/settings_service.dart';
 import 'package:mehd_ai_flutter/screens/home_screen.dart';
 import 'package:mehd_ai_flutter/screens/auth_screen.dart';
 import 'package:mehd_ai_flutter/screens/onboarding_screen.dart';
@@ -73,7 +73,7 @@ class MehdAiApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TradingController()),
         ChangeNotifierProvider(create: (_) => MarketDataController()),
         ChangeNotifierProvider(create: (_) => ThemeProvider(prefs: prefs), lazy: false),
-        ChangeNotifierProvider(create: (_) => AppSettingsProvider(prefs: prefs), lazy: false),
+        ChangeNotifierProvider(create: (_) => SettingsService()..load(), lazy: false),
       ],
       child: Consumer2<LanguageService, ThemeProvider>(
         builder: (context, languageOpts, themeProvider, child) {

@@ -12,17 +12,7 @@ class ThemeProvider extends ChangeNotifier {
 
   bool get isDark => _isDark;
   
-  ThemeData get theme => _isDark
-    ? ThemeData.dark().copyWith(
-        scaffoldBackgroundColor:
-          const Color(0xFF000000),
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF58A6FF)))
-    : ThemeData.light().copyWith(
-        scaffoldBackgroundColor:
-          const Color(0xFFF8F8F8),
-        colorScheme: const ColorScheme.light(
-          primary: Color(0xFF0066CC)));
+  ThemeData get theme => MehdAiTheme.getTheme(_isDark);
   
   void setDark(bool dark) async {
     if (_isDark == dark) return;
@@ -45,7 +35,25 @@ class ThemeProvider extends ChangeNotifier {
 /// the platform with their money.
 
 class MehdAiTheme {
-  // Core Backgrounds - PURE BLACK
+  // --- Dynamic Color System ---
+  // These methods return the correct color based on context brightness.
+  
+  static Color background(BuildContext context) => 
+      Theme.of(context).brightness == Brightness.dark ? bgPrimary : white;
+      
+  static Color surface(BuildContext context) => 
+      Theme.of(context).brightness == Brightness.dark ? bgSecondary : const Color(0xFFF2F2F2);
+
+  static Color border(BuildContext context) => 
+      Theme.of(context).brightness == Brightness.dark ? borderColor : const Color(0xFFE5E5E5);
+
+  static Color text(BuildContext context) => 
+      Theme.of(context).brightness == Brightness.dark ? textPrimary : const Color(0xFF1A1A1A);
+
+  static Color textDim(BuildContext context) => 
+      Theme.of(context).brightness == Brightness.dark ? textSecondary : const Color(0xFF666666);
+
+  // --- Core Backgrounds (Dark Mode Defaults) ---
   static const Color bgPrimary = Color(0xFF000000);
   static const Color bgSecondary = Color(0xFF080808);
   static const Color bgTertiary = Color(0xFF111111);
@@ -64,9 +72,6 @@ class MehdAiTheme {
   static const Color gold = Color(0xFFFFD700);   // Premium / Institutional
   static const Color white = Color(0xFFFFFFFF);   // Pure white alias
   static const Color shieldColor = Color(0xFF00D1FF); // Sovereign Blue
-
-  // Border alias for convenience
-  static const Color border = borderColor;
 
   // Body text style
   static TextStyle get bodyStyle => GoogleFonts.outfit(
@@ -171,36 +176,69 @@ class MehdAiTheme {
         fontSize: 18,
       );
 
-  // Full Theme Data
-  static ThemeData get themeData {
-    return ThemeData(
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: bgPrimary,
-      primaryColor: blue,
-      colorScheme: const ColorScheme.dark(
-        primary: blue,
-        secondary: green,
-        surface: bgSecondary,
-        error: red,
-        onSurface: textPrimary,
-      ),
-      textTheme: TextTheme(
-        displayLarge: GoogleFonts.plusJakartaSans(
-          fontSize: 28, color: green, shadows: textGlowGreen),
-        bodyMedium: GoogleFonts.outfit(
-          fontSize: 14, color: textSecondary),
-        bodySmall: GoogleFonts.jetBrainsMono(
-          fontSize: 11, color: textSecondary),
-      ),
-      dividerColor: borderColor,
-      appBarTheme: const AppBarTheme(
-        backgroundColor: bgPrimary,
-        elevation: 0,
-        iconTheme: IconThemeData(color: textPrimary),
-        titleTextStyle: TextStyle(color: textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
-      ),
-      cardColor: bgSecondary,
-      useMaterial3: true,
-    );
+  // Full Theme Data Factory
+  static ThemeData getTheme(bool isDark) {
+    if (isDark) {
+      return ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: bgPrimary,
+        primaryColor: blue,
+        colorScheme: const ColorScheme.dark(
+          primary: blue,
+          secondary: green,
+          surface: bgSecondary,
+          error: red,
+          onSurface: textPrimary,
+        ),
+        textTheme: TextTheme(
+          displayLarge: GoogleFonts.plusJakartaSans(
+            fontSize: 28, color: green, shadows: textGlowGreen),
+          bodyMedium: GoogleFonts.outfit(
+            fontSize: 14, color: textSecondary),
+          bodySmall: GoogleFonts.jetBrainsMono(
+            fontSize: 11, color: textSecondary),
+        ),
+        dividerColor: borderColor,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: bgPrimary,
+          elevation: 0,
+          iconTheme: IconThemeData(color: textPrimary),
+          titleTextStyle: TextStyle(color: textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        cardColor: bgSecondary,
+        useMaterial3: true,
+      );
+    } else {
+      // PREMIUM LIGHT MODE (Paper/Ivory style)
+      return ThemeData(
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color(0xFFFBFBFB), // Soft Ivory
+        primaryColor: const Color(0xFF0066CC),
+        colorScheme: const ColorScheme.light(
+          primary: Color(0xFF0066CC),
+          secondary: Color(0xFF008855),
+          surface: Color(0xFFF2F2F2),
+          error: Color(0xFFCC3333),
+          onSurface: Color(0xFF1A1A1A),
+        ),
+        textTheme: TextTheme(
+          displayLarge: GoogleFonts.plusJakartaSans(
+            fontSize: 28, color: const Color(0xFF008855)),
+          bodyMedium: GoogleFonts.outfit(
+            fontSize: 14, color: const Color(0xFF666666)),
+          bodySmall: GoogleFonts.jetBrainsMono(
+            fontSize: 11, color: const Color(0xFF666666)),
+        ),
+        dividerColor: const Color(0xFFE5E5E5),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFFFBFBFB),
+          elevation: 0,
+          iconTheme: IconThemeData(color: Color(0xFF1A1A1A)),
+          titleTextStyle: TextStyle(color: Color(0xFF1A1A1A), fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        cardColor: Colors.white,
+        useMaterial3: true,
+      );
+    }
   }
 }

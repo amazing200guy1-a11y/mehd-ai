@@ -38,7 +38,7 @@ class _HomeMobileLayoutState extends State<HomeMobileLayout> {
             // Symbol Bar
             Container(
               height: 60,
-              color: MehdAiTheme.bgSecondary,
+              color: MehdAiTheme.surface(context),
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -50,7 +50,7 @@ class _HomeMobileLayoutState extends State<HomeMobileLayout> {
                     onSelected: (val) {
                       if (val) market.selectSymbol(s, onStatusMsg: (_) {});
                     },
-                    backgroundColor: MehdAiTheme.bgPrimary,
+                    backgroundColor: MehdAiTheme.background(context),
                     selectedColor: MehdAiTheme.blue.withOpacity(0.2),
                   ),
                 )).toList(),
@@ -87,7 +87,7 @@ class _HomeMobileLayoutState extends State<HomeMobileLayout> {
             // Navigation
             BottomNavigationBar(
               type: BottomNavigationBarType.fixed,
-              backgroundColor: MehdAiTheme.bgSecondary,
+              backgroundColor: MehdAiTheme.surface(context),
               selectedItemColor: MehdAiTheme.blue,
               unselectedItemColor: MehdAiTheme.textSecondary,
               currentIndex: _mobileTab,
@@ -126,7 +126,7 @@ class _HomeMobileLayoutState extends State<HomeMobileLayout> {
                   height: 48,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFF000000),
+                    color: MehdAiTheme.background(context),
                     border: Border.all(
                       color: const Color(0xFF58A6FF).withOpacity(0.4),
                       width: 1.5,
@@ -175,7 +175,7 @@ class _HomeMobileLayoutState extends State<HomeMobileLayout> {
         SizedBox(
           height: MediaQuery.of(context).size.height * 0.4,
           child: market.activeSymbol == null
-              ? const Center(child: Text('Empty', style: TextStyle(color: Colors.white)))
+              ? Center(child: Text('Empty', style: TextStyle(color: MehdAiTheme.text(context))))
               : Column(
                   children: [
                     Padding(
@@ -242,15 +242,15 @@ class _HomeMobileLayoutState extends State<HomeMobileLayout> {
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Container(
           decoration: BoxDecoration(
-            color: MehdAiTheme.bgSecondary.withOpacity(0.9),
+            color: MehdAiTheme.surface(context).withOpacity(0.9),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            border: Border.all(color: MehdAiTheme.borderColor),
+            border: Border.all(color: MehdAiTheme.border(context)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: 12),
-              Container(width: 40, height: 4, decoration: BoxDecoration(color: MehdAiTheme.textSecondary.withOpacity(0.3), borderRadius: BorderRadius.circular(2))),
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: MehdAiTheme.textDim(context).withOpacity(0.3), borderRadius: BorderRadius.circular(2))),
               const SizedBox(height: 20),
               _buildMenuAction(
                 context, 
@@ -308,7 +308,7 @@ class _HomeMobileLayoutState extends State<HomeMobileLayout> {
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF58A6FF).withOpacity(0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: isSelected ? const Color(0xFF58A6FF) : MehdAiTheme.borderColor),
+          border: Border.all(color: isSelected ? const Color(0xFF58A6FF) : MehdAiTheme.border(context)),
         ),
         child: Text(
           mode, 
@@ -327,8 +327,8 @@ class _HomeMobileLayoutState extends State<HomeMobileLayout> {
       height: 32,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: MehdAiTheme.bgSecondary,
-        border: const Border(bottom: BorderSide(color: MehdAiTheme.borderColor)),
+        color: MehdAiTheme.surface(context),
+        border: Border(bottom: BorderSide(color: MehdAiTheme.border(context))),
       ),
       child: Row(
         children: [

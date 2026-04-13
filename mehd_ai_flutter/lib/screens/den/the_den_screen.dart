@@ -198,14 +198,15 @@ class _TheDenScreenState extends State<TheDenScreen> {
         top: false,
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _buildTabItem(0, 'UNDERWORLD', Icons.travel_explore),
-            _buildTabItem(1, 'THE EMPIRE', Icons.account_tree),
-            _buildTabItem(2, 'OLYMPUS', Icons.calculate),
-            _buildTabItem(3, 'VIBE', Icons.psychology),
-          ],
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildTabItem(0, 'UNDERWORLD', Icons.travel_explore),
+              _buildTabItem(1, 'THE EMPIRE', Icons.account_tree),
+              _buildTabItem(2, 'OLYMPUS', Icons.calculate),
+              _buildTabItem(3, 'VIBE', Icons.psychology),
+            ],
+          ),
         ),
       ),
     );

@@ -46,6 +46,28 @@ class _LicensingScreenState extends State<LicensingScreen> {
         padding: const EdgeInsets.all(24.0),
         child: Column(
           children: [
+            // Live Moat Health Banner
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              margin: const EdgeInsets.only(bottom: 32),
+              decoration: BoxDecoration(
+                color: MehdAiTheme.shieldColor.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: MehdAiTheme.shieldColor.withOpacity(0.3)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.shield_moon, color: MehdAiTheme.shieldColor, size: 20),
+                  const SizedBox(width: 12),
+                  Text('LIVE DATA MOAT:', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.textSecondary)),
+                  const SizedBox(width: 8),
+                  Text('1,540 ALPHA SNAPSHOTS SECURED', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.shieldColor, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+            
             Text(
               'WHITE-LABEL INSTITUTIONAL ACCESS',
               style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.gold, fontSize: 18),

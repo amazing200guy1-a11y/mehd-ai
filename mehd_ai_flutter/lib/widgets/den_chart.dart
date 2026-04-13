@@ -138,13 +138,12 @@ class DenChartState extends State<DenChart> {
     if (_ctrl == null) {
       return Container(
         color: const Color(0xFF000000),
-        child: const Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFF58A6FF),
-            strokeWidth: 1.0,
-          ),
-        ),
-      );
+        child: Center(
+          child: SizedBox(
+            width: 20, height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 1.0,
+              color: const Color(0xFF58A6FF).withOpacity(0.3)))));
     }
     return WebViewWidget(controller: _ctrl!);
   }

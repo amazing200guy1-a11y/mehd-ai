@@ -304,14 +304,14 @@ class _AuthScreenState extends State<AuthScreen> {
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(
-          color: Color(0xFF555555),
+          color: Color(0xFF888888),
           fontSize: 12),
         hintText: hint,
         hintStyle: const TextStyle(
           color: Color(0xFF2A2A2A),
           fontSize: 12),
         enabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xFF1E1E1E)),
+          borderSide: const BorderSide(color: Color(0xFF2A2A2A)),
           borderRadius: BorderRadius.circular(4)),
         focusedBorder: OutlineInputBorder(
           borderSide: const BorderSide(color: Color(0xFF58A6FF), width: 1.5),
@@ -332,10 +332,10 @@ class _AuthScreenState extends State<AuthScreen> {
       decoration: InputDecoration(
         labelText: 'Password',
         labelStyle: const TextStyle(
-          color: Color(0xFF555555),
+          color: Color(0xFF888888),
           fontSize: 12),
         enabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xFF1E1E1E)),
+          borderSide: const BorderSide(color: Color(0xFF2A2A2A)),
           borderRadius: BorderRadius.circular(4)),
         focusedBorder: OutlineInputBorder(
           borderSide: const BorderSide(color: Color(0xFF58A6FF), width: 1.5),

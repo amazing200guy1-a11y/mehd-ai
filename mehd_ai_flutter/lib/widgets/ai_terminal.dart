@@ -7,7 +7,7 @@ import 'package:mehd_ai_flutter/models/consensus_result.dart';
 import 'package:mehd_ai_flutter/widgets/den_loading_widget.dart';
 import 'package:mehd_ai_flutter/models/automated_drawing.dart';
 import 'package:provider/provider.dart';
-import 'package:mehd_ai_flutter/services/app_settings_provider.dart';
+import 'package:mehd_ai_flutter/services/settings_service.dart';
 
 /// FILE 7 — ai_terminal.dart
 /// Grand Master Build Spec implementation.
@@ -29,14 +29,12 @@ class AiTerminal extends StatefulWidget {
 }
 
 class _AiTerminalState extends State<AiTerminal> {
-  int _currentTab = 0;
-  final List<String> _tabs = ['>_ TERMINAL', 'VOTES', 'THE DEN', 'ACCOUNT'];
   final ScrollController _terminalScroll = ScrollController();
 
   @override
   void didUpdateWidget(covariant AiTerminal oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.consensusResult != oldWidget.consensusResult && _currentTab == 0) {
+    if (widget.consensusResult != oldWidget.consensusResult) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_terminalScroll.hasClients) {
           _terminalScroll.animateTo(
@@ -62,69 +60,48 @@ class _AiTerminalState extends State<AiTerminal> {
     return Container(
       width: double.infinity,
       color: const Color(0xFF0D0D0D),
-      child: Column(
-        children: [
-          // Header / Tab Bar
-          Container(
-            height: 36,
-            color: const Color(0xFF080808),
-            child: Row(
-              children: List.generate(_tabs.length, (index) {
-                final isActive = _currentTab == index;
-                return InkWell(
-                  onTap: () => setState(() => _currentTab = index),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: isActive ? const Color(0xFF58A6FF) : Colors.transparent,
-                          width: 2,
-                        ),
-                        right: const BorderSide(color: Color(0xFF111111)),
-                      ),
-                      color: isActive ? const Color(0xFF0D0D0D) : Colors.transparent,
+      child: SafeArea(
+        bottom: true,
+        child: DefaultTabController(
+          length: 4,
+          child: Column(
+            children: [
+              SizedBox(
+                height: 38,
+                child: TabBar(
+                  isScrollable: false,
+                  labelColor: const Color(0xFF58A6FF),
+                  unselectedLabelColor: const Color(0xFF555555),
+                  indicatorColor: const Color(0xFF58A6FF),
+                  // Customize indicator weight and padding if needed
+                  indicatorWeight: 2,
+                  labelPadding: EdgeInsets.zero,
+                  tabs: [
+                    Tab(child: Text('TERM', style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold))),
+                    Tab(child: Text('VOTES', style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold))),
+                    Tab(child: Text('DEN', style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold))),
+                    Tab(child: Text('ACCT', style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold))),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    _buildTerminalTab(),
+                    Container(
+                      color: unanimous ? const Color(0xFF2EA043).withOpacity(0.05) : Colors.transparent,
+                      child: _buildVotesTab(),
                     ),
-                    child: Text(
-                      _tabs[index],
-                      style: GoogleFonts.jetBrainsMono(
-                        color: isActive ? const Color(0xFF58A6FF) : const Color(0xFF555555),
-                        fontSize: 11,
-                        fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            ),
+                    _buildTheDenTab(),
+                    _buildAccountTab(),
+                  ],
+                ),
+              ),
+            ],
           ),
-          
-          // Content Area
-          Expanded(
-            child: Container(
-              color: unanimous && _currentTab == 1 ? const Color(0xFF2EA043).withOpacity(0.05) : Colors.transparent,
-              child: _buildCurrentTab(),
-            ),
-          ),
-        ],
+        ),
       ),
     );
-  }
-
-  Widget _buildCurrentTab() {
-    switch (_currentTab) {
-      case 0:
-        return _buildTerminalTab();
-      case 1:
-        return _buildVotesTab();
-      case 2:
-        return _buildTheDenTab();
-      case 3:
-        return _buildAccountTab();
-      default:
-        return const SizedBox();
-    }
   }
 
   Widget _buildTerminalTab() {
@@ -156,7 +133,7 @@ class _AiTerminalState extends State<AiTerminal> {
     }
 
     final votes = widget.consensusResult!.votes;
-    final showNames = context.watch<AppSettingsProvider>().showAgentNames;
+    final showNames = context.watch<SettingsService>().showAgentNames;
 
     return ListView.builder(
       controller: _terminalScroll,

@@ -31,7 +31,7 @@ class HomeScreen extends StatelessWidget {
           child: Consumer2<TradingController, MarketDataController>(
             builder: (ctx, trading, market, _) {
               return Scaffold(
-                backgroundColor: MehdAiTheme.bgPrimary,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 body: SafeArea(
                   child: Stack(
                     children: [
@@ -63,7 +63,7 @@ class HomeScreen extends StatelessWidget {
                             height: 48,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: const Color(0xFF000000),
+                              color: MehdAiTheme.background(context),
                               border: Border.all(
                                 color: const Color(0xFF58A6FF).withOpacity(0.4),
                                 width: 1.5,

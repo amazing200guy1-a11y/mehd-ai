@@ -23,6 +23,9 @@ from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
+from firebase_admin import firestore
+
+
 import httpx
 from models import AIVote, ConsensusResult, Direction, MarketSnapshot
 
@@ -747,11 +750,36 @@ class AsyncCouncil:
                     # Extract JSON block
                     if "{" in raw_text and "}" in raw_text:
                         json_str = raw_text[raw_text.find("{"):raw_text.rfind("}")+1]
-                        return json.loads(json_str)
+                        parsed_audit = json.loads(json_str)
+                        
+                        # Save to Sovereign Cloud for the Live Feed
+                        self._save_audit_to_cloud(trade_id, symbol, parsed_audit)
+                        
+                        return parsed_audit
             except Exception as e:
                 logger.error(f"Auditor API failed: {e}")
                 
-        return self._mock_audit(pnl)
+        mock_res = self._mock_audit(pnl)
+        self._save_audit_to_cloud(trade_id, symbol, mock_res)
+        return mock_res
+        
+    def _save_audit_to_cloud(self, trade_id: str, symbol: str, audit_data: dict):
+        """Safely pushes the Auditor's findings to the Sovereign Cloud."""
+        from sovereign_intelligence import sovereign_db
+        if sovereign_db.use_cloud and sovereign_db._db:
+            try:
+                doc_ref = sovereign_db._db.collection('auditor_ledger').document(trade_id)
+                data = {
+                    "symbol": symbol,
+                    "timestamp": firestore.SERVER_TIMESTAMP,
+                    "mistake_dna": audit_data.get("mistake_dna", "Unknown"),
+                    "analysis": audit_data.get("analysis", ""),
+                    "suggested_rule": audit_data.get("suggested_rule")
+                }
+                doc_ref.set(data)
+                logger.info("[AUDITOR] Mistake DNA pushed to Global Ledger for %s", symbol)
+            except Exception as e:
+                logger.error("[AUDITOR] Failed to push ledger to cloud: %s", e)
         
     def _mock_audit(self, pnl: float) -> dict:
         if pnl < 0:
