@@ -6,6 +6,8 @@ import 'package:mehd_ai_flutter/controllers/trading_controller.dart';
 import 'package:mehd_ai_flutter/screens/broker_screen.dart';
 import 'package:mehd_ai_flutter/services/language_service.dart';
 import 'package:mehd_ai_flutter/services/settings_service.dart';
+import 'package:mehd_ai_flutter/screens/help/about_screen.dart';
+import 'package:mehd_ai_flutter/screens/licensing_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -225,6 +227,25 @@ class SettingsScreen extends StatelessWidget {
               secondary: const Icon(Icons.nightlight_outlined, color: Color(0xFF888888)),
               activeColor: const Color(0xFF58A6FF),
               onChanged: settings.setShadowMode,
+            ),
+
+            const Divider(color: Color(0xFF111111), height: 32),
+
+            // About
+            _buildSectionTitle('ABOUT'),
+            ListTile(
+              leading: const Icon(Icons.info_outline, color: Color(0xFF888888), size: 20),
+              title: const Text('About Mehd AI', style: TextStyle(color: Color(0xFF888888))),
+              subtitle: const Text('Version 1.0.0 — The Den', style: TextStyle(color: Color(0xFF444444), fontSize: 10)),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 12, color: Color(0xFF333333)),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutScreen())),
+            ),
+            ListTile(
+              leading: const Icon(Icons.business_center_outlined, color: Color(0xFFFFD700), size: 20),
+              title: const Text('Enterprise Licensing', style: TextStyle(color: Color(0xFFFFD700))),
+              subtitle: const Text('Institutional white-label access', style: TextStyle(color: Color(0xFF444444), fontSize: 10)),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 12, color: Color(0xFF333333)),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LicensingScreen())),
             ),
 
             const Divider(color: Color(0xFF111111), height: 32),

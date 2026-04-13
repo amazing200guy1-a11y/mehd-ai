@@ -4,6 +4,7 @@ import 'package:mehd_ai_flutter/core/theme.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:mehd_ai_flutter/core/constants.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class LicensingScreen extends StatefulWidget {
   const LicensingScreen({super.key});
@@ -104,6 +105,32 @@ class _LicensingScreenState extends State<LicensingScreen> {
                   );
                 }
               },
+            ),
+            const SizedBox(height: 48),
+            // Contact Sales Button
+            Center(
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.email_outlined, color: MehdAiTheme.gold),
+                label: Text('CONTACT SALES', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.gold, fontWeight: FontWeight.bold, letterSpacing: 2)),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: MehdAiTheme.gold),
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: () async {
+                  final url = Uri.parse('mailto:enterprise@mehdai.com?subject=Enterprise%20Licensing%20Inquiry');
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url);
+                  } else if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        backgroundColor: MehdAiTheme.gold,
+                        content: Text('Email enterprise@mehdai.com for licensing inquiries.', style: MehdAiTheme.terminalStyle.copyWith(color: Colors.black)),
+                      ),
+                    );
+                  }
+                },
+              ),
             ),
           ],
         ),

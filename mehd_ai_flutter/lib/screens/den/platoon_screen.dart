@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mehd_ai_flutter/controllers/trading_controller.dart';
+import 'package:mehd_ai_flutter/services/settings_service.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
 import 'dart:ui';
 import 'dart:math';
@@ -189,6 +190,7 @@ class _PlatoonScreenState extends State<PlatoonScreen> with SingleTickerProvider
   }
 
   Widget _buildAlphaFeed() {
+    final isShadow = context.watch<SettingsService>().shadowMode;
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: BackdropFilter(
@@ -213,13 +215,28 @@ class _PlatoonScreenState extends State<PlatoonScreen> with SingleTickerProvider
                       Text("LIVE SHADOW FEED", style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.shieldColor, fontWeight: FontWeight.bold)),
                     ],
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: MehdAiTheme.shieldColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text("SYNCED", style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.shieldColor, fontSize: 10)),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isShadow)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: BoxDecoration(
+                            color: MehdAiTheme.purple.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text("SHADOW ON", style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.purple, fontSize: 10)),
+                        ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: MehdAiTheme.shieldColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text("SYNCED", style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.shieldColor, fontSize: 10)),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -230,7 +247,9 @@ class _PlatoonScreenState extends State<PlatoonScreen> with SingleTickerProvider
                   itemBuilder: (context, index) {
                     final isBuy = _rnd.nextBool();
                     final symbol = ["EUR/USD", "GBP/USD", "XAU/USD", "BTC/USD"][_rnd.nextInt(4)];
-                    final general = _generals[_rnd.nextInt(_generals.length)]['name'];
+                    final general = isShadow
+                        ? 'Anonymous Trader'
+                        : _generals[_rnd.nextInt(_generals.length)]['name'] as String;
                     final latestPrice = symbol == "BTC/USD" ? 64000.0 : (symbol == "XAU/USD" ? 2400.0 : 1.2500);
                     
                     return Container(

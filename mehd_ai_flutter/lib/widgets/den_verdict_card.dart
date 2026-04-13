@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:mehd_ai_flutter/core/theme.dart';
 import 'package:mehd_ai_flutter/models/consensus_result.dart';
 
@@ -19,14 +20,21 @@ class DenVerdictCard extends StatelessWidget {
     final proceed = consensus.proceed;
     final primaryColor = proceed ? MehdAiTheme.green : MehdAiTheme.red;
 
-    return Container(
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
-        gradient: MehdAiTheme.cardGradient,
+        color: const Color(0xFF58A6FF).withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: primaryColor.withOpacity(0.5), width: 1.5),
+        border: Border.all(
+          color: primaryColor.withOpacity(0.3),
+          width: 0.5,
+        ),
         boxShadow: proceed
             ? [BoxShadow(color: primaryColor.withOpacity(0.15), blurRadius: 30, spreadRadius: 4)]
             : [],
@@ -95,6 +103,8 @@ class DenVerdictCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+        ),
       ),
     );
   }

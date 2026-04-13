@@ -179,7 +179,7 @@ class _ConstitutionScreenState extends State<ConstitutionScreen> {
       decoration: BoxDecoration(
         color: MehdAiTheme.bgSecondary,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: MehdAiTheme.border),
+        border: Border.all(color: MehdAiTheme.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

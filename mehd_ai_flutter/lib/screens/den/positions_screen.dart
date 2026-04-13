@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:mehd_ai_flutter/controllers/trading_controller.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
 import 'dart:ui';
-import 'dart:math';
 
 class PositionsScreen extends StatefulWidget {
   const PositionsScreen({super.key});
@@ -14,7 +13,6 @@ class PositionsScreen extends StatefulWidget {
 
 class _PositionsScreenState extends State<PositionsScreen> with SingleTickerProviderStateMixin {
   late AnimationController _animController;
-  final Random _rnd = Random();
 
   @override
   void initState() {

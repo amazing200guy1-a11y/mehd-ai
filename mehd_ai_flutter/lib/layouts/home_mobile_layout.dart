@@ -11,6 +11,7 @@ import 'package:mehd_ai_flutter/screens/settings_screen.dart';
 import 'package:mehd_ai_flutter/screens/war_room_community_screen.dart';
 import 'package:mehd_ai_flutter/screens/den/the_den_screen.dart';
 import 'package:mehd_ai_flutter/widgets/account_health_widget.dart';
+import 'package:mehd_ai_flutter/widgets/den_help_modal.dart';
 import 'package:mehd_ai_flutter/utils/titan_animations.dart';
 class HomeMobileLayout extends StatefulWidget {
   final TradingController trading;
@@ -35,25 +36,48 @@ class _HomeMobileLayoutState extends State<HomeMobileLayout> {
       children: [
         Column(
           children: [
-            // Symbol Bar
+            // Symbol Bar with Help Icon
             Container(
               height: 60,
               color: MehdAiTheme.surface(context),
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                children: AppConstants.symbols.map((s) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                  child: ChoiceChip(
-                    label: Text(s, style: MehdAiTheme.labelStyle),
-                    selected: s == market.activeSymbol,
-                    onSelected: (val) {
-                      if (val) market.selectSymbol(s, onStatusMsg: (_) {});
-                    },
-                    backgroundColor: MehdAiTheme.background(context),
-                    selectedColor: MehdAiTheme.blue.withOpacity(0.2),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      children: AppConstants.symbols.map((s) => Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                        child: ChoiceChip(
+                          label: Text(s, style: MehdAiTheme.labelStyle),
+                          selected: s == market.activeSymbol,
+                          onSelected: (val) {
+                            if (val) market.selectSymbol(s, onStatusMsg: (_) {});
+                          },
+                          backgroundColor: MehdAiTheme.background(context),
+                          selectedColor: MehdAiTheme.blue.withOpacity(0.2),
+                        ),
+                      )).toList(),
+                    ),
                   ),
-                )).toList(),
+                  // Help ? Icon
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GestureDetector(
+                      onTap: () => showDenHelpModal(context),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: MehdAiTheme.blue.withOpacity(0.1),
+                          border: Border.all(color: MehdAiTheme.blue.withOpacity(0.3)),
+                        ),
+                        child: const Icon(Icons.help_outline, color: MehdAiTheme.blue, size: 18),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             

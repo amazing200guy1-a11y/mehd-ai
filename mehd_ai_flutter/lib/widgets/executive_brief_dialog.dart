@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:mehd_ai_flutter/models/executive_brief.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
 import 'package:mehd_ai_flutter/core/den_identity.dart';
@@ -11,74 +12,84 @@ class ExecutiveBriefDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: MehdAiTheme.bgSecondary,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: const BorderSide(color: MehdAiTheme.borderColor),
-      ),
-      child: Container(
-        width: 600,
-        padding: const EdgeInsets.all(24),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Flexible(child: Text('DEN EXECUTIVE BRIEF', style: MehdAiTheme.terminalStyle.copyWith(fontWeight: FontWeight.bold, fontSize: 16), overflow: TextOverflow.ellipsis)),
-                    IconButton(
-                      icon: const Icon(Icons.share, color: MehdAiTheme.textSecondary, size: 20),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            backgroundColor: MehdAiTheme.blue,
-                            content: Text('Brief shared to encrypted vault.', style: MehdAiTheme.terminalStyle.copyWith(color: Colors.white)),
-                          ),
-                        );
-                      },
+      backgroundColor: Colors.transparent,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            width: 600,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF58A6FF).withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFF58A6FF).withOpacity(0.12),
+                width: 0.5,
+              ),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(child: Text('DEN EXECUTIVE BRIEF', style: MehdAiTheme.terminalStyle.copyWith(fontWeight: FontWeight.bold, fontSize: 16), overflow: TextOverflow.ellipsis)),
+                        IconButton(
+                          icon: const Icon(Icons.share, color: MehdAiTheme.textSecondary, size: 20),
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                backgroundColor: MehdAiTheme.blue,
+                                content: Text('Brief shared to encrypted vault.', style: MehdAiTheme.terminalStyle.copyWith(color: Colors.white)),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                Text('Den Analysis™ by Mehd AI', style: MehdAiTheme.labelStyle, overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 12),
-                const Divider(color: MehdAiTheme.borderColor),
-                
-                _buildSectionHeader('THE UNDERWORLD'),
-                ...brief.sentimentLayer.entries.map((e) => _buildVoteRow(e.key, e.value)),
-                const SizedBox(height: 12),
-                
-                _buildSectionHeader('THE EMPIRE'),
-                ...brief.strategyLayer.entries.map((e) => _buildVoteRow(e.key, e.value)),
-                const SizedBox(height: 12),
-                
-                _buildSectionHeader('OLYMPUS'),
-                ...brief.mathLayer.entries.map((e) => _buildVoteRow(e.key, e.value)),
-                const SizedBox(height: 12),
-                
-                _buildSectionHeader('THE DON SYNTHESIS'),
-                Text('Confidence: ${brief.consensusScore}', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.textPrimary, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 4),
-                Text('"${brief.decisionBasis}"', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.gold, height: 1.5), overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 16),
-                
-                _buildRow('SENTINEL:', 'All clear ✓'),
-                _buildRow('KERNEL:', 'Risk approved ✓'),
-                const SizedBox(height: 8),
-                Text('Den Analysis™ Certificate', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.textSecondary, fontStyle: FontStyle.italic), overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 24),
-                
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: MehdAiTheme.green.withOpacity(0.1),
-                    side: const BorderSide(color: MehdAiTheme.green),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text('ACKNOWLEDGE & CLOSE', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.green), overflow: TextOverflow.ellipsis),
-                )
-            ],
+                    Text('Den Analysis™ by Mehd AI', style: MehdAiTheme.labelStyle, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 12),
+                    const Divider(color: MehdAiTheme.borderColor),
+                    
+                    _buildSectionHeader('THE UNDERWORLD'),
+                    ...brief.sentimentLayer.entries.map((e) => _buildVoteRow(e.key, e.value)),
+                    const SizedBox(height: 12),
+                    
+                    _buildSectionHeader('THE EMPIRE'),
+                    ...brief.strategyLayer.entries.map((e) => _buildVoteRow(e.key, e.value)),
+                    const SizedBox(height: 12),
+                    
+                    _buildSectionHeader('OLYMPUS'),
+                    ...brief.mathLayer.entries.map((e) => _buildVoteRow(e.key, e.value)),
+                    const SizedBox(height: 12),
+                    
+                    _buildSectionHeader('THE DON SYNTHESIS'),
+                    Text('Confidence: ${brief.consensusScore}', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.textPrimary, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 4),
+                    Text('"${brief.decisionBasis}"', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.gold, height: 1.5), overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 16),
+                    
+                    _buildRow('SENTINEL:', 'All clear ✓'),
+                    _buildRow('KERNEL:', 'Risk approved ✓'),
+                    const SizedBox(height: 8),
+                    Text('Den Analysis™ Certificate', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.textSecondary, fontStyle: FontStyle.italic), overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 24),
+                    
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: MehdAiTheme.green.withOpacity(0.1),
+                        side: const BorderSide(color: MehdAiTheme.green),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text('ACKNOWLEDGE & CLOSE', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.green), overflow: TextOverflow.ellipsis),
+                    )
+                ],
+              ),
+            ),
           ),
         ),
       ),

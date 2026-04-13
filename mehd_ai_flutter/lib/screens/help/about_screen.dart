@@ -4,6 +4,7 @@ import 'package:mehd_ai_flutter/core/theme.dart';
 import 'package:mehd_ai_flutter/screens/terms_screen.dart';
 import 'package:mehd_ai_flutter/screens/privacy_screen.dart';
 import 'package:mehd_ai_flutter/screens/den_glossary.dart';
+import 'package:mehd_ai_flutter/screens/licensing_screen.dart';
 
 
 class AboutScreen extends StatelessWidget {
@@ -85,6 +86,8 @@ class AboutScreen extends StatelessWidget {
                   _buildFooterLink('Privacy Policy', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyScreen()))),
                   const SizedBox(width: 24),
                   _buildFooterLink('Den Glossary', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DenGlossary()))),
+                  const SizedBox(width: 24),
+                  _buildFooterLink('Enterprise Licensing', color: MehdAiTheme.gold, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LicensingScreen()))),
                   const SizedBox(width: 24),
                   _buildFooterLink('Rate Mehd AI', color: MehdAiTheme.blue, onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
