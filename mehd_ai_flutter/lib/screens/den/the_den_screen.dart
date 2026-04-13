@@ -198,13 +198,16 @@ class _TheDenScreenState extends State<TheDenScreen> {
         top: false,
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildTabItem(0, 'UNDERWORLD', Icons.travel_explore),
-              _buildTabItem(1, 'THE EMPIRE', Icons.account_tree),
-              _buildTabItem(2, 'OLYMPUS', Icons.calculate),
-              _buildTabItem(3, 'VIBE', Icons.psychology),
+              _buildTabCard(0, 'UNDERWORLD', Icons.travel_explore_rounded, const [Color(0xFF2D1B4E), Color(0xFF1A0F30)], MehdAiTheme.purple),
+              const SizedBox(width: 8),
+              _buildTabCard(1, 'EMPIRE', Icons.account_tree_rounded, const [Color(0xFF142840), Color(0xFF0B1825)], MehdAiTheme.blue),
+              const SizedBox(width: 8),
+              _buildTabCard(2, 'OLYMPUS', Icons.calculate_rounded, const [Color(0xFF3A2A10), Color(0xFF1F1508)], MehdAiTheme.gold),
+              const SizedBox(width: 8),
+              _buildTabCard(3, 'VIBE', Icons.psychology_rounded, const [Color(0xFF0A2A18), Color(0xFF06180E)], MehdAiTheme.green),
             ],
           ),
         ),
@@ -212,34 +215,53 @@ class _TheDenScreenState extends State<TheDenScreen> {
     );
   }
 
-  Widget _buildTabItem(int index, String title, IconData icon) {
+  Widget _buildTabCard(int index, String title, IconData icon, List<Color> gradient, Color accent) {
     final isActive = _currentIndex == index;
-    final color = isActive ? MehdAiTheme.blue : MehdAiTheme.textSecondary;
     
     return GestureDetector(
       onTap: () => _navTo(index),
       behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: isActive ? MehdAiTheme.blue : Colors.transparent, 
-              width: 3,
-            ),
+          borderRadius: BorderRadius.circular(12),
+          gradient: isActive ? LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: gradient,
+          ) : null,
+          border: Border.all(
+            color: isActive ? accent.withOpacity(0.3) : Colors.transparent,
+            width: 0.5,
           ),
+          boxShadow: isActive ? [
+            BoxShadow(color: gradient[0].withOpacity(0.25), blurRadius: 8, offset: const Offset(0, 2)),
+          ] : [],
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(height: 4),
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                gradient: isActive ? LinearGradient(
+                  colors: [Colors.white.withOpacity(0.12), Colors.white.withOpacity(0.03)],
+                ) : null,
+                color: isActive ? null : Colors.transparent,
+              ),
+              child: Icon(icon, color: isActive ? accent : MehdAiTheme.textSecondary, size: 16),
+            ),
+            const SizedBox(width: 6),
             Text(
               title,
               style: MehdAiTheme.labelStyle.copyWith(
-                color: color, 
+                color: isActive ? accent : MehdAiTheme.textSecondary,
                 fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                 letterSpacing: 1,
+                fontSize: 10,
               ),
             ),
           ],

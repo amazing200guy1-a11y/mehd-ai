@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -172,14 +173,17 @@ class SettingsScreen extends StatelessWidget {
             
             // Broker Connection
             _buildSectionTitle('BROKER CONNECTION'),
-            ListTile(
-              leading: const Icon(Icons.account_balance, color: Color(0xFF58A6FF)),
-              title: const Text('Connect Broker', style: TextStyle(color: Color(0xFFDDDDDD), fontSize: 13)),
-              subtitle: const Text('Manage your API integrations', style: TextStyle(color: Color(0xFF666666), fontSize: 11)),
-              trailing: const Icon(Icons.chevron_right, color: Color(0xFF444444)),
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const BrokerScreen()));
-              },
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _build3DSettingsCard(
+                context,
+                'Connect Broker',
+                'Manage your API integrations',
+                Icons.account_balance_rounded,
+                const [Color(0xFF142840), Color(0xFF0B1825)],
+                MehdAiTheme.blue,
+                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BrokerScreen())),
+              ),
             ),
             
             const Divider(color: Color(0xFF111111), height: 32),
@@ -233,19 +237,31 @@ class SettingsScreen extends StatelessWidget {
 
             // About
             _buildSectionTitle('ABOUT'),
-            ListTile(
-              leading: const Icon(Icons.info_outline, color: Color(0xFF888888), size: 20),
-              title: const Text('About Mehd AI', style: TextStyle(color: Color(0xFF888888))),
-              subtitle: const Text('Version 1.0.0 — The Den', style: TextStyle(color: Color(0xFF444444), fontSize: 10)),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 12, color: Color(0xFF333333)),
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutScreen())),
-            ),
-            ListTile(
-              leading: const Icon(Icons.business_center_outlined, color: Color(0xFFFFD700), size: 20),
-              title: const Text('Enterprise Licensing', style: TextStyle(color: Color(0xFFFFD700))),
-              subtitle: const Text('Institutional white-label access', style: TextStyle(color: Color(0xFF444444), fontSize: 10)),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 12, color: Color(0xFF333333)),
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LicensingScreen())),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(child: _build3DSettingsCard(
+                    context,
+                    'About\nMehd AI',
+                    'v1.0.0 — The Den',
+                    Icons.info_rounded,
+                    const [Color(0xFF1A2030), Color(0xFF0F1520)],
+                    Colors.white70,
+                    () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutScreen())),
+                  )),
+                  const SizedBox(width: 12),
+                  Expanded(child: _build3DSettingsCard(
+                    context,
+                    'Enterprise\nLicensing',
+                    'White-label access',
+                    Icons.business_center_rounded,
+                    const [Color(0xFF3A2A10), Color(0xFF1F1508)],
+                    MehdAiTheme.gold,
+                    () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LicensingScreen())),
+                  )),
+                ],
+              ),
             ),
 
             const Divider(color: Color(0xFF111111), height: 32),
@@ -390,6 +406,66 @@ class SettingsScreen extends StatelessWidget {
       child: Text(
         title,
         style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+      ),
+    );
+  }
+
+  Widget _build3DSettingsCard(
+    BuildContext context, String title, String subtitle,
+    IconData icon, List<Color> gradient, Color accent, VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+          child: Container(
+            height: 90,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: gradient,
+              ),
+              border: Border.all(color: Colors.white.withOpacity(0.05), width: 0.5),
+              boxShadow: [
+                BoxShadow(color: gradient[0].withOpacity(0.2), blurRadius: 12, offset: const Offset(0, 4)),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44, height: 44,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(13),
+                    gradient: LinearGradient(
+                      colors: [Colors.white.withOpacity(0.12), Colors.white.withOpacity(0.03)],
+                    ),
+                    border: Border.all(color: Colors.white.withOpacity(0.06)),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 6, offset: const Offset(0, 3)),
+                    ],
+                  ),
+                  child: Icon(icon, color: accent, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(title, style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 12, fontWeight: FontWeight.w600, height: 1.2)),
+                    const SizedBox(height: 3),
+                    Text(subtitle, style: TextStyle(color: Colors.white.withOpacity(0.35), fontSize: 10)),
+                  ],
+                )),
+                Icon(Icons.arrow_forward_ios_rounded, color: Colors.white.withOpacity(0.15), size: 14),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
