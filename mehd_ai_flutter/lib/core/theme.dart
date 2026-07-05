@@ -54,24 +54,29 @@ class MehdAiTheme {
       Theme.of(context).brightness == Brightness.dark ? textSecondary : const Color(0xFF666666);
 
   // --- Core Backgrounds (Dark Mode Defaults) ---
-  static const Color bgPrimary = Color(0xFF000000);
-  static const Color bgSecondary = Color(0xFF080808);
-  static const Color bgTertiary = Color(0xFF111111);
-  static const Color borderColor = Color(0xFF1A1A1A);
+  static const Color bgPrimary = Color(0xFF030303); // Slightly softer than pure black
+  static const Color bgSecondary = Color(0xFF0A0A0A);
+  static const Color bgTertiary = Color(0xFF141414);
+  static const Color borderColor = Color(0xFF1F1F1F);
   
   // Text Colors
-  static const Color textPrimary = Color(0xFFFFFFFF);
+  static const Color textPrimary = Color(0xFFF5F5F5); // Slightly softer white
   static const Color textSecondary = Color(0xFF888888);
   
   // Semantic / Status Colors - GLOWING
-  static const Color green = Color(0xFF00FF88);  // BUY / Profit
+  static const Color green = Color(0xFF00E676);  // BUY / Profit (softer green)
   static const Color red = Color(0xFFFF3B3B);    // SELL / Loss
   static const Color yellow = Color(0xFFFFD700); // HOLD / Warning
-  static const Color blue = Color(0xFF58A6FF);   // Accent / Active
-  static const Color purple = Color(0xFFBD93F9); // System / Kernel
+  static const Color amber = Color(0xFFFFC107);  // HOLD / Warning
+  static const Color blue = Color(0xFF3B82F6);   // Institutional, richer blue
+  static const Color purple = Color(0xFF8B5CF6); // Softer purple
   static const Color gold = Color(0xFFFFD700);   // Premium / Institutional
   static const Color white = Color(0xFFFFFFFF);   // Pure white alias
+  static const Color grey = Color(0xFF666666);    // Inactive / Offline
   static const Color shieldColor = Color(0xFF00D1FF); // Sovereign Blue
+
+  // UI Constants
+  static const double borderRadius = 12.0;
 
   // Body text style
   static TextStyle get bodyStyle => GoogleFonts.outfit(
@@ -97,50 +102,56 @@ class MehdAiTheme {
     fontSize: 20,
     fontWeight: FontWeight.bold,
     letterSpacing: 3,
-    color: const Color(0xFF58A6FF));
+    color: blue); // uses blue constant — always in sync
 
-  // Glow Effects
+  // Glow Effects (Upgraded to be Soft & Organic)
   static List<BoxShadow> get greenGlow => [
-    BoxShadow(color: green.withOpacity(0.3), blurRadius: 8, spreadRadius: 1),
+    BoxShadow(color: green.withOpacity(0.15), blurRadius: 20, spreadRadius: 4),
+    BoxShadow(color: green.withOpacity(0.05), blurRadius: 40, spreadRadius: 10),
   ];
   
   static List<BoxShadow> get blueGlow => [
-    BoxShadow(color: blue.withOpacity(0.3), blurRadius: 8, spreadRadius: 1),
+    BoxShadow(color: blue.withOpacity(0.15), blurRadius: 20, spreadRadius: 4),
+    BoxShadow(color: blue.withOpacity(0.05), blurRadius: 40, spreadRadius: 10),
   ];
 
   static List<Shadow> get textGlowGreen => [
-    Shadow(color: green.withOpacity(0.5), blurRadius: 4),
+    const Shadow(color: Colors.greenAccent, blurRadius: 8),
   ];
 
   static List<Shadow> get textGlowBlue => [
-    Shadow(color: blue.withOpacity(0.5), blurRadius: 4),
+    const Shadow(color: Colors.blueAccent, blurRadius: 8),
   ];
 
   static List<Shadow> get textGlowRed => [
-    Shadow(color: red.withOpacity(0.5), blurRadius: 4),
+    const Shadow(color: Colors.redAccent, blurRadius: 8),
   ];
 
   static List<Shadow> get textGlowWhite => [
-    Shadow(color: white.withOpacity(0.8), blurRadius: 8),
+    const Shadow(color: Colors.white, blurRadius: 8),
   ];
 
   static List<Shadow> get textGlowGold => [
-    Shadow(color: gold.withOpacity(0.5), blurRadius: 4),
+    const Shadow(color: Colors.orangeAccent, blurRadius: 8),
   ];
 
   static List<BoxShadow> get goldGlow => [
-    BoxShadow(color: gold.withOpacity(0.3), blurRadius: 12, spreadRadius: 2),
+    BoxShadow(color: gold.withOpacity(0.15), blurRadius: 24, spreadRadius: 4),
+    BoxShadow(color: gold.withOpacity(0.05), blurRadius: 48, spreadRadius: 12),
   ];
 
   static List<BoxShadow> get whiteGlow => [
-    BoxShadow(color: white.withOpacity(0.5), blurRadius: 12, spreadRadius: 2),
+    BoxShadow(color: white.withOpacity(0.15), blurRadius: 24, spreadRadius: 4),
   ];
 
-  // Gradients
-  static LinearGradient get cardGradient => const LinearGradient(
+  // Gradients (Upgraded to Organic Depth)
+  static LinearGradient get cardGradient => LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF000000), Color(0xFF0A0A0A)],
+    colors: [
+      const Color(0xFF151922).withOpacity(0.8), 
+      const Color(0xFF080B10).withOpacity(0.9)
+    ],
   );
 
   // Text Styles

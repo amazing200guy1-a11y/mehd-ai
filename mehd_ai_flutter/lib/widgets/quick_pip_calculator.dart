@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
+import 'package:mehd_ai_flutter/services/settings_service.dart';
 
 class QuickPipCalculator extends StatefulWidget {
   const QuickPipCalculator({super.key});
@@ -10,11 +12,10 @@ class QuickPipCalculator extends StatefulWidget {
 
 class _QuickPipCalculatorState extends State<QuickPipCalculator> {
   bool _isExpanded = false;
-  double _riskAmount = 100.0;
-  double _stopLossPips = 20.0;
-  final double _accountBalance = 10000.0; // Mock account balance
 
-  double get _maxRisk => _accountBalance * 0.01; // 1% max
+  // We will read the initial state from SettingsService and keep it in sync.
+  double _localStopLossPips = 20.0;
+  bool _initialized = false;
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +31,21 @@ class _QuickPipCalculatorState extends State<QuickPipCalculator> {
       );
     }
 
-    final lotSize = _riskAmount / (_stopLossPips * 10); // Rough approximation for standard lots
+    final settings = context.watch<SettingsService>();
+    
+    if (!_initialized) {
+      _localStopLossPips = settings.defaultStopLoss;
+      _initialized = true;
+    }
+
+    final double accountBalance = settings.accountBalance;
+    final double riskPercent = settings.riskPerTrade; // e.g. 1.0 = 1%
+    final double riskAmount = (accountBalance * riskPercent) / 100;
+    
+    // Allow sliding up to 20% risk
+    final double maxRiskAmount = accountBalance * 0.20;
+
+    final lotSize = riskAmount / (_localStopLossPips * 10); // Rough approximation for standard lots
 
     return Container(
       width: 200,
@@ -60,26 +75,32 @@ class _QuickPipCalculatorState extends State<QuickPipCalculator> {
           const SizedBox(height: 12),
           Text('Risk Amount (\$)', style: MehdAiTheme.labelStyle, overflow: TextOverflow.ellipsis),
           Slider(
-            value: _riskAmount.clamp(10, _maxRisk),
+            value: riskAmount.clamp(10, maxRiskAmount > 10 ? maxRiskAmount : 100),
             min: 10,
-            max: _maxRisk,
-            divisions: (_maxRisk / 10).round().clamp(1, 100),
+            max: maxRiskAmount > 10 ? maxRiskAmount : 100,
+            divisions: (maxRiskAmount / 10).round().clamp(1, 100),
             activeColor: MehdAiTheme.blue,
             inactiveColor: MehdAiTheme.borderColor,
-            label: '\$${_riskAmount.toInt()}',
-            onChanged: (val) => setState(() => _riskAmount = val),
+            label: '\$${riskAmount.toInt()} (${riskPercent.toStringAsFixed(1)}%)',
+            onChanged: (val) {
+              final newPercent = (val / accountBalance) * 100;
+              settings.setRiskPerTrade(newPercent);
+            },
           ),
-          Text('1% cap: \$${_maxRisk.toInt()} of \$${_accountBalance.toInt()} account', style: MehdAiTheme.labelStyle.copyWith(color: MehdAiTheme.yellow, fontSize: 9), overflow: TextOverflow.ellipsis),
+          Text('Max 20% cap: \$${maxRiskAmount.toInt()} of \$${accountBalance.toInt()} balance', style: MehdAiTheme.labelStyle.copyWith(color: MehdAiTheme.yellow, fontSize: 9), overflow: TextOverflow.ellipsis),
           Text('Stop Loss (Pips)', style: MehdAiTheme.labelStyle, overflow: TextOverflow.ellipsis),
           Slider(
-            value: _stopLossPips,
+            value: _localStopLossPips,
             min: 5,
             max: 100,
             divisions: 95,
             activeColor: MehdAiTheme.red,
             inactiveColor: MehdAiTheme.borderColor,
-            label: '${_stopLossPips.toInt()} pips',
-            onChanged: (val) => setState(() => _stopLossPips = val),
+            label: '${_localStopLossPips.toInt()} pips',
+            onChanged: (val) {
+               setState(() => _localStopLossPips = val);
+               settings.setDefaultStopLoss(val);
+            },
           ),
           const SizedBox(height: 8),
           Container(

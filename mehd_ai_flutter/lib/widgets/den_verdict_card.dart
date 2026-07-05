@@ -8,7 +8,7 @@ import 'package:mehd_ai_flutter/models/consensus_result.dart';
 ///
 /// Build Debrief:
 /// The DenVerdictCard represents the final decision of the 11-agent architecture.
-/// Displays votes grouped by layer (UNDERWORLD, EMPIRE, OLYMPUS) and final system checks.
+/// Displays votes grouped by layer (RESEARCH, STRATEGY, OLYMPUS) and final system checks.
 
 class DenVerdictCard extends StatelessWidget {
   final ConsensusResult consensus;
@@ -64,9 +64,9 @@ class DenVerdictCard extends StatelessWidget {
           const Divider(height: 1, color: MehdAiTheme.borderColor),
           const SizedBox(height: 16),
           
-          _buildLayerStatus('THE UNDERWORLD', ['grok', 'perplexity', 'gemini']),
+          _buildLayerStatus('THE RESEARCH', ['grok', 'perplexity', 'gemini']),
           const SizedBox(height: 12),
-          _buildLayerStatus('THE EMPIRE', ['gpt-4', 'claude', 'llama']),
+          _buildLayerStatus('THE STRATEGY', ['gpt-4', 'claude', 'llama']),
           const SizedBox(height: 12),
           _buildLayerStatus('OLYMPUS', ['deepseek', 'openai-o3', 'codestral']),
 

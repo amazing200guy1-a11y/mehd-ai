@@ -7,21 +7,24 @@
 /// we change it here, and the entire app respects the new rule.
 
 class AppConstants {
-  // Network (Use 127.0.0.1:8000 for local Android emulator, or actual Railway URL)
-  // For Chrome testing locally we use localhost:8000
-  static const String baseUrl = 'http://127.0.0.1:8005'; // Placeholder requested: 'https://mehd-ai-backend.railway.app'
-  static const String wsUrl = '$baseUrl/stream';       // Base path for SSE stream endpoints
+  // ── NETWORK CONFIGURATION ──────────────────────────────────────────────────
+  // STEP 1 OF CLOUD DEPLOYMENT: Change this one line.
+  //
+  // LOCAL DEV  (your laptop on WiFi):
+  //   static const String baseUrl = 'http://10.33.159.35:8000';
+  //
+  // CLOUD (Railway / Render / GCP — after deployment):
+  //   static const String baseUrl = 'https://YOUR-APP-NAME.up.railway.app';
+  //
+  static const String baseUrl = 'http://10.33.159.35:8000'; // ← CHANGE THIS FOR CLOUD
+  static const String wsUrl = '$baseUrl/stream'; // Base path for SSE stream endpoints
 
-  // Symbols
+  // Symbols (Sniper Launch)
   static const List<String> symbols = [
     'EUR/USD',
-    'GBP/USD',
-    'GBP/JPY',
-    'XAU/USD',
     'BTC/USD',
-    'ETH/USD',
     'NAS100',
-    'US30',
+    'XAU/USD',
   ];
 
   // AI Models by Layer (11 Specialized Agents)

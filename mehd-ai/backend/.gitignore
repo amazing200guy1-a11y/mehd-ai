@@ -1,0 +1,44 @@
+# ────────────────────────────────────────
+#  Mehd AI Backend — .gitignore
+#  SECURITY: This file prevents secrets
+#  and runtime artifacts from being committed.
+# ────────────────────────────────────────
+
+# Environment & Secrets — NEVER COMMIT
+.env
+*.pem
+*.key
+serviceAccountKey*.json
+firebase-credentials*.json
+.prompt_vault.py
+.risk_kernel_state.json
+track_record.jsonl
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+.pytest_cache/
+
+# Runtime artifacts — regenerated at startup
+fallback_log.json
+health_out.txt
+app_constitution.json
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

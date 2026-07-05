@@ -4,9 +4,9 @@ import 'package:mehd_ai_flutter/models/consensus_result.dart';
 import 'package:mehd_ai_flutter/core/api_service.dart';
 import 'package:mehd_ai_flutter/widgets/live_calculator.dart';
 import 'package:mehd_ai_flutter/widgets/den_loading_widget.dart';
-import 'package:provider/provider.dart';
-import 'package:mehd_ai_flutter/services/app_settings_provider.dart';
 import 'package:mehd_ai_flutter/core/den_identity.dart';
+import 'package:mehd_ai_flutter/widgets/glass_agent_card.dart';
+import 'package:mehd_ai_flutter/widgets/techno_card.dart';
 
 /// FILE — math_room.dart
 ///
@@ -91,20 +91,21 @@ class _MathRoomState extends State<MathRoom> {
             child: Text('No Olympus Agents Responded.', style: MehdAiTheme.labelStyle),
           )
         else
-          ...mathVotes.map((v) => _buildPredatorCard(v)),
+          ...mathVotes.map((v) => Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: GlassAgentCard(
+                  agent: DenIdentity.getIdentity(v.modelName),
+                  vote: v,
+                ),
+              )),
       ],
     );
   }
 
   Widget _buildSpecializedCard() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+    return TechnoCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: MehdAiTheme.green.withOpacity(0.05),
-        border: Border.all(color: MehdAiTheme.green.withOpacity(0.3)),
-        borderRadius: BorderRadius.circular(8),
-      ),
+      borderColor: MehdAiTheme.green.withOpacity(0.3),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -134,13 +135,8 @@ class _MathRoomState extends State<MathRoom> {
   }
 
   Widget _buildRoomHeader() {
-    return Container(
+    return TechnoCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: MehdAiTheme.bgSecondary,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: MehdAiTheme.borderColor),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -169,118 +165,39 @@ class _MathRoomState extends State<MathRoom> {
     );
   }
 
-  Widget _buildPredatorCard(AIVote vote) {
-    Color dirColor = MehdAiTheme.textSecondary;
-    if (vote.direction == 'BUY') dirColor = MehdAiTheme.green;
-    if (vote.direction == 'SELL') dirColor = MehdAiTheme.red;
-
-    final identity = DenIdentity.getIdentity(vote.modelName);
-    final showNames = context.watch<AppSettingsProvider>().showAgentNames;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: MehdAiTheme.bgSecondary.withOpacity(0.5),
-        border: Border(left: BorderSide(color: dirColor, width: 3)),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                child: Row(
-                  children: [
-                    Icon(identity.icon, color: MehdAiTheme.textPrimary, size: 16),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Visibility(
-                        visible: showNames,
-                        child: Text(
-                          identity.displayName,
-                          style: MehdAiTheme.headingStyle.copyWith(fontSize: 14),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        '${vote.confidence.toStringAsFixed(1)}%',
-                        style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.textSecondary, fontSize: 11),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: dirColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          vote.direction,
-                          style: MehdAiTheme.terminalStyle.copyWith(
-                            color: dirColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            vote.reasoning,
-            style: MehdAiTheme.labelStyle.copyWith(height: 1.5, color: MehdAiTheme.textSecondary),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 5,
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildEmptyState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.track_changes_outlined,
-            color: Color(0xFF1A1A1A),
-            size: 36,
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: MehdAiTheme.blue.withOpacity(0.05),
+              shape: BoxShape.circle,
+              border: Border.all(color: MehdAiTheme.blue.withOpacity(0.2)),
+            ),
+            child: const Icon(
+              Icons.track_changes_outlined,
+              color: MehdAiTheme.blue,
+              size: 40,
+            ),
           ),
-          const SizedBox(height: 14),
-          const Text(
+          const SizedBox(height: 24),
+          Text(
             'SELECT A MARKET',
-            style: TextStyle(
-              color: Color(0xFF58A6FF),
-              fontSize: 12,
+            style: MehdAiTheme.headingStyle.copyWith(
+              color: MehdAiTheme.blue,
+              fontSize: 16,
               letterSpacing: 3,
             ),
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Choose a symbol from\nMarkets Explorer.',
-            style: TextStyle(
-              color: Color(0xFF333333),
-              fontSize: 10,
+          const SizedBox(height: 12),
+          Text(
+            'Choose a symbol from the Markets\nExplorer to initiate Den Analysis.',
+            style: MehdAiTheme.labelStyle.copyWith(
+              color: MehdAiTheme.textSecondary,
+              fontSize: 13,
               height: 1.6,
             ),
             textAlign: TextAlign.center,

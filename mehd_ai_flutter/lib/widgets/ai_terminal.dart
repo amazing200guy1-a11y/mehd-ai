@@ -4,10 +4,14 @@ import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mehd_ai_flutter/core/den_identity.dart';
 import 'package:mehd_ai_flutter/models/consensus_result.dart';
-import 'package:mehd_ai_flutter/widgets/den_loading_widget.dart';
+import 'package:mehd_ai_flutter/widgets/analysis_progress_widget.dart';
 import 'package:mehd_ai_flutter/models/automated_drawing.dart';
 import 'package:provider/provider.dart';
 import 'package:mehd_ai_flutter/services/settings_service.dart';
+import 'package:mehd_ai_flutter/core/api_service.dart';
+import 'package:mehd_ai_flutter/models/account_health.dart';
+import 'package:mehd_ai_flutter/services/news_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// FILE 7 — ai_terminal.dart
 /// Grand Master Build Spec implementation.
@@ -16,12 +20,14 @@ class AiTerminal extends StatefulWidget {
   final ConsensusResult? consensusResult;
   final bool isAnalyzing;
   final List<AutomatedDrawing>? drawings;
+  final VoidCallback? onStrikeComplete;
 
   const AiTerminal({
     super.key,
     this.consensusResult,
     required this.isAnalyzing,
     this.drawings,
+    this.onStrikeComplete,
   });
 
   @override
@@ -30,11 +36,14 @@ class AiTerminal extends StatefulWidget {
 
 class _AiTerminalState extends State<AiTerminal> {
   final ScrollController _terminalScroll = ScrollController();
+  bool _hasTriggeredStrike = false;
 
   @override
   void didUpdateWidget(covariant AiTerminal oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.consensusResult != oldWidget.consensusResult) {
+      // Reset strike flag when we get a brand new consensus
+      _hasTriggeredStrike = false;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_terminalScroll.hasClients) {
           _terminalScroll.animateTo(
@@ -63,7 +72,7 @@ class _AiTerminalState extends State<AiTerminal> {
       child: SafeArea(
         bottom: true,
         child: DefaultTabController(
-          length: 4,
+          length: 5,
           child: Column(
             children: [
               SizedBox(
@@ -78,6 +87,7 @@ class _AiTerminalState extends State<AiTerminal> {
                   labelPadding: EdgeInsets.zero,
                   tabs: [
                     Tab(child: Text('TERM', style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold))),
+                    Tab(child: Text('NEWS', style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold))),
                     Tab(child: Text('VOTES', style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold))),
                     Tab(child: Text('DEN', style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold))),
                     Tab(child: Text('ACCT', style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.bold))),
@@ -88,6 +98,7 @@ class _AiTerminalState extends State<AiTerminal> {
                 child: TabBarView(
                   children: [
                     _buildTerminalTab(),
+                    _buildNewsTab(),
                     Container(
                       color: unanimous ? const Color(0xFF2EA043).withOpacity(0.05) : Colors.transparent,
                       child: _buildVotesTab(),
@@ -104,6 +115,72 @@ class _AiTerminalState extends State<AiTerminal> {
     );
   }
 
+  Widget _buildNewsTab() {
+    return FutureBuilder<List<NewsArticle>>(
+      future: NewsService().fetchGeneralNews(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: Color(0xFF58A6FF)));
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Error loading news', style: GoogleFonts.jetBrainsMono(color: Colors.red)));
+        }
+        final articles = snapshot.data ?? [];
+        if (articles.isEmpty) {
+          return Center(child: Text('No recent news.', style: GoogleFonts.jetBrainsMono(color: Colors.grey)));
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: articles.length,
+          itemBuilder: (context, index) {
+            final article = articles[index];
+            final timeStr = DateFormat('HH:mm').format(DateTime.fromMillisecondsSinceEpoch(article.datetime * 1000));
+            
+            return InkWell(
+              onTap: () async {
+                if (article.url.isNotEmpty) {
+                  final uri = Uri.parse(article.url);
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri);
+                  }
+                }
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text('[$timeStr] ', style: GoogleFonts.jetBrainsMono(color: const Color(0xFF58A6FF), fontSize: 10)),
+                        Text(article.source, style: GoogleFonts.jetBrainsMono(color: const Color(0xFFAAAAAA), fontSize: 10, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      article.headline,
+                      style: GoogleFonts.inter(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                    ),
+                    if (article.summary.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        article.summary,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(color: const Color(0xFF888888), fontSize: 11),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildTerminalTab() {
     if (widget.isAnalyzing) {
       return Padding(
@@ -116,7 +193,7 @@ class _AiTerminalState extends State<AiTerminal> {
               style: GoogleFonts.jetBrainsMono(color: const Color(0xFF58A6FF), fontSize: 11),
             ),
             const SizedBox(height: 32),
-            const Center(child: DenLoadingWidget(message: 'Initializing agents...')),
+            AnalysisProgressWidget(isAnalyzing: widget.isAnalyzing),
           ],
         ),
       );
@@ -172,6 +249,12 @@ class _AiTerminalState extends State<AiTerminal> {
             child: TweenAnimationBuilder<double>(
               tween: Tween(begin: 0.0, end: 1.0),
               duration: const Duration(milliseconds: 1000),
+              onEnd: () {
+                if (isProceed && !_hasTriggeredStrike) {
+                  _hasTriggeredStrike = true;
+                  widget.onStrikeComplete?.call();
+                }
+              },
               builder: (context, value, child) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -325,14 +408,14 @@ class _AiTerminalState extends State<AiTerminal> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildLayerBox(
-            'THE UNDERWORLD',
+            'THE RESEARCH',
             'Sift, Sentiment, Order Flow',
             'Protects against retail crowding and sudden traps.',
             const Color(0xFFBC8CFF),
           ),
           const SizedBox(height: 12),
           _buildLayerBox(
-            'THE EMPIRE',
+            'THE STRATEGY',
             'Pattern, Structure, Trend',
             'Protects against trading against the primary institutional momentum.',
             const Color(0xFFFFD700),
@@ -380,20 +463,34 @@ class _AiTerminalState extends State<AiTerminal> {
   }
 
   Widget _buildAccountTab() {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildMetric('Balance', '\$10,000.00', Colors.white),
-          const SizedBox(height: 16),
-          _buildMetric('Daily P/L', '+\$142.50', const Color(0xFF2EA043)),
-          const SizedBox(height: 32),
-          _buildMetric('Risk Cap', '1.0% (Enforced)', const Color(0xFF58A6FF)),
-          const SizedBox(height: 16),
-          _buildMetric('Drawdown Limit', '3.0% (Active)', const Color(0xFF58A6FF)),
-        ],
-      ),
+    return FutureBuilder<AccountHealth>(
+      future: ApiService().getAccountHealth(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: Color(0xFF58A6FF)));
+        }
+        
+        final health = snapshot.data;
+        final balance = health?.balance ?? 0.0;
+        final equity = health?.equity ?? 0.0;
+        final drawdown = health?.dailyDrawdownPct ?? 0.0;
+        
+        return Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildMetric('Balance', '\$${balance.toStringAsFixed(2)}', Colors.white),
+              const SizedBox(height: 16),
+              _buildMetric('Equity', '\$${equity.toStringAsFixed(2)}', Colors.white),
+              const SizedBox(height: 32),
+              _buildMetric('Daily Drawdown', '${drawdown.toStringAsFixed(2)}%', drawdown > 2.0 ? const Color(0xFFFF3B3B) : const Color(0xFF2EA043)),
+              const SizedBox(height: 16),
+              _buildMetric('Status', health?.isLocked == true ? 'LOCKED' : 'ACTIVE', health?.isLocked == true ? const Color(0xFFFF3B3B) : const Color(0xFF58A6FF)),
+            ],
+          ),
+        );
+      },
     );
   }
 

@@ -54,11 +54,11 @@ class ExecutiveBriefDialog extends StatelessWidget {
                     const SizedBox(height: 12),
                     const Divider(color: MehdAiTheme.borderColor),
                     
-                    _buildSectionHeader('THE UNDERWORLD'),
+                    _buildSectionHeader('THE RESEARCH'),
                     ...brief.sentimentLayer.entries.map((e) => _buildVoteRow(e.key, e.value)),
                     const SizedBox(height: 12),
                     
-                    _buildSectionHeader('THE EMPIRE'),
+                    _buildSectionHeader('THE STRATEGY'),
                     ...brief.strategyLayer.entries.map((e) => _buildVoteRow(e.key, e.value)),
                     const SizedBox(height: 12),
                     

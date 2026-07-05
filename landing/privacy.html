@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy — Mehd AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;600;700&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .legal { padding: 140px 0 80px; position: relative; z-index: 1; }
+        .legal h1 { font-family: var(--font-heading); font-size: 36px; font-weight: 800; margin-bottom: 8px; }
+        .legal .legal-date { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-bottom: 40px; display: block; }
+        .legal h2 { font-family: var(--font-heading); font-size: 20px; font-weight: 700; margin: 40px 0 12px; color: var(--blue); }
+        .legal p, .legal li { font-size: 14px; color: var(--text-dim); line-height: 1.9; margin-bottom: 12px; }
+        .legal ul { padding-left: 20px; margin-bottom: 16px; }
+        .legal ul li { list-style: disc; margin-bottom: 6px; }
+        .legal strong { color: var(--text); }
+        .legal-back { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 12px; color: var(--text-dim); margin-bottom: 32px; }
+        .legal-back:hover { color: var(--blue); }
+    </style>
+</head>
+<body>
+    <canvas id="particle-canvas"></canvas>
+    <div class="grid-overlay"></div>
+
+    <nav class="nav nav--scrolled">
+        <div class="nav__container">
+            <a href="index.html" class="nav__logo"><img src="mehd_logo.png" alt="Mehd AI" class="nav__logo-img"><span>MEHD AI</span></a>
+            <a href="index.html" class="btn btn--glass btn--sm">← Back</a>
+        </div>
+    </nav>
+
+    <section class="legal">
+        <div class="container">
+            <a href="index.html" class="legal-back">← Back to Home</a>
+            <h1>Privacy Policy</h1>
+            <span class="legal-date">Last updated: April 2026</span>
+
+            <p>At Mehd AI ("we", "us", "our"), we are committed to protecting your personal information. This Privacy Policy explains how we collect, use, and protect your data when you use our platform.</p>
+
+            <h2>1. Information We Collect</h2>
+            <ul>
+                <li><strong>Account Information:</strong> Email address, name, and authentication credentials when you register.</li>
+                <li><strong>Trading Data:</strong> Currency pairs analyzed, trade decisions, and consensus results generated within the platform.</li>
+                <li><strong>Usage Data:</strong> How you interact with the app, features used, and session information.</li>
+                <li><strong>Device Information:</strong> Device type, operating system, and browser type for compatibility and security purposes.</li>
+            </ul>
+
+            <h2>2. How We Use Your Information</h2>
+            <ul>
+                <li>To provide and maintain the Mehd AI platform and its services.</li>
+                <li>To improve the AI consensus engine and risk management algorithms.</li>
+                <li>To process payments and manage subscriptions.</li>
+                <li>To detect and prevent fraud, unauthorized access, and security threats.</li>
+                <li>To communicate important updates about the platform.</li>
+            </ul>
+
+            <h2>3. Data Protection</h2>
+            <p>All data is encrypted in transit (TLS 1.3) and at rest (AES-256). We implement Firebase Authentication for secure sign-in, and all API communications use HMAC-SHA256 signed intent capsules. Your broker credentials are never stored on our servers.</p>
+
+            <h2>4. What We Never Do</h2>
+            <ul>
+                <li>We <strong>never sell</strong> your personal data to third parties.</li>
+                <li>We <strong>never share</strong> your trading data with other users.</li>
+                <li>We <strong>never store</strong> your broker passwords or API keys on our infrastructure.</li>
+                <li>We <strong>never access</strong> your brokerage account funds.</li>
+            </ul>
+
+            <h2>5. Third-Party Services</h2>
+            <p>We use Firebase (Google) for authentication and hosting, and Paystack for payment processing. These services have their own privacy policies and are GDPR compliant.</p>
+
+            <h2>6. Data Retention</h2>
+            <p>We retain your data for as long as your account is active. If you delete your account, all personal data is permanently removed within 30 days.</p>
+
+            <h2>7. Your Rights</h2>
+            <p>You have the right to access, correct, or delete your personal data at any time. Contact us at <strong>privacy@mehdai.com</strong> to exercise these rights.</p>
+
+            <h2>8. Changes to This Policy</h2>
+            <p>We may update this policy periodically. We will notify you of significant changes via the platform or email.</p>
+
+            <h2>9. Contact</h2>
+            <p>For privacy concerns, contact: <strong>privacy@mehdai.com</strong></p>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer__bottom">
+                <p class="mono-sm">&copy; 2026 Mehd AI. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

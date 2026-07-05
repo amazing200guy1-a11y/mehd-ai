@@ -47,6 +47,7 @@ class ConsensusResult {
   final String finalDirection;
   final double consensusPercentage;
   final bool proceed;
+  final bool isSimulated;
   final String tier;
   final double requiredThreshold;
   final String? chairmanSummary;
@@ -59,6 +60,7 @@ class ConsensusResult {
     required this.finalDirection,
     required this.consensusPercentage,
     required this.proceed,
+    this.isSimulated = false,
     this.tier = 'civilian',
     this.requiredThreshold = 0.70,
     this.chairmanSummary,
@@ -90,6 +92,7 @@ class ConsensusResult {
       finalDirection: json['final_direction'] as String,
       consensusPercentage: (json['consensus_percentage'] as num).toDouble(),
       proceed: json['proceed'] as bool,
+      isSimulated: json['is_simulated'] as bool? ?? false,
       tier: json['tier'] as String? ?? 'civilian',
       requiredThreshold: (json['required_threshold'] as num?)?.toDouble() ?? 0.70,
       chairmanSummary: json['chairman_summary'] as String?,
@@ -109,6 +112,7 @@ class ConsensusResult {
       'final_direction': finalDirection,
       'consensus_percentage': consensusPercentage,
       'proceed': proceed,
+      'is_simulated': isSimulated,
       'tier': tier,
       'required_threshold': requiredThreshold,
       'chairman_summary': chairmanSummary,

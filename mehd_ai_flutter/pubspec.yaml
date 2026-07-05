@@ -22,11 +22,14 @@ dependencies:
   animated_text_kit: ^4.3.0
   flutter_secure_storage: ^9.2.4
   google_sign_in: ^6.2.2
+  cupertino_icons: ^1.0.8
   intl: ^0.19.0
   shared_preferences: ^2.5.3
   url_launcher: ^6.3.1
   cloud_functions: ^6.1.0
   webview_flutter: ^4.8.0
+  web_socket_channel: ^3.0.3
+  uuid: ^4.5.1
 
 dev_dependencies:
   flutter_test:
@@ -51,3 +54,5 @@ flutter:
     - assets/images/
     - assets/chart/
     - assets/chart/chart.html
+    - assets/chart/lightweight-charts.min.js
+    - assets/data/

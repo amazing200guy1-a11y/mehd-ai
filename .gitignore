@@ -12,10 +12,14 @@ pub_err*.txt
 git_changes.txt
 setstate_results.txt
 dart_analyze.txt
-*.py
-*.log
 out.txt
 output.txt
+*.log
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
 
 # Old backup files
 old_home.dart
@@ -24,3 +28,18 @@ old_*.dart
 # Build
 build/
 .dart_tool/
+
+# Flutter web node_modules and node scripts
+node_modules/
+**/node_modules/
+package.json
+package-lock.json
+server.js
+
+# Extra test files and reports
+*analyze_results*.txt
+*lint_issues*.txt
+*build_debug*.txt
+finnhub_*.dart
+implementation_plan.md
+

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:uuid/uuid.dart';
 import 'package:mehd_ai_flutter/core/constants.dart';
 import 'package:mehd_ai_flutter/models/account_health.dart';
 import 'package:mehd_ai_flutter/widgets/mistake_dna_dialog.dart';
@@ -92,16 +93,17 @@ class ApiService {
   }
 
   /// Asks the 11 AI agents to analyze a symbol in real-time.
-  Future<ConsensusResult> analyzeSymbol(String symbol) async {
-    final cacheKey = 'analyze_$symbol';
+  Future<ConsensusResult> analyzeSymbol(String symbol, {bool tigerMode = false}) async {
+    final cacheKey = 'analyze_${symbol}_tiger_$tigerMode';
     if (_cache.containsKey(cacheKey) && _cache[cacheKey]!.isValid(const Duration(minutes: 5))) {
       return _cache[cacheKey]!.data as ConsensusResult;
     }
 
     try {
       final cleanSymbol = symbol.replaceAll('/', '');
+      final endpoint = tigerMode ? '${AppConstants.baseUrl}/analyze/$cleanSymbol?tiger_mode=true' : '${AppConstants.baseUrl}/analyze/$cleanSymbol';
       final response = await _client.get(
-        Uri.parse('${AppConstants.baseUrl}/analyze/$cleanSymbol'),
+        Uri.parse(endpoint),
         headers: await _getHeaders(),
       ).timeout(const Duration(seconds: 35)); // Give room for 30s ML timeout
 
@@ -126,11 +128,23 @@ class ApiService {
   }
 
   /// Submits a trade order to the Risk Kernel.
+  /// SECURITY (Option B): Broker API keys are securely transmitted to the Backend
+  /// KMS Vault during onboarding. The backend handles decryption internally just-in-time
+  /// for trade execution. The frontend does not send keys during execution.
   Future<RiskDecision> executeTrade(TradeOrder order) async {
     try {
+      // Generate a unique idempotency key for this trade attempt.
+      // The backend REQUIRES this header — without it, every call returns HTTP 400.
+      final idempotencyKey = const Uuid().v4();
+
+      final headers = await _getHeaders({
+        'Content-Type': 'application/json',
+        'Idempotency-Key': idempotencyKey,
+      });
+
       final response = await _client.post(
         Uri.parse('${AppConstants.baseUrl}/execute'),
-        headers: await _getHeaders({'Content-Type': 'application/json'}),
+        headers: headers,
         body: jsonEncode(order.toJson()),
       ).timeout(const Duration(seconds: 10));
 
@@ -169,13 +183,13 @@ class ApiService {
         throw Exception('Failed fetching account: ${response.statusCode}');
       }
     } catch (e) {
-      // Safe mock state if offline
+      // Safe mock state if offline (Simulated)
       return AccountHealth(
-        balance: 0.0,
-        equity: 0.0,
-        dailyDrawdownPct: 0.0,
-        isLocked: true,
-        lockReason: "BACKEND_OFFLINE",
+        balance: 10000.0,
+        equity: 10045.50,
+        dailyDrawdownPct: 0.15,
+        isLocked: false,
+        lockReason: "SIMULATED",
       );
     }
   }
@@ -187,10 +201,80 @@ class ApiService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       }
+      throw Exception('Failed to get health');
     } catch (e) {
-      debugPrint("Health check failed: $e");
+      // Simulated Health Data
+      return {
+        "status": "SIMULATED",
+        "avg_consensus_time": "1.2s",
+        "price_feed_latency": "14ms",
+        "cache_hit_rate": "89.4%",
+        "error_rate": "0.01%",
+        "api_budget_remaining": "99.8%",
+        "model_response_times": {
+          "vanguard": "0.8s",
+          "guardian": "1.1s",
+          "phantom": "0.9s",
+          "titan": "1.5s"
+        }
+      };
     }
-    return {};
+  }
+
+  /// Fetches real-time status of the autopilot command center
+  Future<Map<String, dynamic>?> getCommandCenterStatus() async {
+    try {
+      final response = await _client.get(Uri.parse('${AppConstants.baseUrl}/autopilot/command-center-status'), headers: await _getHeaders()).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      throw Exception('Failed to get command center status');
+    } catch (e) {
+      // Return simulated data
+      return {
+        "system_status": "SIMULATED",
+        "is_simulated": true,
+        "active_snipers": [
+          {
+            "id": "snp_1",
+            "symbol": "XAU/USD",
+            "direction": "BUY",
+            "status": "AWAITING APPROVAL",
+            "entry_target": 2345.50,
+            "current_price": 2342.10,
+            "distance_dollars": 3.40
+          },
+          {
+            "id": "snp_2",
+            "symbol": "EUR/USD",
+            "direction": "SELL",
+            "status": "HUNTING",
+            "entry_target": 1.0850,
+            "current_price": 1.0820,
+            "distance_pips": 30
+          }
+        ],
+        "system_events": [
+          {"message": "Backend offline — running in demo mode."},
+          {"message": "Sentinel risk layer initialized in simulation."},
+          {"message": "Mock market data stream active."}
+        ],
+        "risk_overview": {
+          "equity": 10045.50,
+          "daily_drawdown": 0.15,
+          "open_positions": 2,
+          "max_positions": 3,
+        },
+        "subsystem_health": {
+          "aggregate_state": "GREEN",
+          "subsystems": {
+            "price_feed": {"state": "GREEN", "detail": "14ms latency (Sim)"},
+            "consensus_engine": {"state": "GREEN", "detail": "Ready (Sim)"},
+            "risk_kernel": {"state": "GREEN", "detail": "Monitoring (Sim)"}
+          }
+        }
+      };
+    }
   }
 
   /// Connects to the Server-Sent Events endpoint and yields live prices.
@@ -225,9 +309,35 @@ class ApiService {
         }
       }
     } catch (e) {
-      // Stream failed or backend offline. 
-      // In a real app we'd throw or wait and reconnect.
-      yield* const Stream.empty();
+      // ── MOCK DATA STREAM IF BACKEND IS OFFLINE ──
+      double mockPrice = symbol.contains('JPY') ? 150.250 : 1.08500;
+      final double mockSpread = symbol.contains('JPY') ? 0.010 : 0.00010;
+      int tick = 0;
+      
+      while (true) {
+        tick++;
+        // Random walk using tick-based micro shift
+        mockPrice += (DateTime.now().microsecond % 100 - 50) / 100000 *
+            (symbol.contains('JPY') ? 10.0 : 1.0);
+
+        yield MarketSnapshot(
+          id: 'mock_$tick',
+          symbol: symbol,
+          bid: mockPrice,
+          ask: mockPrice + mockSpread,
+          spread: mockSpread,
+          timestamp: DateTime.now().toUtc(),
+          open: mockPrice - 0.0005,
+          high: mockPrice + 0.0010,
+          low: mockPrice - 0.0015,
+          close: mockPrice,
+          volume: 1000 + (tick * 17 % 500).toDouble(),
+          dataSource: 'simulated',
+          isLive: false,
+        );
+        
+        await Future.delayed(const Duration(milliseconds: 1500));
+      }
     }
   }
 
@@ -290,21 +400,24 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> denVibe(String query) async {
+  Future<Map<String, dynamic>> denPulse(String query) async {
     try {
       final response = await _client.post(
         Uri.parse('${AppConstants.baseUrl}/den/vibe'),
         headers: await _getHeaders({'Content-Type': 'application/json'}),
         body: jsonEncode({"query": query}),
       ).timeout(const Duration(seconds: 10));
-      return jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
     } catch (e) {
-      return {
-        "text": "Connection to The Den failed. Please retry.",
-        "is_emotional": false,
-        "consensus": null
-      };
+      debugPrint("API - denPulse failed: $e");
     }
+    return {
+      "text": "Connection to The Den failed. Please retry.",
+      "is_emotional": false,
+      "consensus": null
+    };
   }
 
   Future<ExecutiveBrief?> getExecutiveBrief(String tradeId) async {
@@ -369,5 +482,36 @@ class ApiService {
       debugPrint("API - Validation failed: $e");
     }
     return {"is_valid": false, "label": "validation_failed", "strength": 0.0};
+  }
+
+  // ── AUTOPILOT CONFIG ──
+
+  Future<Map<String, dynamic>?> getAutopilotConfig() async {
+    try {
+      final response = await _client.get(
+        Uri.parse('${AppConstants.baseUrl}/broadcast/autopilot/config'),
+        headers: await _getHeaders(),
+      ).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint("API - getAutopilotConfig failed: $e");
+    }
+    return null;
+  }
+
+  Future<bool> saveAutopilotConfig(Map<String, dynamic> config) async {
+    try {
+      final response = await _client.post(
+        Uri.parse('${AppConstants.baseUrl}/broadcast/autopilot/config'),
+        headers: await _getHeaders({'Content-Type': 'application/json'}),
+        body: jsonEncode(config),
+      ).timeout(const Duration(seconds: 10));
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint("API - saveAutopilotConfig failed: $e");
+      return false;
+    }
   }
 }

@@ -23,7 +23,7 @@ class _WarRoomCommunityScreenState extends State<WarRoomCommunityScreen> {
     for (int i = 0; i < 15; i++) {
       _addFeedItem();
     }
-    // Simulate live institutional platoon data
+    // Simulate live institutional network data
     _feedTimer = Timer.periodic(const Duration(seconds: 4), (_) {
       setState(() {
         _addFeedItem();
@@ -67,7 +67,7 @@ class _WarRoomCommunityScreenState extends State<WarRoomCommunityScreen> {
     return Scaffold(
       backgroundColor: MehdAiTheme.bgPrimary,
       appBar: AppBar(
-        title: Text('WAR ROOM PLATOON', style: MehdAiTheme.headingStyle.copyWith(letterSpacing: 2)),
+        title: Text('WAR ROOM NETWORK', style: MehdAiTheme.headingStyle.copyWith(letterSpacing: 2)),
         backgroundColor: MehdAiTheme.bgSecondary,
         iconTheme: const IconThemeData(color: MehdAiTheme.textPrimary),
         centerTitle: true,
@@ -76,44 +76,67 @@ class _WarRoomCommunityScreenState extends State<WarRoomCommunityScreen> {
           child: Container(color: MehdAiTheme.borderColor, height: 1),
         ),
       ),
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Left Column (Consensus Chat & Heatmap)
-          Expanded(
-            flex: 6,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isMobile = constraints.maxWidth < 800;
+          if (isMobile) {
+            // MOBILE: Single scrollable column
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildSentimentHeatmap(),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
                   Text('CONSENSUS FEED (LIVE)', style: MehdAiTheme.headingStyle.copyWith(color: MehdAiTheme.gold)),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   _buildConsensusChat(),
-                ],
-              ),
-            ),
-          ),
-          // Divider
-          Container(width: 1, color: MehdAiTheme.borderColor),
-          // Right Column (Leaderboard & Wound Healing)
-          Expanded(
-            flex: 4,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+                  const SizedBox(height: 24),
                   _buildLeaderboard(),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
                   _buildWoundHealingHospital(),
                 ],
               ),
-            ),
-          ),
-        ],
+            );
+          }
+          // DESKTOP: Side-by-side layout
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 6,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSentimentHeatmap(),
+                      const SizedBox(height: 32),
+                      Text('CONSENSUS FEED (LIVE)', style: MehdAiTheme.headingStyle.copyWith(color: MehdAiTheme.gold)),
+                      const SizedBox(height: 16),
+                      _buildConsensusChat(),
+                    ],
+                  ),
+                ),
+              ),
+              Container(width: 1, color: MehdAiTheme.borderColor),
+              Expanded(
+                flex: 4,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildLeaderboard(),
+                      const SizedBox(height: 32),
+                      _buildWoundHealingHospital(),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -130,27 +153,45 @@ class _WarRoomCommunityScreenState extends State<WarRoomCommunityScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('SENTIMENT HEATMAP (CROWD LOGIC)', style: MehdAiTheme.headingStyle),
+              Flexible(
+                child: Text('SENTIMENT HEATMAP (CROWD LOGIC)', style: MehdAiTheme.headingStyle, overflow: TextOverflow.ellipsis),
+              ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(color: MehdAiTheme.green.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
-                child: Text('82% AGGREGATE EDGE', style: MehdAiTheme.labelStyle.copyWith(color: MehdAiTheme.green, fontWeight: FontWeight.bold)),
+                child: Text('82% EDGE', style: MehdAiTheme.labelStyle.copyWith(color: MehdAiTheme.green, fontWeight: FontWeight.bold, fontSize: 10)),
               ),
             ],
           ),
           const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(child: _buildHeatmapBlock('XAU/USD', 88, MehdAiTheme.green)),
-              const SizedBox(width: 12),
-              Expanded(child: _buildHeatmapBlock('EUR/USD', 74, MehdAiTheme.green)),
-              const SizedBox(width: 12),
-              Expanded(child: _buildHeatmapBlock('GBP/JPY', 42, MehdAiTheme.red)),
-              const SizedBox(width: 12),
-              Expanded(child: _buildHeatmapBlock('BTC/USD', 95, MehdAiTheme.green)),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 500) {
+                return Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    SizedBox(width: (constraints.maxWidth - 10) / 2, child: _buildHeatmapBlock('XAU/USD', 88, MehdAiTheme.green)),
+                    SizedBox(width: (constraints.maxWidth - 10) / 2, child: _buildHeatmapBlock('EUR/USD', 74, MehdAiTheme.green)),
+                    SizedBox(width: (constraints.maxWidth - 10) / 2, child: _buildHeatmapBlock('GBP/JPY', 42, MehdAiTheme.red)),
+                    SizedBox(width: (constraints.maxWidth - 10) / 2, child: _buildHeatmapBlock('BTC/USD', 95, MehdAiTheme.green)),
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: _buildHeatmapBlock('XAU/USD', 88, MehdAiTheme.green)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildHeatmapBlock('EUR/USD', 74, MehdAiTheme.green)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildHeatmapBlock('GBP/JPY', 42, MehdAiTheme.red)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildHeatmapBlock('BTC/USD', 95, MehdAiTheme.green)),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -167,9 +208,9 @@ class _WarRoomCommunityScreenState extends State<WarRoomCommunityScreen> {
       ),
       child: Column(
         children: [
-          Text(symbol, style: MehdAiTheme.terminalStyle.copyWith(fontWeight: FontWeight.bold, fontSize: 16)),
+          FittedBox(fit: BoxFit.scaleDown, child: Text(symbol, style: MehdAiTheme.terminalStyle.copyWith(fontWeight: FontWeight.bold, fontSize: 16))),
           const SizedBox(height: 8),
-          Text('$profitPercent% IN PROFIT', style: MehdAiTheme.labelStyle.copyWith(color: baseColor, fontWeight: FontWeight.bold)),
+          FittedBox(fit: BoxFit.scaleDown, child: Text('$profitPercent% IN PROFIT', style: MehdAiTheme.labelStyle.copyWith(color: baseColor, fontWeight: FontWeight.bold))),
         ],
       ),
     );
@@ -286,13 +327,24 @@ class _WarRoomCommunityScreenState extends State<WarRoomCommunityScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          Text('Don\'t revenge trade. Process your losses with the Platoon.', style: MehdAiTheme.labelStyle),
-          const SizedBox(height: 24),
+          Text('Don\'t revenge trade. Process your losses with the Network.', style: MehdAiTheme.labelStyle),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Wound Post-Mortems', style: MehdAiTheme.labelStyle.copyWith(color: MehdAiTheme.textSecondary)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(color: MehdAiTheme.textSecondary.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
+                child: const Text('EXAMPLES', style: TextStyle(color: MehdAiTheme.textSecondary, fontSize: 10, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           _buildWoundPost(
             'BeginnerTrader99', 
             'XAU/USD blew past my Stop Loss. I lost 4% today and I feel sick. The AI said HOLD and I ignored it.', 
             'Don77', 
-            'Capital is a seed, not a sacrifice. The Platoon saw the volume drying up. Take 24 hours off. You survived, that\'s what matters. Stick to the system tomorrow.',
+            'Capital is a seed, not a sacrifice. The Network saw the volume drying up. Take 24 hours off. You survived, that\'s what matters. Stick to the system tomorrow.',
             '-42 pips (FOMO DNA)'
           ),
           const Divider(color: MehdAiTheme.borderColor, height: 32),
@@ -313,7 +365,63 @@ class _WarRoomCommunityScreenState extends State<WarRoomCommunityScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Triage Center connecting...')));
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    backgroundColor: MehdAiTheme.bgSecondary,
+                    title: Row(
+                      children: [
+                        const Icon(Icons.local_hospital, color: MehdAiTheme.blue),
+                        const SizedBox(width: 8),
+                        Text('TRIAGE REPORT', style: MehdAiTheme.headingStyle.copyWith(color: MehdAiTheme.blue)),
+                      ],
+                    ),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Admit your mistake to the Network. Truth is the only way to heal your Mistake DNA.', style: MehdAiTheme.labelStyle),
+                        const SizedBox(height: 16),
+                        TextField(
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            labelText: 'Asset Pair (e.g. XAU/USD)',
+                            labelStyle: const TextStyle(color: MehdAiTheme.textSecondary),
+                            enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: MehdAiTheme.borderColor)),
+                            focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: MehdAiTheme.blue)),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          style: const TextStyle(color: Colors.white),
+                          maxLines: 3,
+                          decoration: InputDecoration(
+                            labelText: 'What did you do wrong?',
+                            labelStyle: const TextStyle(color: MehdAiTheme.textSecondary),
+                            enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: MehdAiTheme.borderColor)),
+                            focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: MehdAiTheme.blue)),
+                          ),
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('CANCEL', style: TextStyle(color: MehdAiTheme.textSecondary)),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: MehdAiTheme.blue),
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                            content: Text('Your Post-Mortem has been submitted to the Network for review.'),
+                            backgroundColor: MehdAiTheme.blue,
+                          ));
+                        },
+                        child: const Text('SUBMIT FOR REVIEW', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                );
               },
               child: Text('REQUEST POST-MORTEM TRIAGE', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.blue, fontWeight: FontWeight.bold)),
             ),
@@ -327,8 +435,11 @@ class _WarRoomCommunityScreenState extends State<WarRoomCommunityScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8,
+          runSpacing: 6,
           children: [
             Text('@$opName reported a casualty:', style: MehdAiTheme.labelStyle.copyWith(color: MehdAiTheme.red)),
             Container(

@@ -3,6 +3,7 @@ import 'package:mehd_ai_flutter/core/theme.dart';
 import 'package:mehd_ai_flutter/models/user_profile.dart';
 import 'package:mehd_ai_flutter/services/auth_service.dart';
 import 'package:mehd_ai_flutter/services/user_service.dart';
+import 'package:mehd_ai_flutter/services/broker_service.dart';
 import 'package:mehd_ai_flutter/screens/onboarding/risk_setup_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -35,26 +36,17 @@ class BrokerConnectScreen extends StatefulWidget {
 }
 
 class _BrokerConnectScreenState extends State<BrokerConnectScreen> {
-  int _selectedBroker = 2; // 0=MT5, 1=Oanda, 2=Demo (default)
+  int _selectedBroker = 0; // 0=Binance, 1=Bybit, 2=Exness
   bool _isConnecting = false;
   String? _connectionError;
 
-  // MT5 fields
-  final _mt5LoginController = TextEditingController();
-  final _mt5PasswordController = TextEditingController();
-  final _mt5ServerController = TextEditingController();
-
-  // Oanda fields
-  final _oandaAccountController = TextEditingController();
-  final _oandaApiKeyController = TextEditingController();
+  final _apiKeyController = TextEditingController();
+  final _apiSecretController = TextEditingController();
 
   @override
   void dispose() {
-    _mt5LoginController.dispose();
-    _mt5PasswordController.dispose();
-    _mt5ServerController.dispose();
-    _oandaAccountController.dispose();
-    _oandaApiKeyController.dispose();
+    _apiKeyController.dispose();
+    _apiSecretController.dispose();
     super.dispose();
   }
 
@@ -65,7 +57,6 @@ class _BrokerConnectScreenState extends State<BrokerConnectScreen> {
     });
 
     final authService = context.read<AuthService>();
-    final userService = UserService();
     final userId = authService.currentUser?.uid;
 
     if (userId == null) {
@@ -77,49 +68,35 @@ class _BrokerConnectScreenState extends State<BrokerConnectScreen> {
     }
 
     try {
-      BrokerType brokerType;
-      String? login;
-      String? server;
-
-      switch (_selectedBroker) {
-        case 0: // MT5
-          if (_mt5LoginController.text.trim().isEmpty ||
-              _mt5PasswordController.text.trim().isEmpty ||
-              _mt5ServerController.text.trim().isEmpty) {
-            setState(() {
-              _isConnecting = false;
-              _connectionError = 'All MT5 fields are required.';
-            });
-            return;
-          }
-          brokerType = BrokerType.mt5;
-          login = _mt5LoginController.text.trim();
-          server = _mt5ServerController.text.trim();
-          break;
-        case 1: // Oanda
-          if (_oandaAccountController.text.trim().isEmpty ||
-              _oandaApiKeyController.text.trim().isEmpty) {
-            setState(() {
-              _isConnecting = false;
-              _connectionError = 'Account ID and API Key are required.';
-            });
-            return;
-          }
-          brokerType = BrokerType.oanda;
-          login = _oandaAccountController.text.trim();
-          server = 'practice'; // Oanda practice server
-          break;
-        default: // Demo
-          brokerType = BrokerType.demo;
-          login = null;
-          server = null;
+      if (_apiKeyController.text.trim().isEmpty || _apiSecretController.text.trim().isEmpty) {
+        setState(() {
+          _isConnecting = false;
+          _connectionError = 'Both API Key and API Secret are required.';
+        });
+        return;
       }
 
-      // Simulate connection test
+      String exchangeId = '';
+      if (_selectedBroker == 0) exchangeId = 'binance';
+      if (_selectedBroker == 1) exchangeId = 'bybit';
+      if (_selectedBroker == 2) exchangeId = 'exness';
+
+      // Simulate connection testing
       await Future.delayed(const Duration(seconds: 2));
 
-      // Save broker settings (credentials encrypted automatically)
-      await userService.updateBrokerSettings(userId, brokerType, login, server);
+      // SECURE VAULT SAVE
+      final success = await BrokerService().connectBroker(
+        exchangeId: exchangeId,
+        apiKey: _apiKeyController.text.trim(),
+        apiSecret: _apiSecretController.text.trim(),
+      );
+
+      if (!success) {
+        throw Exception("Failed to encrypt and store keys on device.");
+      }
+
+      // Tell Firebase we have a broker connected (but DO NOT store keys)
+      await UserService().updateBrokerSettings(userId, BrokerType.oanda, "SECURE_VAULT", "ENCRYPTED");
 
       if (mounted) {
         Navigator.of(context).pushReplacement(
@@ -188,56 +165,53 @@ class _BrokerConnectScreenState extends State<BrokerConnectScreen> {
                 const SizedBox(height: 16),
               ],
 
-              // ── MT5 CARD ─────────────────────────────────
+              // ── BINANCE CARD ─────────────────────────────────
               _buildBrokerCard(
                 index: 0,
-                icon: Icons.candlestick_chart,
-                title: 'MetaTrader 5',
-                description:
-                    'Works with Exness, XM, FxPro, Deriv and 500+ brokers',
-                badge: null,
+                icon: Icons.currency_bitcoin,
+                title: 'Binance',
+                description: 'Direct institutional access to Binance Futures via API.',
+                badge: 'RECOMMENDED',
                 fields: [
-                  _buildField(_mt5LoginController, 'Login number'),
+                  _buildField(_apiKeyController, 'API Key'),
                   const SizedBox(height: 10),
-                  _buildField(_mt5PasswordController, 'Password',
-                      obscure: true),
-                  const SizedBox(height: 10),
-                  _buildField(_mt5ServerController, 'Server name'),
+                  _buildField(_apiSecretController, 'API Secret', obscure: true),
                 ],
-                buttonLabel: 'Connect MT5',
+                buttonLabel: 'Connect Binance',
               ),
 
               const SizedBox(height: 14),
 
-              // ── OANDA CARD ───────────────────────────────
+              // ── BYBIT CARD ───────────────────────────────
               _buildBrokerCard(
                 index: 1,
-                icon: Icons.show_chart,
-                title: 'Oanda',
-                description:
-                    'Professional forex broker with direct API',
+                icon: Icons.candlestick_chart,
+                title: 'Bybit',
+                description: 'Connect Bybit Unified Trading Account.',
                 badge: null,
                 fields: [
-                  _buildField(_oandaAccountController, 'Account ID'),
+                  _buildField(_apiKeyController, 'API Key'),
                   const SizedBox(height: 10),
-                  _buildField(_oandaApiKeyController, 'API Key',
-                      obscure: true),
+                  _buildField(_apiSecretController, 'API Secret', obscure: true),
                 ],
-                buttonLabel: 'Connect Oanda',
+                buttonLabel: 'Connect Bybit',
               ),
 
               const SizedBox(height: 14),
 
-              // ── DEMO MODE CARD ───────────────────────────
+              // ── EXNESS CARD ───────────────────────────
               _buildBrokerCard(
                 index: 2,
-                icon: Icons.school_outlined,
-                title: 'Demo Mode',
-                description:
-                    'Practice with simulated prices. No real money. Perfect for learning.',
-                badge: 'RECOMMENDED',
-                fields: const [],
-                buttonLabel: 'Start in Demo Mode',
+                icon: Icons.show_chart,
+                title: 'Exness',
+                description: 'Professional forex broker connection.',
+                badge: null,
+                fields: [
+                  _buildField(_apiKeyController, 'API Key'),
+                  const SizedBox(height: 10),
+                  _buildField(_apiSecretController, 'API Secret', obscure: true),
+                ],
+                buttonLabel: 'Connect Exness',
               ),
 
               const SizedBox(height: 20),
@@ -246,8 +220,10 @@ class _BrokerConnectScreenState extends State<BrokerConnectScreen> {
               Center(
                 child: TextButton(
                   onPressed: () {
-                    setState(() => _selectedBroker = 2);
-                    _connectBroker();
+                    // Start in demo anyway
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (_) => const RiskSetupScreen()),
+                    );
                   },
                   child: Text(
                     'Skip for now — use demo mode',

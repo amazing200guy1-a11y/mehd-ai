@@ -99,4 +99,44 @@ class MarketSnapshot {
       'latency_warning': latencyWarning,
     };
   }
+
+  MarketSnapshot copyWith({
+    String? id,
+    String? symbol,
+    double? bid,
+    double? ask,
+    double? spread,
+    DateTime? timestamp,
+    double? open,
+    double? high,
+    double? low,
+    double? close,
+    double? volume,
+    int? timestampNs,
+    String? orderBookWalls,
+    int? dataAgeMs,
+    String? dataSource,
+    bool? isLive,
+    bool? latencyWarning,
+  }) {
+    return MarketSnapshot(
+      id: id ?? this.id,
+      symbol: symbol ?? this.symbol,
+      bid: bid ?? this.bid,
+      ask: ask ?? this.ask,
+      spread: spread ?? this.spread,
+      timestamp: timestamp ?? this.timestamp,
+      open: open ?? this.open,
+      high: high ?? this.high,
+      low: low ?? this.low,
+      close: close ?? this.close,
+      volume: volume ?? this.volume,
+      timestampNs: timestampNs ?? this.timestampNs,
+      orderBookWalls: orderBookWalls ?? this.orderBookWalls,
+      dataAgeMs: dataAgeMs ?? this.dataAgeMs,
+      dataSource: dataSource ?? this.dataSource,
+      isLive: isLive ?? this.isLive,
+      latencyWarning: latencyWarning ?? this.latencyWarning,
+    );
+  }
 }

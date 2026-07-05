@@ -113,26 +113,43 @@ class _TerminalScreenState extends State<TerminalScreen> with TickerProviderStat
             child: _buildGlowOrb(MehdAiTheme.green.withOpacity(0.05)),
           ),
           
-          Column(
-            children: [
-              _buildHeaderRow(),
-              const SizedBox(height: 16),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: Row(
-                    children: [
-                      // Left Column: The Order Book numbers
-                      Expanded(flex: 3, child: _buildOrderBook()),
-                      const SizedBox(width: 16),
-                      // Right Column: The AI Intercom Matrix
-                      Expanded(flex: 7, child: _buildAIIntercom()),
-                    ],
+          SafeArea(
+            child: Column(
+              children: [
+                _buildHeaderRow(),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // On narrow screens, stack vertically instead of side-by-side
+                      if (constraints.maxWidth < 600) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                          child: Column(
+                            children: [
+                              Expanded(flex: 4, child: _buildOrderBook()),
+                              const SizedBox(height: 16),
+                              Expanded(flex: 6, child: _buildAIIntercom()),
+                            ],
+                          ),
+                        );
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                        child: Row(
+                          children: [
+                            Expanded(flex: 3, child: _buildOrderBook()),
+                            const SizedBox(width: 16),
+                            Expanded(flex: 7, child: _buildAIIntercom()),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-            ],
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         ],
       ),
@@ -152,13 +169,24 @@ class _TerminalScreenState extends State<TerminalScreen> with TickerProviderStat
           ),
           child: Row(
             children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: MehdAiTheme.gold, size: 20),
+                  onPressed: () => Navigator.pop(context),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ),
               const Icon(Icons.code, color: MehdAiTheme.shieldColor, size: 20),
               const SizedBox(width: 12),
-              Text("QUANTITATIVE TERMINAL", style: MehdAiTheme.headline.copyWith(fontSize: 14)),
-              const Spacer(),
-              _buildStatusBadge("LATENCY", "12ms", MehdAiTheme.green),
-              const SizedBox(width: 16),
-              _buildStatusBadge("DATA STREAM", "SECURE", MehdAiTheme.shieldColor),
+              Expanded(
+                child: Text("QUANTITATIVE TERMINAL", style: MehdAiTheme.headline.copyWith(fontSize: 14), overflow: TextOverflow.ellipsis),
+              ),
+              const SizedBox(width: 8),
+              Flexible(child: _buildStatusBadge("LATENCY", "12ms", MehdAiTheme.green)),
+              const SizedBox(width: 8),
+              Flexible(child: _buildStatusBadge("DATA STREAM", "SECURE", MehdAiTheme.shieldColor)),
             ],
           ),
         ),
@@ -312,7 +340,7 @@ class _TerminalScreenState extends State<TerminalScreen> with TickerProviderStat
                   children: [
                     const Icon(Icons.circle, color: MehdAiTheme.green, size: 10),
                     const SizedBox(width: 12),
-                    Text("SYSTEM ARMED. AWAITING TRADE SIGNAL...", style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.green, fontWeight: FontWeight.bold)),
+                    Text("SYSTEM ARMED. AWAITING TRADE SIGNAL...", style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.green, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
                   ],
                 ),
               )

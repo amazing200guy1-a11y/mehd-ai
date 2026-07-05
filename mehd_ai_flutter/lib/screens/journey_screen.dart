@@ -45,28 +45,48 @@ class JourneyScreen extends StatelessWidget {
           _buildHeader(),
           const SizedBox(height: 32),
           
-          // Row configuration
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Left: Timeline List
-              Expanded(
-                flex: 3,
-                child: _buildTimeline(),
-              ),
-              const SizedBox(width: 24),
-              // Right: Stats & DNA
-              Expanded(
-                flex: 4,
-                child: Column(
+          // Responsive layout
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < 800;
+              
+              if (isMobile) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    _buildTimeline(),
+                    const SizedBox(height: 32),
                     const ProtectionScore(score: 92),
                     const SizedBox(height: 24),
                     _buildMistakeDNA(),
                   ],
-                ),
-              ),
-            ],
+                );
+              }
+              
+              // Desktop two-column layout
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Left: Timeline List
+                  Expanded(
+                    flex: 3,
+                    child: _buildTimeline(),
+                  ),
+                  const SizedBox(width: 24),
+                  // Right: Stats & DNA
+                  Expanded(
+                    flex: 4,
+                    child: Column(
+                      children: [
+                        const ProtectionScore(score: 92),
+                        const SizedBox(height: 24),
+                        _buildMistakeDNA(),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -77,8 +97,11 @@ class JourneyScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 16,
+          runSpacing: 8,
           children: [
             Text(
               '6-MONTH TRANSFORMATION',
@@ -161,38 +184,84 @@ class JourneyScreen extends StatelessWidget {
   }
 
   Widget _buildPhase(int num, String title, String weeks, bool active, bool completed) {
-    Color iconColor = MehdAiTheme.textSecondary;
-    if (active) iconColor = MehdAiTheme.blue;
-    if (completed && !active) iconColor = MehdAiTheme.green;
+    return Builder(
+      builder: (context) {
+        Color iconColor = MehdAiTheme.textSecondary;
+        if (active) iconColor = MehdAiTheme.blue;
+        if (completed && !active) iconColor = MehdAiTheme.green;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      color: active ? MehdAiTheme.blue.withOpacity(0.05) : Colors.transparent,
-      child: Row(
-        children: [
-          Icon(
-            completed ? Icons.check_circle : (active ? Icons.play_circle_fill : Icons.lock_outline),
-            color: iconColor,
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        return InkWell(
+          onTap: () {
+            showModalBottomSheet(
+              context: context,
+              backgroundColor: MehdAiTheme.bgSecondary,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              builder: (ctx) => Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(completed ? Icons.check_circle : (active ? Icons.play_circle_fill : Icons.lock_outline), color: iconColor),
+                        const SizedBox(width: 12),
+                        Text('PHASE $num', style: MehdAiTheme.headingStyle.copyWith(color: iconColor)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(title, style: MehdAiTheme.terminalStyle.copyWith(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    Text(weeks, style: MehdAiTheme.labelStyle),
+                    const SizedBox(height: 16),
+                    const Divider(color: MehdAiTheme.borderColor),
+                    const SizedBox(height: 16),
+                    Text(
+                      num == 1 ? 'Focus: Risk management, capital preservation, stopping the bleeding. The HardRiskKernel is extremely strict here.' :
+                      num == 2 ? 'Focus: Identifying Edge. Vanguard and Titan start pointing out exactly what setups work for you.' :
+                      num == 3 ? 'Focus: Scaling up. You know your edge, now we apply leverage safely.' :
+                      'Focus: Mastery. Trading becomes boring and mechanical. You are a Certified Alpha.',
+                      style: MehdAiTheme.labelStyle.copyWith(height: 1.5, color: Colors.white70),
+                    ),
+                    const SizedBox(height: 32),
+                  ],
+                ),
+              ),
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            color: active ? MehdAiTheme.blue.withOpacity(0.05) : Colors.transparent,
+            child: Row(
               children: [
-                Text('PHASE $num • $weeks', style: MehdAiTheme.labelStyle.copyWith(fontSize: 10, color: active ? MehdAiTheme.blue : MehdAiTheme.textSecondary)),
-                const SizedBox(height: 4),
-                Text(
-                  title,
-                  style: MehdAiTheme.terminalStyle.copyWith(
-                    fontWeight: active ? FontWeight.bold : FontWeight.normal,
-                    color: active ? MehdAiTheme.textPrimary : MehdAiTheme.textSecondary,
+                Icon(
+                  completed ? Icons.check_circle : (active ? Icons.play_circle_fill : Icons.lock_outline),
+                  color: iconColor,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('PHASE $num • $weeks', style: MehdAiTheme.labelStyle.copyWith(fontSize: 10, color: active ? MehdAiTheme.blue : MehdAiTheme.textSecondary)),
+                      const SizedBox(height: 4),
+                      Text(
+                        title,
+                        style: MehdAiTheme.terminalStyle.copyWith(
+                          fontWeight: active ? FontWeight.bold : FontWeight.normal,
+                          color: active ? MehdAiTheme.textPrimary : MehdAiTheme.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-        ],
-      ),
+        );
+      }
     );
   }
 
@@ -229,7 +298,7 @@ class JourneyScreen extends StatelessWidget {
           const SizedBox(height: 20),
           _buildDNATrait('REVENGE TRADING', '42% of losses occur within 1 hour of a previous loss. Sage flagged emotional tilt.', 0.8),
           const SizedBox(height: 16),
-          _buildDNATrait('SESSION IGNORANCE', 'You ignore The Underworld during high-impact news on USD pairs. Sentinel recorded this.', 0.6),
+          _buildDNATrait('SESSION IGNORANCE', 'You ignore The Research during high-impact news on USD pairs. Sentinel recorded this.', 0.6),
           const SizedBox(height: 16),
           _buildDNATrait('OVER-LEVERAGING', 'You risk 3% instead of 1% when winning. Atlas calculated ruin probability at 14%.', 0.9),
         ],

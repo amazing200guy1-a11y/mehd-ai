@@ -1,0 +1,218 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:mehd_ai_flutter/core/theme.dart';
+import 'package:mehd_ai_flutter/services/payment_service.dart';
+
+/// ARCHITECTURE_DISCIPLINE.md COMPLIANCE:
+/// ────────────────────────────────────────
+/// The mobile app must NOT display a "subscription purchase screen" with
+/// pricing cards and checkout buttons. Apple and Google will reject the app
+/// for processing purchases outside their native billing systems.
+///
+/// This screen now ONLY:
+///   1. Shows current subscription status (synced from backend)
+///   2. Redirects to the external web billing portal
+///   3. Displays a "Learn more on our website" CTA
+///
+/// All pricing, plan selection, and payment processing happens on the
+/// external website — never inside the app.
+
+class SubscriptionScreen extends StatelessWidget {
+  const SubscriptionScreen({super.key});
+
+  /// External website URL for plan information and upgrades.
+  /// This keeps the app fully compliant with App Store / Play Store policies.
+//   static const String _websiteUrl = 'https://mehdai.com/pricing';
+
+  @override
+  Widget build(BuildContext context) {
+    final paymentService = Provider.of<PaymentService>(context);
+    final tier = paymentService.currentTier.toLowerCase();
+
+    String displayName = 'OBSERVER MODE';
+    Color tierColor = const Color(0xFF888888);
+    String tierDescription = 'Basic market intelligence access.';
+    IconData tierIcon = Icons.remove_red_eye_outlined;
+
+    if (tier == 'core') {
+      displayName = 'CORE TRADER';
+      tierColor = MehdAiTheme.blue;
+      tierDescription = 'AI-filtered execution with sniper trade filtering.';
+      tierIcon = Icons.insights_rounded;
+    } else if (tier == 'precision') {
+      displayName = 'PRECISION TRADER';
+      tierColor = const Color(0xFFBB00FF);
+      tierDescription =
+          'Advanced multi-timeframe alignment and partial autopilot.';
+      tierIcon = Icons.precision_manufacturing_rounded;
+    } else if (tier == 'institutional') {
+      displayName = 'INSTITUTIONAL';
+      tierColor = MehdAiTheme.gold;
+      tierDescription =
+          'Full autonomous execution ecosystem with command center.';
+      tierIcon = Icons.account_balance_rounded;
+    }
+
+//     final isObserver = tier == 'observer';
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.close_rounded, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'ACCOUNT STATUS',
+          style: MehdAiTheme.labelStyle.copyWith(
+            fontSize: 11,
+            letterSpacing: 3,
+            color: MehdAiTheme.textSecondary,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            children: [
+              const Spacer(flex: 2),
+
+              // ── TIER STATUS DISPLAY ──
+              Container(
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: tierColor.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: tierColor.withOpacity(0.2)),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: tierColor.withOpacity(0.1),
+                        border:
+                            Border.all(color: tierColor.withOpacity(0.3)),
+                      ),
+                      child: Icon(tierIcon, color: tierColor, size: 40),
+                    ),
+                    const SizedBox(height: 24),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: tierColor.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(20),
+                        border:
+                            Border.all(color: tierColor.withOpacity(0.4)),
+                      ),
+                      child: Text(
+                        displayName,
+                        style: TextStyle(
+                          color: tierColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      tierDescription,
+                      textAlign: TextAlign.center,
+                      style: MehdAiTheme.labelStyle.copyWith(
+                        color: MehdAiTheme.textSecondary,
+                        fontSize: 13,
+                        height: 1.5,
+                      ),
+                    ),
+
+                    // Trial badge
+                    if (paymentService.isOnTrial) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: MehdAiTheme.gold.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                              color: MehdAiTheme.gold.withOpacity(0.3)),
+                        ),
+                        child: Text(
+                          'FREE TRIAL — ${paymentService.trialDaysRemaining} DAYS REMAINING',
+                          style: const TextStyle(
+                            color: MehdAiTheme.gold,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 24),
+
+                    // Usage stats
+                    _buildUsageRow(
+                      'Analyses Today',
+                      '${paymentService.analysesUsedToday} / ${paymentService.analysesPerDay >= 999 ? '∞' : paymentService.analysesPerDay}',
+                      paymentService.analysesUsedToday >=
+                              paymentService.analysesPerDay &&
+                          paymentService.analysesPerDay < 999
+                          ? MehdAiTheme.red
+                          : MehdAiTheme.green,
+                    ),
+                  ],
+                ),
+              ),
+
+              const Spacer(flex: 1),
+
+              // ── COMPLIANCE NOTE ──
+              Padding(
+                padding: const EdgeInsets.only(bottom: 24),
+                child: Text(
+                  'Account management and subscription options\nare available on the Mehd AI web platform.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.4),
+                    fontSize: 11,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUsageRow(String label, String value, Color valueColor) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white54, fontSize: 12),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: valueColor,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'monospace',
+          ),
+        ),
+      ],
+    );
+  }
+
+}

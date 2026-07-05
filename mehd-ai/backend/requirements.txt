@@ -1,8 +1,17 @@
-fastapi
-uvicorn
-httpx
-pydantic
-slowapi
-python-dotenv
-sse-starlette
-firebase-admin
+# Mehd AI — Pinned Dependencies (Security Hardened)
+# NEVER use unpinned versions in production.
+# Run: pip install -r requirements.txt
+# Audit: pip-audit (check for CVEs before every deploy)
+
+fastapi==0.115.6
+uvicorn==0.34.0
+httpx==0.28.1
+pydantic==2.10.4
+slowapi==0.1.9
+python-dotenv==1.0.1
+sse-starlette==2.2.1
+firebase-admin==6.6.0
+stripe==11.4.1
+sentry-sdk[fastapi]==2.19.2
+cryptography==42.0.5
+cachetools==5.5.0

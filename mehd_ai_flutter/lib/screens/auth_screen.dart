@@ -1,54 +1,89 @@
 import 'package:flutter/material.dart';
+import 'package:mehd_ai_flutter/core/theme.dart';
 import 'package:mehd_ai_flutter/services/auth_service.dart';
-import 'package:mehd_ai_flutter/screens/home_screen.dart';
+import 'package:mehd_ai_flutter/screens/onboarding/broker_connect_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io' show Platform;
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key});
+  final bool initialIsLogin;
+  const AuthScreen({super.key, this.initialIsLogin = true});
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
 }
 
 class _AuthScreenState extends State<AuthScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _nameCtrl = TextEditingController();
   final TextEditingController _emailCtrl = TextEditingController();
   final TextEditingController _passCtrl = TextEditingController();
+  final TextEditingController _confirmPassCtrl = TextEditingController();
   
   bool _isLoading = false;
   String? _errorMsg;
   bool _obscurePass = true;
-  bool _isLogin = true;
+  bool _obscureConfirm = true;
+  late bool _isLogin;
+  bool _termsAccepted = false;
+  int _passwordStrength = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _isLogin = widget.initialIsLogin;
+  }
 
   @override
   void dispose() {
+    _nameCtrl.dispose();
     _emailCtrl.dispose();
     _passCtrl.dispose();
+    _confirmPassCtrl.dispose();
     super.dispose();
+  }
+
+  void _updatePasswordStrength(String password) {
+    int strength = 0;
+    if (password.length >= 6) strength++;
+    if (password.length >= 10) strength++;
+    if (RegExp(r'[A-Z]').hasMatch(password) && RegExp(r'[a-z]').hasMatch(password)) strength++;
+    if (RegExp(r'[0-9!@#$%^&*(),.?":{}|<>]').hasMatch(password)) strength++;
+    setState(() => _passwordStrength = strength);
   }
 
   void _handleError(String? error) {
     if (error == null) return;
-    String displayError = error;
-    if (error.toLowerCase().contains("password") || error.toLowerCase().contains("credential")) {
-      displayError = "⚠ Invalid credentials.";
-    } else if (error.toLowerCase().contains("network") || error.toLowerCase().contains("connection")) {
-      displayError = "⚠ Connection lost. Try again.";
-    }
-    setState(() => _errorMsg = displayError);
+    setState(() => _errorMsg = error);
   }
 
-  void _signIn() async {
+  void _submit() async {
     setState(() {
       _isLoading = true;
       _errorMsg = null;
     });
 
-    if (_emailCtrl.text.trim().isEmpty || _passCtrl.text.trim().isEmpty) {
-      setState(() {
-        _isLoading = false;
-        _errorMsg = "Please enter your email and password.";
-      });
-      return;
+    if (_isLogin) {
+      if (_emailCtrl.text.trim().isEmpty || _passCtrl.text.trim().isEmpty) {
+        setState(() {
+          _isLoading = false;
+          _errorMsg = "Please enter your email and password.";
+        });
+        return;
+      }
+    } else {
+      if (!_formKey.currentState!.validate()) {
+        setState(() => _isLoading = false);
+        return;
+      }
+      if (!_termsAccepted) {
+        setState(() {
+          _isLoading = false;
+          _errorMsg = "You must agree to the terms to continue.";
+        });
+        return;
+      }
     }
 
     final authService = context.read<AuthService>();
@@ -57,8 +92,11 @@ class _AuthScreenState extends State<AuthScreen> {
     if (_isLogin) {
       error = await authService.signInWithEmail(_emailCtrl.text.trim(), _passCtrl.text.trim());
     } else {
-      final name = _emailCtrl.text.trim().split('@').first;
-      error = await authService.signUpWithEmail(_emailCtrl.text.trim(), _passCtrl.text.trim(), name);
+      error = await authService.signUpWithEmail(
+        _emailCtrl.text.trim(), 
+        _passCtrl.text.trim(), 
+        _nameCtrl.text.trim().isEmpty ? 'Trader' : _nameCtrl.text.trim()
+      );
     }
 
     if (!mounted) return;
@@ -67,7 +105,15 @@ class _AuthScreenState extends State<AuthScreen> {
     if (error != null) {
       _handleError(error);
     } else {
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
+      if (_isLogin) {
+        Navigator.of(context).pushReplacementNamed('/home');
+      } else {
+        // Success Sign Up -> Push Onboarding
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const BrokerConnectScreen()),
+          (route) => false,
+        );
+      }
     }
   }
 
@@ -86,7 +132,7 @@ class _AuthScreenState extends State<AuthScreen> {
     if (error != null) {
       _handleError(error);
     } else {
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
+      Navigator.of(context).pushReplacementNamed('/home');
     }
   }
 
@@ -104,14 +150,14 @@ class _AuthScreenState extends State<AuthScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          backgroundColor: Color(0xFFD29922),
+          backgroundColor: MehdAiTheme.gold,
           content: Text('Password reset email sent. Check your inbox.', style: TextStyle(color: Colors.black)),
         ),
       );
     }
   }
 
-  void _switchToSignUp() {
+  void _toggleMode() {
     setState(() {
       _isLogin = !_isLogin;
       _errorMsg = null;
@@ -121,9 +167,9 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF000000),
+      backgroundColor: MehdAiTheme.bgPrimary,
       body: Stack(children: [
-        // Subtle tiger background
+        // Subtle logo background
         Center(child: Opacity(
           opacity: 0.03,
           child: Image.asset('assets/images/mehd_logo.png', width: 400, height: 400))),
@@ -131,156 +177,185 @@ class _AuthScreenState extends State<AuthScreen> {
         SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 28),
-            child: Column(children: [
-              const SizedBox(height: 48),
-              
-              // Logo
-              Image.asset('assets/images/mehd_logo.png', width: 64, height: 64),
-              const SizedBox(height: 20),
-              
-              // Title
-              const Text('THE DEN',
-                style: TextStyle(
-                  color: Color(0xFF58A6FF),
-                  fontSize: 24,
-                  letterSpacing: 8,
-                  fontWeight: FontWeight.bold)),
-              const SizedBox(height: 6),
-              const Text('Sign in to continue',
-                style: TextStyle(
-                  color: Color(0xFF666666),
-                  fontSize: 12,
-                  letterSpacing: 0.5)),
-              const SizedBox(height: 40),
-              
-              // Email field
-              _field(
-                controller: _emailCtrl,
-                label: 'Email address',
-                hint: 'trader@example.com',
-                type: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 12),
-              
-              // Password field
-              _passField(),
-              const SizedBox(height: 6),
-              
-              // Forgot password
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: _forgotPassword,
-                  child: const Text(
-                    'Forgot password?',
-                    style: TextStyle(
-                      color: Color(0xFF555555),
-                      fontSize: 11)))),
-              const SizedBox(height: 16),
-              
-              // Error message
-              if (_errorMsg != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(_errorMsg!,
-                    style: const TextStyle(
-                      color: Color(0xFFD29922),
-                      fontSize: 11),
-                    textAlign: TextAlign.center)),
-              
-              // ENTER THE DEN button
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _signIn,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF020810),
-                    side: const BorderSide(
-                      color: Color(0xFF58A6FF),
-                      width: 1.5),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4))),
-                  child: _isLoading
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 1.5,
-                          color: Color(0xFF58A6FF)))
-                    : const Text('ENTER THE DEN',
-                        style: TextStyle(
-                          color: Color(0xFF58A6FF),
-                          fontSize: 13,
-                          letterSpacing: 3,
-                          fontWeight: FontWeight.w600)),
+            child: Form(
+              key: _formKey,
+              child: Column(children: [
+                const SizedBox(height: 48),
+                
+                // Logo
+                Image.asset('assets/images/mehd_logo.png', width: 64, height: 64),
+                const SizedBox(height: 20),
+                
+                // Title
+                Text(_isLogin ? 'THE DEN' : 'CREATE ACCOUNT',
+                  style: MehdAiTheme.headingStyle.copyWith(
+                    color: MehdAiTheme.blue,
+                    fontSize: 24,
+                    letterSpacing: _isLogin ? 8 : 4,
+                    fontWeight: FontWeight.bold)),
+                const SizedBox(height: 6),
+                Text(_isLogin ? 'Sign in to continue' : 'Join the AI-powered trading terminal',
+                  style: MehdAiTheme.labelStyle.copyWith(
+                    color: MehdAiTheme.textSecondary,
+                    fontSize: 12)),
+                const SizedBox(height: 40),
+                
+                // Name Field (Register Only)
+                if (!_isLogin) ...[
+                  _field(
+                    controller: _nameCtrl,
+                    label: 'DISPLAY NAME',
+                    hint: 'Your Name',
+                    validator: (v) => v!.trim().isEmpty ? 'Name required' : null,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                // Email field
+                _field(
+                  controller: _emailCtrl,
+                  label: 'EMAIL ADDRESS',
+                  hint: 'trader@example.com',
+                  type: TextInputType.emailAddress,
+                  validator: (v) => v!.contains('@') ? null : 'Valid email required',
                 ),
-              ),
-              const SizedBox(height: 16),
-              
-              // OR divider
-              Row(children: const [
-                Expanded(child: Divider(color: Color(0xFF111111))),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12),
-                  child: Text('or',
-                    style: TextStyle(
-                      color: Color(0xFF333333),
-                      fontSize: 11))),
-                Expanded(child: Divider(color: Color(0xFF111111))),
-              ]),
-              const SizedBox(height: 16),
-              
-              // Google button
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: OutlinedButton(
-                  onPressed: _signInGoogle,
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF1A1A1A)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4))),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Text('G',
-                        style: TextStyle(
-                          color: Color(0xFF888888),
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold)),
-                      SizedBox(width: 10),
-                      Text(
-                        'Continue with Google',
-                        style: TextStyle(
-                          color: Color(0xFF666666),
-                          fontSize: 12)),
-                    ]),
+                const SizedBox(height: 16),
+                
+                // Password field
+                _passField(
+                  controller: _passCtrl,
+                  label: 'PASSWORD',
+                  obscure: _obscurePass,
+                  toggleObscure: () => setState(() => _obscurePass = !_obscurePass),
+                  onChanged: _isLogin ? null : _updatePasswordStrength,
                 ),
-              ),
-              const SizedBox(height: 24),
-              
-              // Create account link
-              GestureDetector(
-                onTap: _switchToSignUp,
-                child: RichText(
-                  text: TextSpan(children: [
-                    TextSpan(
-                      text: _isLogin ? 'New to Mehd AI? ' : 'Already have an account? ',
-                      style: const TextStyle(
-                        color: Color(0xFF444444),
-                        fontSize: 12)),
-                    TextSpan(
-                      text: _isLogin ? 'Create account' : 'Sign in',
-                      style: const TextStyle(
-                        color: Color(0xFF58A6FF),
-                        fontSize: 12,
-                        decoration: TextDecoration.underline)),
+                
+                // Strength Indicator (Register Only)
+                if (!_isLogin) ...[
+                  const SizedBox(height: 8),
+                  _buildStrengthBar(),
+                  const SizedBox(height: 16),
+                  _passField(
+                    controller: _confirmPassCtrl,
+                    label: 'CONFIRM PASSWORD',
+                    obscure: _obscureConfirm,
+                    toggleObscure: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                    validator: (v) => v == _passCtrl.text ? null : 'Passwords do not match',
+                  ),
+                ],
+                
+                if (_isLogin) 
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: _forgotPassword,
+                      child: Text('Forgot password?',
+                        style: MehdAiTheme.labelStyle.copyWith(fontSize: 11, color: Colors.grey)))),
+                
+                const SizedBox(height: 16),
+                
+                // Terms Checkbox (Register Only)
+                if (!_isLogin) ...[
+                  _buildTermsCheckbox(),
+                  const SizedBox(height: 24),
+                ],
+
+                // Error message
+                if (_errorMsg != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Text(_errorMsg!,
+                      style: MehdAiTheme.labelStyle.copyWith(
+                        color: MehdAiTheme.gold,
+                        fontSize: 12),
+                      textAlign: TextAlign.center)),
+                
+                // SUBMIT button
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: MehdAiTheme.bgSecondary,
+                      side: BorderSide(
+                        color: _isLoading ? MehdAiTheme.borderColor : MehdAiTheme.blue,
+                        width: 1.5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8))),
+                    child: _isLoading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.5,
+                            color: MehdAiTheme.blue))
+                      : Text(_isLogin ? 'ENTER THE DEN' : 'CREATE ACCOUNT',
+                          style: MehdAiTheme.headingStyle.copyWith(
+                            color: MehdAiTheme.blue,
+                            fontSize: 14,
+                            letterSpacing: 2,
+                            fontWeight: FontWeight.w600)),
+                  ),
+                ),
+                
+                const SizedBox(height: 24),
+                
+                if (kIsWeb || Platform.isAndroid || Platform.isIOS) ...[
+                  // OR divider
+                  Row(children: [
+                    const Expanded(child: Divider(color: MehdAiTheme.borderColor)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text('or',
+                        style: MehdAiTheme.labelStyle.copyWith(fontSize: 11, color: Colors.grey))),
+                    const Expanded(child: Divider(color: MehdAiTheme.borderColor)),
                   ]),
+                  const SizedBox(height: 24),
+                  
+                  // Google button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: OutlinedButton(
+                      onPressed: _signInGoogle,
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: MehdAiTheme.borderColor),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8))),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.g_mobiledata, color: MehdAiTheme.textSecondary, size: 28),
+                          const SizedBox(width: 4),
+                          Text('Continue with Google',
+                            style: MehdAiTheme.labelStyle.copyWith(fontSize: 13, color: MehdAiTheme.textSecondary)),
+                        ]),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                ],
+                
+                // Toggle link
+                GestureDetector(
+                  onTap: _toggleMode,
+                  child: RichText(
+                    text: TextSpan(children: [
+                      TextSpan(
+                        text: _isLogin ? 'New to Mehd AI? ' : 'Already have an account? ',
+                        style: MehdAiTheme.labelStyle.copyWith(fontSize: 13, color: MehdAiTheme.textSecondary)),
+                      TextSpan(
+                        text: _isLogin ? 'Create account' : 'Sign in',
+                        style: MehdAiTheme.labelStyle.copyWith(
+                          color: MehdAiTheme.blue,
+                          fontSize: 13,
+                          decoration: TextDecoration.underline)),
+                    ]),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 32),
-            ]),
+                const SizedBox(height: 48),
+              ]),
+            ),
           ),
         ),
       ]),
@@ -292,69 +367,143 @@ class _AuthScreenState extends State<AuthScreen> {
     required String label,
     String? hint,
     TextInputType type = TextInputType.text,
-    bool obscure = false,
+    String? Function(String?)? validator,
   }) {
-    return TextField(
-      controller: controller,
-      obscureText: obscure,
-      keyboardType: type,
-      style: const TextStyle(
-        color: Color(0xFFCCCCCC),
-        fontSize: 13),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(
-          color: Color(0xFF888888),
-          fontSize: 12),
-        hintText: hint,
-        hintStyle: const TextStyle(
-          color: Color(0xFF2A2A2A),
-          fontSize: 12),
-        enabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xFF2A2A2A)),
-          borderRadius: BorderRadius.circular(4)),
-        focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xFF58A6FF), width: 1.5),
-          borderRadius: BorderRadius.circular(4)),
-        filled: true,
-        fillColor: const Color(0xFF080808),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14)),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: MehdAiTheme.labelStyle.copyWith(fontSize: 10, letterSpacing: 1.5, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          keyboardType: type,
+          validator: validator,
+          style: MehdAiTheme.terminalStyle.copyWith(fontSize: 14, color: MehdAiTheme.textPrimary),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.textSecondary.withOpacity(0.3), fontSize: 14),
+            enabledBorder: OutlineInputBorder(
+              borderSide: const BorderSide(color: MehdAiTheme.borderColor),
+              borderRadius: BorderRadius.circular(8)),
+            focusedBorder: OutlineInputBorder(
+              borderSide: const BorderSide(color: MehdAiTheme.blue, width: 1.5),
+              borderRadius: BorderRadius.circular(8)),
+            errorBorder: OutlineInputBorder(
+              borderSide: const BorderSide(color: MehdAiTheme.gold, width: 1.0),
+              borderRadius: BorderRadius.circular(8)),
+            focusedErrorBorder: OutlineInputBorder(
+              borderSide: const BorderSide(color: MehdAiTheme.gold, width: 1.5),
+              borderRadius: BorderRadius.circular(8)),
+            filled: true,
+            fillColor: MehdAiTheme.bgSecondary,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16)),
+        ),
+      ],
     );
   }
 
-  Widget _passField() {
-    return TextField(
-      controller: _passCtrl,
-      obscureText: _obscurePass,
-      style: const TextStyle(
-        color: Color(0xFFCCCCCC),
-        fontSize: 13),
-      decoration: InputDecoration(
-        labelText: 'Password',
-        labelStyle: const TextStyle(
-          color: Color(0xFF888888),
-          fontSize: 12),
-        enabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xFF2A2A2A)),
-          borderRadius: BorderRadius.circular(4)),
-        focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xFF58A6FF), width: 1.5),
-          borderRadius: BorderRadius.circular(4)),
-        filled: true,
-        fillColor: const Color(0xFF080808),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        suffixIcon: IconButton(
-          icon: Icon(
-            _obscurePass ? Icons.visibility_off : Icons.visibility,
-            color: const Color(0xFF444444),
-            size: 18,
+  Widget _passField({
+    required TextEditingController controller,
+    required String label,
+    required bool obscure,
+    required VoidCallback toggleObscure,
+    String? Function(String?)? validator,
+    void Function(String)? onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: MehdAiTheme.labelStyle.copyWith(fontSize: 10, letterSpacing: 1.5, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          obscureText: obscure,
+          validator: validator,
+          onChanged: onChanged,
+          style: MehdAiTheme.terminalStyle.copyWith(fontSize: 14, color: MehdAiTheme.textPrimary),
+          decoration: InputDecoration(
+            hintText: '••••••••',
+            hintStyle: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.textSecondary.withOpacity(0.3), fontSize: 14),
+            enabledBorder: OutlineInputBorder(
+              borderSide: const BorderSide(color: MehdAiTheme.borderColor),
+              borderRadius: BorderRadius.circular(8)),
+            focusedBorder: OutlineInputBorder(
+              borderSide: const BorderSide(color: MehdAiTheme.blue, width: 1.5),
+              borderRadius: BorderRadius.circular(8)),
+            errorBorder: OutlineInputBorder(
+              borderSide: const BorderSide(color: MehdAiTheme.gold, width: 1.0),
+              borderRadius: BorderRadius.circular(8)),
+            focusedErrorBorder: OutlineInputBorder(
+              borderSide: const BorderSide(color: MehdAiTheme.gold, width: 1.5),
+              borderRadius: BorderRadius.circular(8)),
+            filled: true,
+            fillColor: MehdAiTheme.bgSecondary,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            suffixIcon: IconButton(
+              icon: Icon(obscure ? Icons.visibility_off : Icons.visibility, color: MehdAiTheme.textSecondary, size: 20),
+              onPressed: toggleObscure,
+            ),
           ),
-          onPressed: () {
-            setState(() {
-              _obscurePass = !_obscurePass;
-            });
-          },
         ),
+      ],
+    );
+  }
+
+  Widget _buildStrengthBar() {
+    return Row(
+      children: List.generate(4, (index) {
+        Color color = MehdAiTheme.borderColor;
+        if (index < _passwordStrength) {
+          if (_passwordStrength == 1) {
+            color = MehdAiTheme.red;
+          } else if (_passwordStrength == 2) {
+            color = MehdAiTheme.gold;
+          } else if (_passwordStrength == 3) {
+            color = MehdAiTheme.blue;
+          } else {
+            color = MehdAiTheme.green;
+          }
+        }
+        return Expanded(
+          child: Container(
+            height: 4,
+            margin: const EdgeInsets.symmetric(horizontal: 2),
+            decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildTermsCheckbox() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: MehdAiTheme.bgSecondary.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _termsAccepted ? MehdAiTheme.green.withOpacity(0.3) : MehdAiTheme.red.withOpacity(0.6)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 24, height: 24,
+            child: Checkbox(
+              value: _termsAccepted,
+              onChanged: (v) => setState(() => _termsAccepted = v ?? false),
+              activeColor: MehdAiTheme.green,
+              checkColor: Colors.black,
+              side: BorderSide(color: _termsAccepted ? MehdAiTheme.green : MehdAiTheme.red),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'I acknowledge that trading on margin involves significant risk of capital loss. Mehd AI is a decision-support tool, not financial advice. I trade entirely at my own risk.',
+              style: MehdAiTheme.labelStyle.copyWith(fontSize: 12, color: MehdAiTheme.textSecondary, height: 1.5),
+            ),
+          ),
+        ],
       ),
     );
   }

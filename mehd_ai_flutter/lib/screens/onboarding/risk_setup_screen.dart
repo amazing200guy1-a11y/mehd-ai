@@ -1,26 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
 import 'package:mehd_ai_flutter/services/auth_service.dart';
+import 'package:mehd_ai_flutter/services/settings_service.dart';
 import 'package:mehd_ai_flutter/services/user_service.dart';
-import 'package:mehd_ai_flutter/screens/onboarding/tutorial_screen.dart';
 import 'package:provider/provider.dart';
 
 /// FILE 7 — risk_setup_screen.dart
 ///
-/// Build Debrief:
-/// This is the most important screen in the entire onboarding flow. It forces
-/// users to consciously acknowledge the risk rules BEFORE they can trade.
-///
-/// The slider is HARD-CAPPED at 1.0% — this isn't a suggestion, it's the law
-/// of the app. The cap is enforced at 3 levels:
-///   1. The Flutter slider physically cannot go above 1.0%
-///   2. The UserService clamps the value in Dart before saving
-///   3. Firestore security rules reject any write > 1.0
-///
-/// The kill-switch card is shown but cannot be disabled — it's informational.
-/// Users need to know it exists so they trust the system, but they shouldn't
-/// be able to turn it off because the entire safety architecture depends on it.
-///
+/// The slider now allows 0.1% – 10% risk per trade.
+/// Colour coding:
+///   Green  = 0.1–2%   (conservative, recommended for beginners)
+///   Yellow = 2.1–5%   (moderate, experienced traders)
+///   Red    = 5.1–10%  (aggressive, professionals only)
+/// The value is saved to Firestore AND to SettingsService globally.
 /// The real-time dollar calculation ("$10 on a $1,000 account") makes abstract
 /// percentages concrete. Traders understand "$10" much better than "1%".
 
@@ -40,6 +32,7 @@ class _RiskSetupScreenState extends State<RiskSetupScreen> {
     setState(() => _isLoading = true);
 
     final authService = context.read<AuthService>();
+    final settingsService = context.read<SettingsService>();
     final userService = UserService();
     final userId = authService.currentUser?.uid;
 
@@ -50,11 +43,12 @@ class _RiskSetupScreenState extends State<RiskSetupScreen> {
         debugPrint('Risk save error: $e');
       }
     }
+    
+    // Also sync to the global in-memory SettingsService
+    await settingsService.setRiskPerTrade(_riskPercent);
 
     if (mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const TutorialScreen()),
-      );
+      Navigator.of(context).pushReplacementNamed('/tutorial');
     }
   }
 
@@ -133,9 +127,11 @@ class _RiskSetupScreenState extends State<RiskSetupScreen> {
                       '${_riskPercent.toStringAsFixed(1)}%',
                       style: MehdAiTheme.priceStyle.copyWith(
                         fontSize: 56,
-                        color: _riskPercent <= 0.5
+                        color: _riskPercent <= 2.0
                             ? MehdAiTheme.green
-                            : MehdAiTheme.yellow,
+                            : _riskPercent <= 5.0
+                                ? MehdAiTheme.yellow
+                                : MehdAiTheme.red,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -164,9 +160,11 @@ class _RiskSetupScreenState extends State<RiskSetupScreen> {
                     // ── SLIDER — HARD-CAPPED AT 1.0% ────────
                     SliderTheme(
                       data: SliderThemeData(
-                        activeTrackColor: _riskPercent <= 0.5
+                        activeTrackColor: _riskPercent <= 2.0
                             ? MehdAiTheme.green
-                            : MehdAiTheme.yellow,
+                            : _riskPercent <= 5.0
+                                ? MehdAiTheme.yellow
+                                : MehdAiTheme.red,
                         inactiveTrackColor:
                             MehdAiTheme.borderColor.withOpacity(0.3),
                         thumbColor: MehdAiTheme.textPrimary,
@@ -179,8 +177,8 @@ class _RiskSetupScreenState extends State<RiskSetupScreen> {
                       child: Slider(
                         value: _riskPercent,
                         min: 0.1,
-                        max: 1.0, // HARD STOP at 1% — CANNOT go higher
-                        divisions: 9,
+                        max: 10.0,
+                        divisions: 99,
                         onChanged: (value) {
                           setState(() {
                             _riskPercent = double.parse(value.toStringAsFixed(1));
@@ -195,15 +193,18 @@ class _RiskSetupScreenState extends State<RiskSetupScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('0.1%',
-                              style: MehdAiTheme.labelStyle
-                                  .copyWith(fontSize: 11)),
-                          Text('1.0% MAX',
+                          Text('0.1% Safe',
+                              style: MehdAiTheme.labelStyle.copyWith(
+                                fontSize: 11, color: MehdAiTheme.green)),
+                          Text(_riskPercent > 5.0 ? '⚠ HIGH RISK' : _riskPercent > 2.0 ? 'Moderate' : 'Conservative',
                               style: MehdAiTheme.labelStyle.copyWith(
                                 fontSize: 11,
-                                color: MehdAiTheme.yellow,
+                                color: _riskPercent > 5.0 ? MehdAiTheme.red : _riskPercent > 2.0 ? MehdAiTheme.yellow : MehdAiTheme.green,
                                 fontWeight: FontWeight.w600,
                               )),
+                          Text('10.0% Pro',
+                              style: MehdAiTheme.labelStyle.copyWith(
+                                fontSize: 11, color: MehdAiTheme.red)),
                         ],
                       ),
                     ),

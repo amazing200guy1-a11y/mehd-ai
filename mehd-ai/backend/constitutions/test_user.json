@@ -1,0 +1,26 @@
+{
+  "rules": [
+    {
+      "id": "a2e1c376-2405-4236-99fa-266b154042ef",
+      "name": "Overtrading Protection",
+      "description": "Maximum 3 trades per day to prevent revenge trading.",
+      "rule_type": "max_daily_trades",
+      "parameter": 3.0,
+      "condition_payload": {},
+      "is_active": true,
+      "created_at": "2026-05-27T13:19:53.496857Z"
+    },
+    {
+      "id": "86998408-a6be-480e-928a-b14dd096d55d",
+      "name": "High Conviction Only",
+      "description": "Only trade when consensus is 80% or higher.",
+      "rule_type": "min_consensus",
+      "parameter": 80.0,
+      "condition_payload": {},
+      "is_active": true,
+      "created_at": "2026-05-27T13:19:53.496857Z"
+    }
+  ],
+  "daily_trades_count": 0,
+  "last_reset_date": ""
+}

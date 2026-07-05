@@ -4,7 +4,7 @@ import 'package:mehd_ai_flutter/models/consensus_result.dart';
 import 'package:mehd_ai_flutter/screens/den/research_room.dart';
 import 'package:mehd_ai_flutter/screens/den/strategy_room.dart';
 import 'package:mehd_ai_flutter/screens/den/math_room.dart';
-import 'package:mehd_ai_flutter/screens/vibe_trading_screen.dart';
+import 'package:mehd_ai_flutter/screens/pulse_trading_screen.dart';
 import 'package:mehd_ai_flutter/screens/journey_screen.dart';
 import 'package:mehd_ai_flutter/utils/titan_animations.dart';
 
@@ -62,26 +62,8 @@ class _TheDenScreenState extends State<TheDenScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_bottomIndex == 1) {
-      return Scaffold(
-        backgroundColor: MehdAiTheme.bgPrimary,
-        appBar: AppBar(
-          backgroundColor: MehdAiTheme.bgSecondary,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.close, color: MehdAiTheme.textSecondary),
-            onPressed: widget.onClose,
-          ),
-          title: Text('JOURNEY', style: MehdAiTheme.headingStyle.copyWith(letterSpacing: 3)),
-          centerTitle: true,
-        ),
-        body: const JourneyScreen(),
-        bottomNavigationBar: _buildBottomNav(),
-      );
-    }
-
     return Scaffold(
-      backgroundColor: MehdAiTheme.bgPrimary,
+      backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: MehdAiTheme.bgSecondary,
         elevation: 0,
@@ -96,22 +78,23 @@ class _TheDenScreenState extends State<TheDenScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // SIMULATED DATA badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: const Color(0xFFD29922)),
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                    child: const Text(
-                      'SIMULATED DATA',
-                      style: TextStyle(
-                        fontSize: 8,
-                        color: Color(0xFFD29922),
+                  if (widget.consensusResult?.isSimulated == true)
+                    Container(
+                      margin: const EdgeInsets.only(right: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: const Color(0xFFD29922)),
+                        borderRadius: BorderRadius.circular(3),
                       ),
-                      overflow: TextOverflow.ellipsis,
+                      child: const Text(
+                        'SIMULATED DATA',
+                        style: TextStyle(
+                          fontSize: 8,
+                          color: Color(0xFFD29922),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 6),
                   Flexible(
                     child: Text(
                       'THE DEN',
@@ -165,24 +148,9 @@ class _TheDenScreenState extends State<TheDenScreen> {
           ResearchRoom(consensusResult: widget.consensusResult, isAnalyzing: widget.isAnalyzing, activeSymbol: widget.activeSymbol),
           StrategyRoom(consensusResult: widget.consensusResult, isAnalyzing: widget.isAnalyzing, activeSymbol: widget.activeSymbol),
           MathRoom(consensusResult: widget.consensusResult, isAnalyzing: widget.isAnalyzing, activeSymbol: widget.activeSymbol),
-          const VibeTradingScreen(),
+          const PulseTradingScreen(),
         ],
       ),
-      bottomNavigationBar: _buildBottomNav(),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      backgroundColor: MehdAiTheme.bgSecondary,
-      selectedItemColor: MehdAiTheme.blue,
-      unselectedItemColor: MehdAiTheme.textSecondary,
-      currentIndex: _bottomIndex,
-      onTap: (i) => setState(() => _bottomIndex = i),
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.account_tree), label: 'The Den'),
-        BottomNavigationBarItem(icon: Icon(Icons.rocket_launch), label: 'Journey'),
-      ],
     );
   }
 
@@ -201,13 +169,13 @@ class _TheDenScreenState extends State<TheDenScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Row(
             children: [
-              _buildTabCard(0, 'UNDERWORLD', Icons.travel_explore_rounded, const [Color(0xFF2D1B4E), Color(0xFF1A0F30)], MehdAiTheme.purple),
+              _buildTabCard(0, 'RESEARCH', Icons.travel_explore_rounded, const [Color(0xFF2D1B4E), Color(0xFF1A0F30)], MehdAiTheme.purple),
               const SizedBox(width: 8),
-              _buildTabCard(1, 'EMPIRE', Icons.account_tree_rounded, const [Color(0xFF142840), Color(0xFF0B1825)], MehdAiTheme.blue),
+              _buildTabCard(1, 'STRATEGY', Icons.account_tree_rounded, const [Color(0xFF142840), Color(0xFF0B1825)], MehdAiTheme.blue),
               const SizedBox(width: 8),
-              _buildTabCard(2, 'OLYMPUS', Icons.calculate_rounded, const [Color(0xFF3A2A10), Color(0xFF1F1508)], MehdAiTheme.gold),
+              _buildTabCard(2, 'OLYMPUS', Icons.query_stats_rounded, const [Color(0xFF3A2A10), Color(0xFF1F1508)], MehdAiTheme.gold),
               const SizedBox(width: 8),
-              _buildTabCard(3, 'VIBE', Icons.psychology_rounded, const [Color(0xFF0A2A18), Color(0xFF06180E)], MehdAiTheme.green),
+              _buildTabCard(3, 'PULSE', Icons.psychology_rounded, const [Color(0xFF0A2A18), Color(0xFF06180E)], MehdAiTheme.green),
             ],
           ),
         ),

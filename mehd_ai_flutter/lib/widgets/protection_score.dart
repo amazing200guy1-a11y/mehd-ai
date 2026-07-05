@@ -36,10 +36,38 @@ class ProtectionScore extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            'PROTECTION SCORE',
-            style: MehdAiTheme.labelStyle.copyWith(letterSpacing: 2, fontSize: 11),
-            overflow: TextOverflow.ellipsis,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'PROTECTION SCORE',
+                style: MehdAiTheme.labelStyle.copyWith(letterSpacing: 2, fontSize: 11),
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(width: 4),
+              InkWell(
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: MehdAiTheme.bgSecondary,
+                      title: Text('How is this calculated?', style: MehdAiTheme.headingStyle.copyWith(fontSize: 16)),
+                      content: Text(
+                        'The HardRiskKernel calculates your Protection Score based on your adherence to institutional risk limits. It drops when you over-leverage or tilt, and rises when you respect the AI\'s verdicts.',
+                        style: MehdAiTheme.labelStyle.copyWith(height: 1.5, color: Colors.white70),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('UNDERSTOOD', style: TextStyle(color: MehdAiTheme.blue)),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                child: const Icon(Icons.help_outline, color: MehdAiTheme.textSecondary, size: 14),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Stack(
@@ -89,7 +117,7 @@ class ProtectionScore extends StatelessWidget {
 
   String _getScoreMessage() {
     if (score >= 90) return 'The Don protects you completely.';
-    if (score >= 70) return 'Solid execution. The Empire acknowledges.';
+    if (score >= 70) return 'Solid execution. The Strategy acknowledges.';
     if (score >= 40) return 'Warning: Emotional trading. Sentinel watching.';
     return 'CRITICAL: The Den has locked your capital.';
   }

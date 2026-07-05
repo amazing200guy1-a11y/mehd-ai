@@ -99,7 +99,7 @@ class DenHelpModal extends StatelessWidget {
                             Expanded(child: _build3DHelpCard(
                               '11 AGENTS',
                               Icons.smart_toy_rounded,
-                              '3 layers: Underworld, Empire, Olympus',
+                              '3 layers: Research, Strategy, Olympus',
                               const [Color(0xFF142840), Color(0xFF0B1825)],
                               MehdAiTheme.blue,
                             )),

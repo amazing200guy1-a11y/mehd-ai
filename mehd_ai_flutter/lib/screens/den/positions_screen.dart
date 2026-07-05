@@ -78,26 +78,28 @@ class _PositionsScreenState extends State<PositionsScreen> with SingleTickerProv
             child: _buildGlowOrb(MehdAiTheme.shieldColor.withOpacity(0.08)),
           ),
           
-          Column(
-            children: [
-              _buildHeaderRow(),
-              const SizedBox(height: 16),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Column(
-                    children: [
-                      // Top Row Metrics & Kill Switch
-                      _buildMetricsRow(isOverallProfit, totalPnl, activePairs.length),
-                      const SizedBox(height: 24),
-                      // The Ledger
-                      Expanded(child: _buildPositionsLedger(activePairs)),
-                    ],
+          SafeArea(
+            child: Column(
+              children: [
+                _buildHeaderRow(),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Column(
+                      children: [
+                        // Top Row Metrics & Kill Switch
+                        _buildMetricsRow(isOverallProfit, totalPnl, activePairs.length),
+                        const SizedBox(height: 24),
+                        // The Ledger
+                        Expanded(child: _buildPositionsLedger(activePairs)),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-            ],
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         ],
       ),
@@ -117,9 +119,20 @@ class _PositionsScreenState extends State<PositionsScreen> with SingleTickerProv
           ),
           child: Row(
             children: [
+               Padding(
+                 padding: const EdgeInsets.only(right: 12),
+                 child: IconButton(
+                   icon: const Icon(Icons.arrow_back, color: MehdAiTheme.gold, size: 20),
+                   onPressed: () => Navigator.pop(context),
+                   padding: EdgeInsets.zero,
+                   constraints: const BoxConstraints(),
+                 ),
+               ),
               const Icon(Icons.show_chart, color: Colors.white, size: 20),
               const SizedBox(width: 12),
-              Text("ACTIVE RISK LEDGER", style: MehdAiTheme.headline.copyWith(fontSize: 14, color: Colors.white, letterSpacing: 2)),
+              Expanded(
+                child: Text("ACTIVE RISK LEDGER", style: MehdAiTheme.headline.copyWith(fontSize: 14, color: Colors.white, letterSpacing: 2), overflow: TextOverflow.ellipsis),
+              ),
             ],
           ),
         ),
@@ -128,29 +141,66 @@ class _PositionsScreenState extends State<PositionsScreen> with SingleTickerProv
   }
 
   Widget _buildMetricsRow(bool isOverallProfit, double totalPnl, int tradeCount) {
-    return Row(
-      children: [
-        Expanded(
-          flex: 2,
-          child: _buildMetricCard(
-            "FLOATING PNL", 
-            "\$${totalPnl.abs().toStringAsFixed(2)}", 
-            isOverallProfit ? MehdAiTheme.green : MehdAiTheme.red,
-            prefix: isOverallProfit ? "+" : "-"
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildMetricCard("TOTAL EXPOSURE", "\$${(tradeCount * 125000).toStringAsFixed(2)}", MehdAiTheme.shieldColor),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildMetricCard("MARGIN LEVEL", "452.1%", MehdAiTheme.gold),
-        ),
-        const SizedBox(width: 16),
-        // The Kill Switch
-        _buildKillSwitch(),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 600) {
+          // Mobile: stack metrics in 2 rows
+          return Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildMetricCard(
+                      "FLOATING PNL", 
+                      "\$${totalPnl.abs().toStringAsFixed(2)}", 
+                      isOverallProfit ? MehdAiTheme.green : MehdAiTheme.red,
+                      prefix: isOverallProfit ? "+" : "-"
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  _buildKillSwitch(),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildMetricCard("TOTAL EXPOSURE", "\$${(tradeCount * 125000).toStringAsFixed(0)}", MehdAiTheme.shieldColor),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildMetricCard("MARGIN LEVEL", "452.1%", MehdAiTheme.gold),
+                  ),
+                ],
+              ),
+            ],
+          );
+        }
+        // Desktop/Tablet: original side-by-side
+        return Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: _buildMetricCard(
+                "FLOATING PNL", 
+                "\$${totalPnl.abs().toStringAsFixed(2)}", 
+                isOverallProfit ? MehdAiTheme.green : MehdAiTheme.red,
+                prefix: isOverallProfit ? "+" : "-"
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildMetricCard("TOTAL EXPOSURE", "\$${(tradeCount * 125000).toStringAsFixed(0)}", MehdAiTheme.shieldColor),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildMetricCard("MARGIN LEVEL", "452.1%", MehdAiTheme.gold),
+            ),
+            const SizedBox(width: 16),
+            _buildKillSwitch(),
+          ],
+        );
+      },
     );
   }
 
@@ -176,8 +226,8 @@ class _PositionsScreenState extends State<PositionsScreen> with SingleTickerProv
                 textBaseline: TextBaseline.alphabetic,
                 children: [
                   if (prefix.isNotEmpty)
-                    Text(prefix, style: MehdAiTheme.dataMono.copyWith(color: color, fontSize: 24, fontWeight: FontWeight.bold)),
-                  Text(value, style: MehdAiTheme.dataMono.copyWith(color: color, fontSize: 28, fontWeight: FontWeight.bold)),
+                    Text(prefix, style: MehdAiTheme.dataMono.copyWith(color: color, fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(value, style: MehdAiTheme.dataMono.copyWith(color: color, fontSize: 24, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
                 ],
               ),
             ],

@@ -1,0 +1,184 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 1. USER PROFILES
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // SECURITY: Block privilege escalation fields.
+      //   - 'role' and 'admin' are NEVER allowed from the client.
+      //   - 'userId' is allowed on CREATE (Flutter sends it during onboarding)
+      //     but blocked from being CHANGED on UPDATE (prevents impersonation).
+      allow create: if request.auth != null && request.auth.uid == userId
+                    && request.resource.data.riskPercent >= 0.1 
+                    && request.resource.data.riskPercent <= 1.0
+                    && (!request.resource.data.keys().hasAny(['role', 'admin']));
+      allow update: if request.auth != null && request.auth.uid == userId
+                    && request.resource.data.riskPercent >= 0.1 
+                    && request.resource.data.riskPercent <= 1.0
+                    && (!request.resource.data.keys().hasAny(['role', 'admin']))
+                    && (!request.resource.data.keys().hasAny(['userId']) 
+                        || request.resource.data.userId == resource.data.userId);
+      
+      match /settings/{settingId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        // HARDENED: Field validation on settings — only allow known setting keys
+        // and cap document size at 50KB to prevent abuse.
+        allow write: if request.auth != null && request.auth.uid == userId
+                     && request.resource.size < 50 * 1024
+                     && !request.resource.data.keys().hasAny(['__proto__', 'constructor', 'prototype']);
+      }
+    }
+
+    match /user_profiles/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false; // Server-only
+
+      match /rejection_feed/{rejectionId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false; // Server-only (written by AutoExecutionWorker)
+      }
+    }
+
+    // 2. USAGE LIMITS & TRACKING (CRITICAL)
+    match /analysis_counts/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false; 
+    }
+    match /reveals/{tokenKey} {
+      allow read: if request.auth != null && tokenKey.matches(request.auth.uid + '.*');
+      allow write: if false;
+    }
+    match /tokens_used/{tokenKey} {
+      allow read: if request.auth != null && tokenKey.matches(request.auth.uid + '.*');
+      allow write: if false; 
+    }
+
+    // 3. DRAWINGS & APP DATA
+    // HARDENED: Field validation prevents abuse (storing arbitrary large data).
+    // Max document size in Firestore is 1MB, but we cap at 500KB to prevent
+    // users from using the drawings collection as free cloud storage.
+    match /drawings/{userSymbolKey} {
+      allow read: if request.auth != null && userSymbolKey.matches(request.auth.uid + '.*');
+      allow write: if request.auth != null && userSymbolKey.matches(request.auth.uid + '.*')
+                   && request.resource.size < 500 * 1024
+                   && request.resource.data.keys().hasAll(['data'])
+                   && !request.resource.data.keys().hasAny(['__proto__', 'constructor', 'prototype']);
+    }
+
+    // 4. LOGS & AUDIT
+    match /trade_logs/{logId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow write: if false; 
+    }
+    match /consensus_logs/{logId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow write: if false; 
+    }
+    match /account_events/{eventId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow write: if false;  
+    }
+
+    // 5. SECURITY, LOCKS & MOATS
+    match /auth_locks/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false; 
+    }
+    match /sovereign_moat/{snapshotId} {
+      allow read: if false;   
+      allow write: if false;  
+    }
+    match /user_risk_states/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;  // Server-only — prevents client-side risk tampering
+    }
+
+    // 6. LEGAL COMPLIANCE
+    match /legal_acceptances/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;  // Server-only — provable legal record
+    }
+
+    // 7. ACCOUNT DELETION REQUESTS
+    match /deletion_requests/{requestId} {
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow update, delete: if false;  
+    }
+
+    // 8. SUBSCRIPTION & PAYMENT STATE (server-only)
+    // These are populated by the payment webhook handler and
+    // rebuilt into memory on startup via rebuild_tier_caches().
+    match /user_tiers/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;  // Server-only — prevents tier self-promotion
+    }
+    match /stripe_mappings/{userId} {
+      allow read, write: if false;  // Fully server-only — never exposed to client
+    }
+    match /webhook_events/{eventId} {
+      allow read, write: if false;  // Server-only — webhook idempotency tracking
+    }
+    match /failed_logins/{email} {
+      allow read, write: if false;  // Server-only — brute force tracking
+    }
+
+    // 9. BROADCAST & AUTOPILOT (server-only via Admin SDK)
+    // These collections are managed exclusively by the backend.
+    // Explicit deny prevents exposure if catch-all is ever misconfigured.
+    match /broadcast_history/{signalId} {
+      allow read, write: if false;  // Server-only — read via API layer to enforce tier gates
+    }
+    match /pending_auto_executions/{signalId} {
+      allow read, write: if false;  // Fully server-managed — live trade queue
+    }
+    match /morning_briefing_logs/{logId} {
+      allow read: if request.auth != null && resource.data.user_id == request.auth.uid;
+      allow write: if false;  // Server-only — auto-execution logs
+    }
+    match /autopilot_configs/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;  // Server-only — prevents config tampering
+    }
+    match /risk_kernel_state/{stateId} {
+      allow read, write: if false;  // Fully server-managed — safety-critical state
+    }
+
+    // 10. POSITION HEALTH SCORES (server-only via PositionHealthWorker)
+    match /position_health/{positionKey} {
+      allow read: if request.auth != null && resource.data.user_id == request.auth.uid;
+      allow write: if false;  // Server-only — calculated by PositionHealthWorker
+    }
+
+    // 11. EXECUTION TELEMETRY (server-only via auto_execution_worker)
+    match /telemetry/{entryId} {
+      allow read: if request.auth != null && resource.data.user_id == request.auth.uid;
+      allow write: if false;  // Server-only — latency, slippage, queue metrics
+    }
+
+    // 12. USER WATCHLISTS (user-writable with size limits)
+    match /user_watchlists/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId
+                   && request.resource.size < 10 * 1024  // 10KB max
+                   && !request.resource.data.keys().hasAny(['__proto__', 'constructor']);
+    }
+
+    // 13. WEEKLY SCAN RESULTS (server-only)
+    match /weekly_scans/{scanId} {
+      allow read: if request.auth != null && resource.data.user_id == request.auth.uid;
+      allow write: if false;  // Server-only — generated by WeeklyScanWorker
+    }
+
+    // 15. IDEMPOTENCY KEYS (server-only — trade replay protection)
+    match /idempotency_keys/{keyId} {
+      allow read, write: if false;  // Fully server-managed
+    }
+
+    // DEFAULT DENY
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

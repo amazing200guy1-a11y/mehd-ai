@@ -1,0 +1,87 @@
+rules_version = '2';
+
+// ════════════════════════════════════════════════════════════════
+//  MEHD AI — Firestore Security Rules
+//  Last Updated: 2026-04-14
+//  Standard: OWASP MASVS L2 + Firebase Best Practices
+// ════════════════════════════════════════════════════════════════
+//
+//  These rules are the LAST LINE OF DEFENSE for your database.
+//  Even if someone steals a Firebase API key, these rules prevent
+//  them from reading/writing data they don't own.
+//
+//  Golden Rule: DENY by default, ALLOW only what's necessary.
+// ════════════════════════════════════════════════════════════════
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── DEFAULT: Deny everything ──────────────────────────────
+    // If no rule below matches, access is DENIED.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ── USER PROFILES ─────────────────────────────────────────
+    // Users can ONLY read/write their OWN profile document.
+    // The document ID must match their Firebase Auth UID.
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId
+                   && (!request.resource.data.keys().hasAny(['balance', 'tier', 'is_locked', 'role', 'admin', 'daily_drawdown_pct', 'equity', 'max_risk']));
+
+      // ── USER SETTINGS (sub-collection) ──────────────────────
+      match /settings/{settingId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    match /user_profiles/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false; // Server-only
+
+      match /rejection_feed/{rejectionId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false; // Server-only
+      }
+    }
+
+    // ── TRADE LOGS ────────────────────────────────────────────
+    // Backend writes via Admin SDK (bypasses rules).
+    // Users can READ logs that belong to their session.
+    match /trade_logs/{logId} {
+      allow read: if request.auth != null;
+      allow write: if false;  // Only backend Admin SDK can write
+    }
+
+    // ── CONSENSUS LOGS ────────────────────────────────────────
+    match /consensus_logs/{logId} {
+      allow read: if request.auth != null;
+      allow write: if false;  // Only backend Admin SDK can write
+    }
+
+    // ── ACCOUNT EVENTS ────────────────────────────────────────
+    match /account_events/{eventId} {
+      allow read: if request.auth != null;
+      allow write: if false;  // Only backend Admin SDK can write
+    }
+
+    // ── SOVEREIGN MOAT (Alpha Snapshots) ──────────────────────
+    // Nobody can read the sovereign data from the client.
+    // Only the backend (Admin SDK) writes to this collection.
+    match /sovereign_moat/{snapshotId} {
+      allow read: if false;   // Proprietary data — server only
+      allow write: if false;  // Only backend Admin SDK can write
+    }
+
+    // ── ACCOUNT DELETION REQUESTS ────────────────────────────
+    // Users can create a deletion request for their OWN account.
+    match /deletion_requests/{requestId} {
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null
+                  && resource.data.userId == request.auth.uid;
+      allow update, delete: if false;  // Once submitted, cannot be modified
+    }
+  }
+}

@@ -47,9 +47,9 @@ class ConnectionMonitor extends ChangeNotifier {
       case ConnectionQuality.fast:
         return '';
       case ConnectionQuality.medium:
-        return 'Medium connection — slight delays possible';
+        return 'Partial system degradation — slight delays possible';
       case ConnectionQuality.slow:
-        return 'Slow connection detected — paper trading recommended';
+        return 'Systems impaired — execution may be unavailable';
       case ConnectionQuality.offline:
         return 'Offline — all trading locked';
     }
@@ -93,19 +93,42 @@ class ConnectionMonitor extends ChangeNotifier {
   Future<void> _checkNow() async {
     final stopwatch = Stopwatch()..start();
     try {
-      await http.get(
+      final response = await http.get(
         Uri.parse('${AppConstants.baseUrl}/health'),
       ).timeout(const Duration(seconds: 5));
       stopwatch.stop();
       final latency = stopwatch.elapsedMilliseconds;
 
       ConnectionQuality newQuality;
-      if (latency < 500) {
-        newQuality = ConnectionQuality.fast;
-      } else if (latency < 2000) {
-        newQuality = ConnectionQuality.medium;
-      } else {
-        newQuality = ConnectionQuality.slow;
+
+      // Parse backend aggregate state (GREEN/YELLOW/RED)
+      try {
+        final body = response.body;
+        if (body.contains('"RED"')) {
+          newQuality = ConnectionQuality.slow; // RED = execution unavailable
+        } else if (body.contains('"YELLOW"')) {
+          newQuality = ConnectionQuality.medium; // YELLOW = degraded
+        } else if (body.contains('"GREEN"')) {
+          newQuality = ConnectionQuality.fast; // GREEN = healthy
+        } else {
+          // Fallback: latency-based detection
+          if (latency < 500) {
+            newQuality = ConnectionQuality.fast;
+          } else if (latency < 2000) {
+            newQuality = ConnectionQuality.medium;
+          } else {
+            newQuality = ConnectionQuality.slow;
+          }
+        }
+      } catch (_) {
+        // JSON parse failed — use latency fallback
+        if (latency < 500) {
+          newQuality = ConnectionQuality.fast;
+        } else if (latency < 2000) {
+          newQuality = ConnectionQuality.medium;
+        } else {
+          newQuality = ConnectionQuality.slow;
+        }
       }
 
       if (newQuality != _quality) {

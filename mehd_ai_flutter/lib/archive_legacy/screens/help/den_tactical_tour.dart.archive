@@ -1,0 +1,286 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:mehd_ai_flutter/core/theme.dart';
+import 'package:mehd_ai_flutter/core/den_identity.dart';
+
+class DenTacticalTour extends StatefulWidget {
+  const DenTacticalTour({super.key});
+
+  @override
+  State<DenTacticalTour> createState() => _DenTacticalTourState();
+}
+
+class _DenTacticalTourState extends State<DenTacticalTour> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+
+  final List<Map<String, dynamic>> _tourData = [
+    {
+      'title': 'THE UNDERWORLD',
+      'subtitle': 'PHASE 1: INTELLIGENCE GATHERING',
+      'accent': const Color(0xFF6A0DAD),
+      'icon': Icons.public_rounded,
+      'desc':
+          'This is the Den\'s eyes and ears. Before a trade is even considered, these agents scour global feeds for sentiment anomalies.',
+      'agents': ['don', 'phantom', 'oracle'],
+      'bgGradient': [Color(0xFF1A102A), Color(0xFF0F0818)],
+    },
+    {
+      'title': 'THE EMPIRE',
+      'subtitle': 'PHASE 2: STRATEGIC LOGIC',
+      'accent': MehdAiTheme.gold,
+      'icon': Icons.auto_graph_rounded,
+      'desc':
+          'Once intelligence is gathered, the Empire synthesizes data into actionable strategies. They argue the logic of the entry.',
+      'agents': ['caesar', 'sage', 'guardian'],
+      'bgGradient': [Color(0xFF2A2210), Color(0xFF151008)],
+    },
+    {
+      'title': 'OLYMPUS',
+      'subtitle': 'PHASE 3: QUANTITATIVE VETO',
+      'accent': MehdAiTheme.blue,
+      'icon': Icons.radar_rounded,
+      'desc':
+          'The Math Layer. Even if strategy agrees, Olympus will VETO the trade if the liquidity, spread, or risk-to-reward ratio is sub-optimal.',
+      'agents': ['titan', 'atlas', 'forge'],
+      'bgGradient': [Color(0xFF10203A), Color(0xFF08101F)],
+    },
+    {
+      'title': 'SUPREME COMMAND',
+      'subtitle': 'PHASE 4: AGGREGATION & PROTECTION',
+      'accent': Colors.white,
+      'icon': Icons.account_balance_rounded,
+      'desc':
+          'Final oversight. The Don synchronizes consensus, while Sentinel watches for systemic paradoxes to freeze execution if needed.',
+      'agents': ['the don', 'sentinel'],
+      'bgGradient': [Color(0xFF222222), Color(0xFF111111)],
+    },
+  ];
+
+  void _nextPage() {
+    if (_currentPage < _tourData.length - 1) {
+      _pageController.nextPage(
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeOutCubic);
+    } else {
+      Navigator.pop(context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          // Background PageView
+          PageView.builder(
+            controller: _pageController,
+            onPageChanged: (idx) => setState(() => _currentPage = idx),
+            itemCount: _tourData.length,
+            itemBuilder: (context, index) {
+              return _buildPage(_tourData[index]);
+            },
+          ),
+
+          // Header
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 20,
+            left: 24,
+            right: 24,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('TACTICAL BRIEFING',
+                        style: GoogleFonts.outfit(
+                            color: MehdAiTheme.blue,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                            letterSpacing: 2)),
+                    const SizedBox(height: 4),
+                    Text('MEHD AI ARCHITECTURE v2.0',
+                        style: MehdAiTheme.labelStyle.copyWith(
+                            fontSize: 10,
+                            color: MehdAiTheme.textSecondary.withOpacity(0.5))),
+                  ],
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded,
+                      color: Colors.white, size: 28),
+                ),
+              ],
+            ),
+          ),
+
+          // Footer Controls
+          Positioned(
+            bottom: 40,
+            left: 32,
+            right: 32,
+            child: Row(
+              children: [
+                // Pagination Dots
+                Row(
+                  children: List.generate(
+                      _tourData.length,
+                      (idx) => AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            width: _currentPage == idx ? 24 : 8,
+                            height: 8,
+                            margin: const EdgeInsets.only(right: 8),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(4),
+                              color: _currentPage == idx
+                                  ? MehdAiTheme.blue
+                                  : Colors.white.withOpacity(0.15),
+                            ),
+                          )),
+                ),
+                const Spacer(),
+                // Next Button
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 32, vertical: 16),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: _nextPage,
+                  child: Text(
+                    _currentPage == _tourData.length - 1
+                        ? 'START COMMAND'
+                        : 'NEXT ROOM',
+                    style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.w900, fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPage(Map<String, dynamic> data) {
+    final accent = data['accent'] as Color;
+    final agents = data['agents'] as List<String>;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: data['bgGradient'] as List<Color>,
+        ),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Icon Header
+              Container(
+                width: 70,
+                height: 70,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: accent.withOpacity(0.1),
+                  border: Border.all(color: accent.withOpacity(0.3)),
+                  boxShadow: [
+                    BoxShadow(
+                        color: accent.withOpacity(0.1),
+                        blurRadius: 40,
+                        spreadRadius: 10),
+                  ],
+                ),
+                child: Icon(data['icon'] as IconData, color: accent, size: 36),
+              ),
+              const SizedBox(height: 32),
+
+              // Title Area
+              Text(data['subtitle'] as String,
+                  style: GoogleFonts.outfit(
+                      color: accent.withOpacity(0.7),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      letterSpacing: 1.5)),
+              const SizedBox(height: 8),
+              Text(data['title'] as String,
+                  style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 42,
+                      height: 1.1)),
+              const SizedBox(height: 24),
+
+              // Description
+              Text(data['desc'] as String,
+                  style: MehdAiTheme.labelStyle.copyWith(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 15,
+                      height: 1.6)),
+
+              const SizedBox(height: 48),
+
+              // Agents in this room
+              Text('ACTIVE AGENTS',
+                  style: GoogleFonts.outfit(
+                      color: Colors.white.withOpacity(0.3),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                      letterSpacing: 2)),
+              const SizedBox(height: 16),
+
+              ...agents.map((id) {
+                final identity = DenIdentity.getIdentity(id);
+                return _buildAgentChip(identity);
+              }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAgentChip(AgentIdentity agent) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.white.withOpacity(0.04),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
+      ),
+      child: Row(
+        children: [
+          Icon(agent.icon, color: agent.nodeColor, size: 20),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(agent.displayName,
+                    style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14)),
+                Text(agent.personality,
+                    style: MehdAiTheme.labelStyle.copyWith(
+                        fontSize: 10, color: MehdAiTheme.textSecondary)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

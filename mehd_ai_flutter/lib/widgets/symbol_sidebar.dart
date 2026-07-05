@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
 import 'package:mehd_ai_flutter/core/constants.dart';
+import 'package:mehd_ai_flutter/models/market_snapshot.dart';
 
 /// FILE 5 — symbol_sidebar.dart
 ///
@@ -14,11 +15,17 @@ import 'package:mehd_ai_flutter/core/constants.dart';
 class SymbolSidebar extends StatefulWidget {
   final String activeSymbol;
   final Function(String) onSymbolSelected;
+  final bool isExpanded;
+  final VoidCallback onToggle;
+  final MarketSnapshot? snapshot;
 
   const SymbolSidebar({
     super.key,
     required this.activeSymbol,
     required this.onSymbolSelected,
+    required this.isExpanded,
+    required this.onToggle,
+    this.snapshot,
   });
 
   @override
@@ -94,78 +101,105 @@ class _SymbolSidebarState extends State<SymbolSidebar> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 200,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+      width: widget.isExpanded ? 260 : 48,
       color: MehdAiTheme.bgSecondary,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'MARKETS EXPLORER',
-              style: MehdAiTheme.labelStyle.copyWith(
-                fontSize: 11,
-                letterSpacing: 1.2,
+      child: !widget.isExpanded
+          ? GestureDetector(
+              onTap: widget.onToggle,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(top: 16.0),
+                    child: Icon(Icons.view_sidebar_outlined, color: MehdAiTheme.textSecondary, size: 20),
+                  ),
+                ],
               ),
-            ),
-          ),
-          
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSectionHeader('FOREX'),
-                ...AppConstants.symbols.take(3).map((s) => _buildSymbolRow(s)),
-                
-                const SizedBox(height: 12),
-                _buildSectionHeader('COMMODITIES'),
-                ...AppConstants.symbols.skip(3).take(1).map((s) => _buildSymbolRow(s)),
-                
-                const SizedBox(height: 12),
-                _buildSectionHeader('CRYPTO'),
-                ...AppConstants.symbols.skip(4).take(2).map((s) => _buildSymbolRow(s)),
-
-                const SizedBox(height: 12),
-                _buildSectionHeader('INDICES'),
-                ...AppConstants.symbols.skip(6).map((s) => _buildSymbolRow(s)),
-              ],
-            ),
-          ),
-
-          // Risk Kernel Status at bottom
-          Container(
-            padding: const EdgeInsets.all(16.0),
-            decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: MehdAiTheme.borderColor)),
-            ),
-            child: Row(
-              children: [
-                // Pulsing dot simulation
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: MehdAiTheme.green,
-                    shape: BoxShape.circle,
+                // Header with toggle button
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'MARKETS EXPLORER',
+                        style: MehdAiTheme.labelStyle.copyWith(
+                          fontSize: 11,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.view_sidebar_outlined, color: MehdAiTheme.textSecondary, size: 20),
+                        onPressed: widget.onToggle,
+                        tooltip: 'Collapse Markets Explorer',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 8),
+
+                // Symbol list
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: ListView(
+                    padding: EdgeInsets.zero,
                     children: [
-                      Text('RISK KERNEL', style: MehdAiTheme.labelStyle.copyWith(fontSize: 10, color: MehdAiTheme.purple), overflow: TextOverflow.ellipsis),
-                      Text('1% max active', style: MehdAiTheme.labelStyle.copyWith(fontSize: 11, color: MehdAiTheme.textPrimary), overflow: TextOverflow.ellipsis),
+                      _buildSectionHeader('FOREX'),
+                      ...AppConstants.symbols.take(3).map((s) => _buildSymbolRow(s)),
+
+                      const SizedBox(height: 12),
+                      _buildSectionHeader('COMMODITIES'),
+                      ...AppConstants.symbols.skip(3).take(1).map((s) => _buildSymbolRow(s)),
+
+                      const SizedBox(height: 12),
+                      _buildSectionHeader('CRYPTO'),
+                      ...AppConstants.symbols.skip(4).take(2).map((s) => _buildSymbolRow(s)),
+
+                      const SizedBox(height: 12),
+                      _buildSectionHeader('INDICES'),
+                      ...AppConstants.symbols.skip(6).map((s) => _buildSymbolRow(s)),
+                    ],
+                  ),
+                ),
+
+                // Risk Kernel Status at bottom
+                Container(
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: const BoxDecoration(
+                    border: Border(top: BorderSide(color: MehdAiTheme.borderColor)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: MehdAiTheme.green,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('RISK KERNEL', style: MehdAiTheme.labelStyle.copyWith(fontSize: 10, color: MehdAiTheme.purple), overflow: TextOverflow.ellipsis),
+                            Text('1% max active', style: MehdAiTheme.labelStyle.copyWith(fontSize: 11, color: MehdAiTheme.textPrimary), overflow: TextOverflow.ellipsis),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
-          )
-        ],
-      ),
     );
   }
 
@@ -188,26 +222,22 @@ class _SymbolSidebarState extends State<SymbolSidebar> {
     );
   }
 
-  static const Map<String, double> _basePrices = {
-    'EUR/USD': 1.08420,
-    'GBP/USD': 1.26340,
-    'GBP/JPY': 189.420,
-    'XAU/USD': 2318.50,
-    'BTC/USD': 67420.0,
-    'ETH/USD': 3240.0,
-    'PARADOX/USD': 1.0,
-    'NAS100': 17842.0,
-    'US30': 38910.0,
-  };
+
 
   Widget _buildSymbolRow(String symbol) {
     final isActive = symbol == widget.activeSymbol;
     final hasAlert = _alerts.containsKey(symbol);
-    final isUp = symbol.length % 2 == 0;
-    final basePrice = _basePrices[symbol] ?? 0.0;
-    final int decimals = basePrice < 10 ? 5 : (basePrice < 1000 ? 3 : 2);
-    final priceStr = basePrice.toStringAsFixed(decimals);
-    final changeStr = isUp ? '+0.15%' : '-0.12%';
+    
+    // Use live price if it's the active symbol, otherwise default
+    String priceStr = '0.00000';
+    if (isActive && widget.snapshot != null) {
+      if (symbol.contains('BTC') || symbol.contains('ETH') || symbol.contains('XAU')) {
+         priceStr = widget.snapshot!.close.toStringAsFixed(2);
+      } else {
+         priceStr = widget.snapshot!.close.toStringAsFixed(5);
+      }
+    }
+    const changeStr = '0.00%';
 
     return Container(
       color: isActive ? MehdAiTheme.blue.withOpacity(0.1) : Colors.transparent,
@@ -242,10 +272,10 @@ class _SymbolSidebarState extends State<SymbolSidebar> {
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(width: 8),
-            Text(
+            const Text(
               changeStr,
               style: TextStyle(
-                color: isUp ? const Color(0xFF00FF88) : const Color(0xFFFF3B3B),
+                color: Color(0xFF888888), // Neutral gray for awaiting state
                 fontSize: 10,
               ),
               overflow: TextOverflow.ellipsis,

@@ -76,14 +76,19 @@ class _HomeTabletLayoutState extends State<HomeTabletLayout> {
                         child: DenChart(
                           key: _chartKey,
                           symbol: market.activeSymbol!,
-                          basePrice: market.latestSnapshot!.close,
+                          interval: market.activeInterval,
+                          basePrice: market.latestSnapshot?.close ?? 0.0,
                           isAutoMode: market.drawingMode != 'MANUAL',
                           activeTool: market.activeTool,
                           commands: market.aiCommands,
                           onEvent: (data) async {
+                            if (data['type'] == 'price_update') {
+                              final price = (data['price'] as num).toDouble();
+                              widget.market.updatePriceFromChart(price);
+                            }
                             if (data['type'] == 'validate_request') {
                               final price = (data['price'] as num).toDouble();
-                              await market.validateManualLevel(price);
+                              await widget.market.validateManualLevel(price);
                             }
                           },
                         ),

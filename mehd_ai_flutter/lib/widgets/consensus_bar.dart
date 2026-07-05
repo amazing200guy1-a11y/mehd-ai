@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
 import 'package:mehd_ai_flutter/core/constants.dart';
 import 'package:mehd_ai_flutter/models/consensus_result.dart';
+import 'package:mehd_ai_flutter/widgets/swipe_to_execute.dart';
 
 /// FILE 8 — consensus_bar.dart
 ///
@@ -268,6 +269,14 @@ class ConsensusBar extends StatelessWidget {
         text = 'SOVEREIGN EXECUTE — ${consensus!.finalDirection}';
         icon = const Icon(Icons.bolt, size: 16, color: MehdAiTheme.white);
       }
+    }
+
+    if ((buttonState == ButtonState.readyBuy || buttonState == ButtonState.readySell) && enabled) {
+      return SwipeToExecuteBtn(
+        onExecute: onTradePressed,
+        text: text,
+        baseColor: borderColor,
+      );
     }
 
     return _BouncingTradeButton(

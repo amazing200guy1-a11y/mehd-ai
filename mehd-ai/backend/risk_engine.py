@@ -20,6 +20,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 import json
 import os
+import re
+import time
 
 from models import (
     AccountHealth, 
@@ -28,67 +30,14 @@ from models import (
     TradeOrder, 
     AIVote,
     AppConstitution,
-    ConstitutionRule
+    ConstitutionRule,
+    get_pip_size
 )
 
+from constitution_manager import ConstitutionManager
+from risk_state_store import RiskStateStore
+
 logger = logging.getLogger("mehd.risk_engine")
-
-CONSTITUTION_FILE = os.path.join(os.path.dirname(__file__), "app_constitution.json")
-
-class ConstitutionManager:
-    """
-    Manages loading, validating, and updating the Trader's Constitution.
-    """
-    @classmethod
-    def load(cls) -> AppConstitution:
-        if not os.path.exists(CONSTITUTION_FILE):
-             # Create default constitution if none exists
-            default_const = AppConstitution(
-                rules=[
-                    ConstitutionRule(
-                        name="Overtrading Protection",
-                        description="Maximum 3 trades per day to prevent revenge trading.",
-                        rule_type="max_daily_trades",
-                        parameter=3.0,
-                    ),
-                    ConstitutionRule(
-                        name="High Conviction Only",
-                        description="Only trade when consensus is 80% or higher.",
-                        rule_type="min_consensus",
-                        parameter=80.0,
-                    )
-                ]
-            )
-            cls.save(default_const)
-            return default_const
-
-        try:
-            with open(CONSTITUTION_FILE, "r") as f:
-                data = json.load(f)
-            return AppConstitution.model_validate(data)
-        except Exception as e:
-            logger.error("Error loading constitution: %s", e)
-            return AppConstitution()
-
-    @classmethod
-    def save(cls, constitution: AppConstitution) -> None:
-        try:
-            with open(CONSTITUTION_FILE, "w") as f:
-                f.write(constitution.model_dump_json(indent=2))
-        except Exception as e:
-            logger.error("Error saving constitution: %s", e)
-            
-    @classmethod
-    def increment_daily_trades(cls) -> None:
-        const = cls.load()
-        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        if const.last_reset_date != today:
-            const.daily_trades_count = 0
-            const.last_reset_date = today
-            
-        const.daily_trades_count += 1
-        cls.save(const)
-
 
 
 class HardRiskKernel:
@@ -106,17 +55,30 @@ class HardRiskKernel:
     """
 
     # ── Constants ─────────────────────────────────────
-    MAX_RISK_PER_TRADE_PCT: float = 1.0      # 1% of balance, period.
+    MAX_RISK_PER_TRADE_PCT: float = 10.0     # Hard ceiling: user can go up to 10% (set by UI slider)
     MAX_DAILY_DRAWDOWN_PCT: float = 3.0      # 3% daily loss → lockout
     LOCKOUT_DURATION_HOURS: int = 24          # How long the lock lasts
     SPREAD_VOLATILITY_THRESHOLD: float = 5.0  # Pips — above this is "wide"
     PIP_VALUE_PER_STANDARD_LOT: float = 10.0  # $10 per pip per standard lot (simplified)
+    
+    # ── IN-MEMORY CACHE FOR GLOBAL CONSTITUTION ──
+    _global_constitution_cache = None
+    _global_constitution_timestamp = 0
+    
+    @classmethod
+    async def get_global_constitution_cached(cls):
+        now = time.time()
+        # 60-second TTL to prevent disk I/O bottleneck
+        if cls._global_constitution_cache is None or (now - cls._global_constitution_timestamp) > 60:
+            cls._global_constitution_cache = await ConstitutionManager.load(user_id=None)
+            cls._global_constitution_timestamp = now
+        return cls._global_constitution_cache
 
     def __init__(self) -> None:
         """
-        The kernel starts with a clean state.
-        In production, account_health would come from the broker API.
-        For now, we initialise with a reasonable demo account.
+        The kernel starts with a clean state, then restores any persisted
+        drawdown/lock state from disk. This ensures that a server restart
+        cannot reset the daily drawdown counter (safety critical).
         """
         self.account: AccountHealth = AccountHealth(
             balance=10_000.00,
@@ -126,23 +88,71 @@ class HardRiskKernel:
             lock_reason=None,
             lock_expiry=None,
         )
-        logger.info("HardRiskKernel initialised — balance: $%.2f", self.account.balance)
+        self._restore_state()
+        logger.info("HardRiskKernel initialised — balance: $%.2f, drawdown: %.2f%%", 
+                    self.account.balance, self.account.daily_drawdown_pct)
+
+    def _persist_state(self) -> None:
+        """Save safety-critical state to file (sync) and storage backend (async) via RiskStateStore."""
+        RiskStateStore.persist_state(self.account)
+
+    async def restore_from_storage(self) -> None:
+        """Async restore from storage backend."""
+        updated = await RiskStateStore.restore_from_storage(self.account)
+        if updated:
+            self.account = updated
+
+    def _restore_state(self) -> None:
+        """Restore drawdown/lock state on boot (sync fallback)."""
+        self.account = RiskStateStore.restore_state(self.account)
+
+
+    async def sync_broker_equity(self) -> None:
+        """
+        Dynamically fetches live equity and margin from the configured Broker API.
+        If no API key is present, it falls back to the local demo state.
+        """
+        try:
+            from broker_gateway import broker_gateway
+            if broker_gateway.is_live:
+                summary = await broker_gateway.get_account_summary()
+                if summary.get("mode") == "live" and summary.get("balance", 0) > 0:
+                    self.account = self.account.model_copy(
+                        update={
+                            "balance": summary["balance"],
+                            "equity": summary.get("equity", summary["balance"]),
+                        }
+                    )
+                    logger.debug(
+                        "Synced broker equity: balance=$%.2f, equity=$%.2f",
+                        self.account.balance,
+                        self.account.equity,
+                    )
+                # If mode is "error", keep existing values (don't reset to 0)
+        except Exception as e:
+            # If broker_gateway import fails or API errors, keep offline state
+            logger.debug("Broker sync skipped: %s", e)
 
     # ──────────────────────────────────────────────────
     #  PUBLIC: evaluate() — the only entry point
     # ──────────────────────────────────────────────────
 
-    def evaluate(self, order: TradeOrder, current_price: float = 0.0, current_spread: float = 0.0) -> RiskDecision:
+    async def evaluate(self, order: TradeOrder, current_price: float = 0.0, current_spread: float = 0.0, user_id: str | None = None) -> RiskDecision:
         """
         Run ALL risk checks on a trade order.
         Returns a RiskDecision — approved or rejected with reason.
 
         The order of checks matters:
         1. Account lock check (fastest — just read a boolean)
-        2. Volatility check (spread too wide?)
-        3. Stop-loss check (fast — just check if field is None)
-        4. Risk sizing check (math — needs calculation)
+        2. Absolute Risk check (simple multiplication)
+        3. Market Environment check (spread/volatility)
+        4. Take Profit Logic (verify R:R)
+        5. Drift / Data Tampering detection
         """
+        # Always read real money before making a decision.
+        await self.sync_broker_equity()
+
+        logger.info("Kernel beginning evaluation for %s trade...", order.symbol)
         logger.info(
             "Evaluating order: %s %s %.2f lots (entry_price=%.5f)",
             order.direction.value,
@@ -150,6 +160,27 @@ class HardRiskKernel:
             order.lot_size,
             current_price,
         )
+
+        # ── CHECK 0: Economic Calendar (Sovereign Lock / SUPREME Override) ──────────
+        from economic_calendar import calendar_gateway
+        minutes_to_news = calendar_gateway.get_minutes_to_next_high_impact_news(order.symbol)
+        
+        # SUPREME Override: Stricter news window for auto-execution (60 mins vs 30 mins)
+        news_threshold = 60 if order.is_auto_execution else 30
+        
+        if minutes_to_news is not None and minutes_to_news <= news_threshold:
+            return RiskDecision(
+                approved=False,
+                calculated_lot_size=0.0,
+                stop_loss=order.stop_loss or 0.0001,
+                take_profit=order.take_profit,
+                rejection_reason=(
+                    f"REJECTED: {'SUPREME OVERRIDE' if order.is_auto_execution else 'SOVEREIGN LOCK'}. "
+                    f"High impact news in {minutes_to_news} mins. "
+                    "Trading is paused to protect capital from extreme volatility spikes."
+                ),
+                vetoing_agents=["KERNEL", "SENTINEL"]
+            )
 
         # ── CHECK 1: Is the account locked? ──────────
         if self.account.is_locked:
@@ -171,10 +202,14 @@ class HardRiskKernel:
                         f"Account is locked: {self.account.lock_reason}. "
                         f"Unlocks at {expiry_str}"
                     ),
+                    vetoing_agents=["KERNEL"]
                 )
 
         # ── CHECK 2: Volatility / Spread check ──────
-        if current_spread > 0 and self.check_volatility(current_spread):
+        # SUPREME Override: Stricter spread check for auto-execution
+        spread_threshold = self.SPREAD_VOLATILITY_THRESHOLD * 0.5 if order.is_auto_execution else self.SPREAD_VOLATILITY_THRESHOLD
+        
+        if current_spread > spread_threshold:
             return RiskDecision(
                 approved=False,
                 calculated_lot_size=0.0,
@@ -182,9 +217,10 @@ class HardRiskKernel:
                 take_profit=order.take_profit,
                 rejection_reason=(
                     f"REJECTED: Spread is {current_spread:.1f} pips — above the "
-                    f"{self.SPREAD_VOLATILITY_THRESHOLD} pip safety threshold. "
-                    f"Trading during extreme volatility is blocked."
+                    f"{spread_threshold:.1f} pip safety threshold. "
+                    f"{'SUPREME OVERRIDE: ' if order.is_auto_execution else ''}Trading during extreme volatility is blocked."
                 ),
+                vetoing_agents=["KERNEL", "TITAN"]
             )
 
         # ── CHECK 3: Is there a stop-loss? ───────────
@@ -198,17 +234,20 @@ class HardRiskKernel:
                     "REJECTED: No stop-loss provided. Every trade in Mehd AI "
                     "must have a stop-loss. This is non-negotiable."
                 ),
+                vetoing_agents=["KERNEL"]
             )
 
         # ── CHECK 3.5: OLYMPUS Agents Verification ──
         olympus_veto = self._verify_olympus_agents(order, current_price)
         if olympus_veto:
+            agent = olympus_veto.split(" VETO:")[0] if " VETO:" in olympus_veto else "OLYMPUS"
             return RiskDecision(
                 approved=False,
                 calculated_lot_size=0.0,
                 stop_loss=order.stop_loss,
                 take_profit=order.take_profit,
-                rejection_reason=f"REJECTED: {olympus_veto}",
+                rejection_reason="REJECTED: %s" % olympus_veto,
+                vetoing_agents=[agent]
             )
 
         # ── CHECK 4: Calculate safe lot size ─────────
@@ -224,6 +263,7 @@ class HardRiskKernel:
                     "REJECTED: Calculated safe lot size is zero or negative. "
                     "The stop-loss distance may be too tight for your account balance."
                 ),
+                vetoing_agents=["KERNEL", "ATLAS"]
             )
 
         # If the trader asked for more lots than is safe, cap it
@@ -245,41 +285,60 @@ class HardRiskKernel:
             + (potential_loss / self.account.balance * 100)
         )
 
-        if potential_drawdown_pct >= self.MAX_DAILY_DRAWDOWN_PCT:
-            self._lock_account(
-                reason=(
-                    f"Daily drawdown would reach {potential_drawdown_pct:.2f}% "
-                    f"(limit: {self.MAX_DAILY_DRAWDOWN_PCT}%). "
-                    f"Trade blocked to protect your capital."
+        # SUPREME Override: 2% max daily loss for auto-execution
+        max_drawdown = 2.0 if order.is_auto_execution else self.MAX_DAILY_DRAWDOWN_PCT
+
+        if potential_drawdown_pct >= max_drawdown:
+            if order.is_auto_execution:
+                return RiskDecision(
+                    approved=False,
+                    calculated_lot_size=0.0,
+                    stop_loss=order.stop_loss,
+                    take_profit=order.take_profit,
+                    rejection_reason=f"SUPREME OVERRIDE: Autopilot daily loss limit ({max_drawdown}%) hit.",
+                    vetoing_agents=["KERNEL"]
                 )
-            )
-            return RiskDecision(
-                approved=False,
-                calculated_lot_size=0.0,
-                stop_loss=order.stop_loss,
-                take_profit=order.take_profit,
-                rejection_reason=self.account.lock_reason,
-            )
+            else:
+                self._lock_account(
+                    reason=(
+                        f"Daily drawdown would reach {potential_drawdown_pct:.2f}% "
+                        f"(limit: {max_drawdown}%). "
+                        f"Trade blocked to protect your capital."
+                    )
+                )
+                return RiskDecision(
+                    approved=False,
+                    calculated_lot_size=0.0,
+                    stop_loss=order.stop_loss,
+                    take_profit=order.take_profit,
+                    rejection_reason=self.account.lock_reason,
+                    vetoing_agents=["KERNEL"]
+                )
 
         # ── CHECK 5: The Trader's Constitution ────────
-        # Load the trader's personal mandate and enforce it ruthlessly.
-        constitution = ConstitutionManager.load()
+        # Load the trader's PERSONAL mandate and enforce it ruthlessly.
+        # Fix Constitution Disconnect: Load GLOBAL autonomous rules as well
+        personal_constitution = await ConstitutionManager.load(user_id=user_id)
+        global_constitution = await self.get_global_constitution_cached()
         
-        for rule in constitution.rules:
+        all_rules = personal_constitution.rules + global_constitution.rules
+        
+        for rule in all_rules:
             if not rule.is_active:
                 continue
                 
             # Rule: Max Daily Trades
             if rule.rule_type == "max_daily_trades":
-                if constitution.daily_trades_count >= rule.parameter:
+                if personal_constitution.daily_trades_count >= rule.parameter:
                     logger.critical("🔥 CONSTITUTION VETO: %s (Limit: %d, Taken: %d)", 
-                                    rule.name, rule.parameter, constitution.daily_trades_count)
+                                    rule.name, rule.parameter, personal_constitution.daily_trades_count)
                     return RiskDecision(
                         approved=False,
                         calculated_lot_size=0.0,
                         stop_loss=order.stop_loss or 0.0,
                         take_profit=order.take_profit,
-                        rejection_reason=f"CONSTITUTION_VETO: {rule.description}"
+                        rejection_reason="CONSTITUTION_VETO: %s" % rule.description,
+                        vetoing_agents=["CONSTITUTION"]
                     )
             
             # Rule: Minimum Consensus (requires knowing the consensus %, which we don't have here)
@@ -300,8 +359,91 @@ class HardRiskKernel:
                         calculated_lot_size=0.0,
                         stop_loss=order.stop_loss or 0.0,
                         take_profit=order.take_profit,
-                        rejection_reason=f"CONSTITUTION_VETO: {rule.description}"
+                        rejection_reason="CONSTITUTION_VETO: %s" % rule.description,
+                        vetoing_agents=["CONSTITUTION"]
                     )
+
+            # Rule: Autonomous Dynamic Veto (Self-Learning Feedback Loop)
+            elif rule.rule_type == "dynamic_veto":
+                cond = getattr(rule, "condition_payload", {})
+                if cond:
+                    # Filter by Symbol (if specified)
+                    if cond.get("symbol") and cond.get("symbol") != order.symbol:
+                        continue
+                    
+                    # Filter by Direction (if specified)
+                    if cond.get("direction") and cond.get("direction") != order.direction.value:
+                        continue
+                    
+                    # Condition: Max Spread
+                    max_spread = cond.get("max_spread_allowed")
+                    if max_spread is not None and current_spread > max_spread:
+                        logger.critical("🔥 AUTONOMOUS VETO: %s (Spread %.1f > %.1f)", 
+                                        rule.name, current_spread, max_spread)
+                        return RiskDecision(
+                            approved=False,
+                            calculated_lot_size=0.0,
+                            stop_loss=order.stop_loss or 0.0,
+                            take_profit=order.take_profit,
+                            rejection_reason=f"AUTONOMOUS_VETO (Learned): {rule.description}",
+                            vetoing_agents=["SENTINEL"]
+                        )
+                    
+                    # Structural Condition: Depth of Market (DOM) Imbalance
+                    min_dom = cond.get("min_dom_imbalance")
+                    max_dom = cond.get("max_dom_imbalance")
+                    
+                    if min_dom is not None or max_dom is not None:
+                        try:
+                            from state import streamer
+                            snapshot = streamer.get_latest_snapshot(order.symbol)
+                            
+                            # Fix "Failing Open": If safety rules require DOM data, and we don't have it, we must reject.
+                            if not snapshot or not snapshot.dom_data:
+                                # Rule Decay: If the rule is older than 24 hours, assume a permanent data provider outage and skip.
+                                rule_age = datetime.now(timezone.utc) - rule.created_at
+                                if rule_age > timedelta(hours=24):
+                                    logger.warning("⚠️ Bypassing stale structural rule %s (Missing DOM data, rule age > 24h).", rule.name)
+                                    pass # Bypass rule
+                                else:
+                                    logger.critical("🔥 STRUCTURAL VETO: %s (Missing DOM data for safety check. Rule is fresh: fails closed.)", rule.name)
+                                    return RiskDecision(
+                                        approved=False,
+                                        calculated_lot_size=0.0,
+                                        stop_loss=order.stop_loss or 0.0,
+                                        take_profit=order.take_profit,
+                                        rejection_reason="STRUCTURAL_DATA_MISSING: Cannot verify DOM safety rule.",
+                                        vetoing_agents=["KERNEL", "TITAN"]
+                                    )
+                                    
+                            if snapshot and snapshot.dom_data:
+                                imbalance = snapshot.dom_data.imbalance_ratio
+                                
+                                if min_dom is not None and imbalance < min_dom:
+                                    logger.critical("🔥 STRUCTURAL VETO: %s (DOM Imbalance %.2f < %.2f limit)", 
+                                                    rule.name, imbalance, min_dom)
+                                    return RiskDecision(
+                                        approved=False,
+                                        calculated_lot_size=0.0,
+                                        stop_loss=order.stop_loss or 0.0,
+                                        take_profit=order.take_profit,
+                                        rejection_reason=f"STRUCTURAL_VETO (Learned): {rule.description}",
+                                        vetoing_agents=["SENTINEL", "TITAN"]
+                                    )
+                                    
+                                if max_dom is not None and imbalance > max_dom:
+                                    logger.critical("🔥 STRUCTURAL VETO: %s (DOM Imbalance %.2f > %.2f limit)", 
+                                                    rule.name, imbalance, max_dom)
+                                    return RiskDecision(
+                                        approved=False,
+                                        calculated_lot_size=0.0,
+                                        stop_loss=order.stop_loss or 0.0,
+                                        take_profit=order.take_profit,
+                                        rejection_reason=f"STRUCTURAL_VETO (Learned): {rule.description}",
+                                        vetoing_agents=["SENTINEL", "TITAN"]
+                                    )
+                        except ImportError:
+                            pass # If streamer isn't available, skip structural check
 
         # ── ALL CHECKS PASSED ────────────────────────
         logger.info(
@@ -318,8 +460,152 @@ class HardRiskKernel:
             calculated_lot_size=final_lot_size,
             stop_loss=order.stop_loss,
             take_profit=order.take_profit,
+            expected_price=current_price,
             rejection_reason=None,
         )
+
+    async def evaluate_master_block(self, order: TradeOrder, current_price: float = 0.0, current_spread: float = 0.0) -> RiskDecision:
+        """
+        Special evaluation for Master Block orders.
+        Bypasses individual retail equity constraints (max 1% balance),
+        but strictly enforces structural market safety (news, spread, DOM).
+        The actual lot size is preserved as requested by the aggregator.
+        """
+        logger.info("Kernel beginning MASTER BLOCK evaluation for %s trade...", order.symbol)
+
+        # ── CHECK 0: Economic Calendar ──────────
+        from economic_calendar import calendar_gateway
+        minutes_to_news = calendar_gateway.get_minutes_to_next_high_impact_news(order.symbol)
+        
+        news_threshold = 60
+        if minutes_to_news is not None and minutes_to_news <= news_threshold:
+            return RiskDecision(
+                approved=False, calculated_lot_size=0.0, stop_loss=order.stop_loss or 0.0001, take_profit=order.take_profit,
+                rejection_reason=f"REJECTED: SUPREME OVERRIDE. High impact news in {minutes_to_news} mins.",
+                vetoing_agents=["KERNEL", "SENTINEL"]
+            )
+
+        # ── CHECK 2: Volatility / Spread check ──────
+        spread_threshold = self.SPREAD_VOLATILITY_THRESHOLD * 0.5
+        if current_spread > spread_threshold:
+            return RiskDecision(
+                approved=False, calculated_lot_size=0.0, stop_loss=order.stop_loss or 0.0001, take_profit=order.take_profit,
+                rejection_reason=f"REJECTED: Spread is {current_spread:.1f} pips — above the {spread_threshold:.1f} pip safety threshold.",
+                vetoing_agents=["KERNEL", "TITAN"]
+            )
+
+        # ── CHECK 3: Is there a stop-loss? ───────────
+        if order.stop_loss is None:
+            return RiskDecision(
+                approved=False, calculated_lot_size=0.0, stop_loss=0.0001, take_profit=order.take_profit,
+                rejection_reason="REJECTED: No stop-loss provided.",
+                vetoing_agents=["KERNEL"]
+            )
+
+        # ── CHECK 3.5: OLYMPUS Agents Verification ──
+        olympus_veto = self._verify_olympus_agents(order, current_price)
+        if olympus_veto:
+            agent = olympus_veto.split(" VETO:")[0] if " VETO:" in olympus_veto else "OLYMPUS"
+            return RiskDecision(
+                approved=False, calculated_lot_size=0.0, stop_loss=order.stop_loss, take_profit=order.take_profit,
+                rejection_reason="REJECTED: %s" % olympus_veto,
+                vetoing_agents=[agent]
+            )
+
+        # ── ALL CHECKS PASSED ────────────────────────
+        return RiskDecision(
+            approved=True,
+            calculated_lot_size=order.lot_size, # Preserve original volume
+            stop_loss=order.stop_loss,
+            take_profit=order.take_profit,
+            expected_price=current_price,
+            rejection_reason=None,
+        )
+
+    def _get_pip_value(self, symbol: str) -> float:
+        """Returns approximate USD pip value for 1 standard lot (100,000 units)."""
+        sym = symbol.upper()
+        if "XAU" in sym: return 1.0
+        if "JPY" in sym: return 7.0
+        if "GBP" in sym and not "USD" in sym: return 12.0
+        return 10.0
+
+    def calculate_user_lot_size(self, cfg: "AutopilotConfig", stop_loss_pips: float, consensus: float, current_spread: float, symbol: str = "") -> float:
+        """
+        Institutional Capital Scaling Engine.
+        Calculates a user's safe lot size based on their simulated equity, enforcing drawdown penalties,
+        win streak caps, and max lot ceilings.
+        """
+        MIN_LOT = 0.01
+        
+        if getattr(cfg, "compounding_mode", "OFF") == "OFF":
+            return MIN_LOT
+
+        equity = getattr(cfg, "simulated_equity", 100.0)
+
+        # 1. Negative Equity Protection
+        if equity <= 0:
+            cfg.simulated_equity = 100.0
+            cfg.compounding_mode = "OFF"
+            return MIN_LOT
+
+        # 2. Capital Protection Floor (Disable if equity < 70% of starting)
+        if equity < 70.0:  # Assuming 100 was starting
+            return MIN_LOT
+
+        # 3. Drawdown Check
+        drawdown = getattr(cfg, "current_drawdown_pct", 0.0)
+        if drawdown >= 5.0:
+            return MIN_LOT
+            
+        # 4. Base Risk sizing (1% standard)
+        risk_pct = 0.01
+        
+        # 5. Drawdown Penalty
+        if drawdown >= 3.0:
+            risk_pct *= 0.5  # Slash risk by 50%
+            
+        # 6. Loss Streak Protection
+        losses = getattr(cfg, "consecutive_losses", 0)
+        if losses >= 3:
+            return MIN_LOT  # Temporary pause
+        elif losses >= 2:
+            risk_pct *= 0.7  # Reduce by 30%
+
+        # 8. Controlled Boost (+25%) / ALPHA PREDATOR BOOST (+50%)
+        boost = 1.0
+        is_predator = getattr(cfg, "predator_mode", False)
+        wins = getattr(cfg, "consecutive_wins", 0)
+        
+        is_spread_safe = current_spread <= self.SPREAD_VOLATILITY_THRESHOLD
+        
+        if is_predator and wins >= 1 and losses == 0:
+            boost = 1.50 # ALPHA PREDATOR: 50% risk boost on win streaks
+            logger.info("🔥 ALPHA PREDATOR ACTIVATED: Scaling risk by 1.5x after win streak.")
+        elif consensus >= 90.0 and is_spread_safe and losses == 0:
+            boost = 1.25
+            
+        # 9. Math Calculation
+        sl_pips = max(stop_loss_pips, 1.0)
+        pip_value = self._get_pip_value(symbol)
+        raw_lot = (equity * risk_pct * boost) / (sl_pips * pip_value)
+        
+        # 10. Dynamic Max Cap: min(5.0, equity * safe_ratio)
+        safe_ratio = 1.0 / 1000.0  # max 1 lot per $1000 equity
+        
+        # Predator expands the cap
+        cap_limit = 10.0 if is_predator else 5.0
+        dynamic_cap = min(cap_limit, equity * safe_ratio)
+        
+        final_lot = max(MIN_LOT, min(raw_lot, dynamic_cap))
+        
+        # 7. Win Streak Freeze (Bypassed in Predator Mode)
+        if wins >= 3 and not is_predator:
+            # Freeze growth by removing boost and capping aggressively
+            frozen_lot = (equity * 0.01) / (sl_pips * pip_value)
+            final_lot = max(MIN_LOT, min(frozen_lot, dynamic_cap))
+            
+        return round(final_lot, 2)
 
     # ──────────────────────────────────────────────────
     #  PUBLIC: check_volatility() — spread check
@@ -390,6 +676,7 @@ class HardRiskKernel:
         self.account = self.account.model_copy(
             update={"daily_drawdown_pct": new_drawdown}
         )
+        self._persist_state()
 
         logger.info("Daily drawdown updated: %.2f%%", new_drawdown)
 
@@ -400,6 +687,16 @@ class HardRiskKernel:
                     f"(limit: {self.MAX_DAILY_DRAWDOWN_PCT}%)"
                 )
             )
+            # ── TRACK RECORD: Log lockout as proof of protection ──
+            try:
+                import track_record
+                track_record.log_drawdown_lockout(
+                    drawdown_pct=new_drawdown,
+                    max_pct=self.MAX_DAILY_DRAWDOWN_PCT,
+                    lock_duration_hours=self.LOCKOUT_DURATION_HOURS,
+                )
+            except Exception as e:
+                logger.warning("Failed to log drawdown lockout: %s", e)  # Track record should never crash the risk engine
 
     # ──────────────────────────────────────────────────
     #  PRIVATE helpers
@@ -430,6 +727,16 @@ class HardRiskKernel:
             if not is_buy and order.take_profit >= current_price:
                 return "TITAN VETO: Take profit must be below current price for SELL orders."
                 
+            # Tiger Mode asymmetric payout enforcement — only applies to 'tiger' tier orders
+            if order.tier == 'tiger' and order.stop_loss is not None:
+                stop_distance = abs(current_price - order.stop_loss)
+                target_distance = abs(order.take_profit - current_price)
+                if stop_distance > 0 and target_distance < (2.0 * stop_distance):
+                    rr_actual = target_distance / stop_distance
+                    return (f"TITAN VETO: Risk:Reward is {rr_actual:.2f}:1, below the Tiger Mode minimum of 2:1 "
+                            f"(Risk: {stop_distance:.4f}, Reward: {target_distance:.4f}). "
+                            "Tiger Mode only hunts asymmetric payouts.")
+                
         return None
 
     def _calculate_safe_lot_size(self, order: TradeOrder, entry_price: float = 0.0) -> float:
@@ -443,10 +750,18 @@ class HardRiskKernel:
 
         This is pure math — the AI has no say in this number.
         """
-        max_risk_dollars = self.account.balance * (self.MAX_RISK_PER_TRADE_PCT / 100)
+        # FIX C5: Read risk % from the order (already server-clamped in routes/trading.py).
+        # For auto-execution, apply the stricter 0.5% SUPREME Override cap.
+        # order.risk_percentage arrives as a decimal (e.g. 0.02 = 2%), so multiply by 100.
+        client_risk_pct = (order.risk_percentage or 0.01) * 100  # convert decimal → percentage
+        if order.is_auto_execution:
+            applied_risk_pct = min(0.5, client_risk_pct)  # Autopilot never exceeds 0.5%
+        else:
+            applied_risk_pct = min(client_risk_pct, self.MAX_RISK_PER_TRADE_PCT)  # Cap at hard ceiling
+        max_risk_dollars = self.account.balance * (applied_risk_pct / 100)
 
-        # For forex, 1 pip = 0.0001 for most pairs (0.01 for JPY pairs)
-        pip_size = 0.01 if "JPY" in order.symbol.upper() else 0.0001
+        # For forex, 1 pip = 0.0001 for most pairs (0.01 for JPY, 0.1 for XAU)
+        pip_size = get_pip_size(order.symbol)
 
         # Use the ACTUAL current market price passed from the streamer.
         # If not provided, fall back to a conservative 50-pip estimate.
@@ -459,7 +774,7 @@ class HardRiskKernel:
         stop_distance_pips = max(stop_distance / pip_size, 1.0)
 
         safe_lot_size = max_risk_dollars / (
-            stop_distance_pips * self.PIP_VALUE_PER_STANDARD_LOT
+            stop_distance_pips * self._get_pip_value(order.symbol)
         )
 
         # Round to 2 decimal places (standard lot precision)
@@ -481,7 +796,7 @@ class HardRiskKernel:
         Estimate the maximum possible loss for this trade
         (i.e., if the stop-loss is hit).
         """
-        pip_size = 0.01 if "JPY" in order.symbol.upper() else 0.0001
+        pip_size = get_pip_size(order.symbol)
 
         if entry_price > 0 and order.stop_loss is not None:
             stop_distance = abs(entry_price - order.stop_loss)
@@ -490,7 +805,7 @@ class HardRiskKernel:
 
         stop_distance_pips = max(stop_distance / pip_size, 1.0)
 
-        max_loss = lot_size * stop_distance_pips * self.PIP_VALUE_PER_STANDARD_LOT
+        max_loss = lot_size * stop_distance_pips * self._get_pip_value(order.symbol)
         return max_loss
 
     def _lock_account(self, reason: str) -> None:
@@ -503,6 +818,7 @@ class HardRiskKernel:
                 "lock_expiry": expiry,
             }
         )
+        self._persist_state()
         logger.critical(
             "🔒 ACCOUNT LOCKED: %s — Unlocks at %s",
             reason,
@@ -519,6 +835,7 @@ class HardRiskKernel:
                 "daily_drawdown_pct": 0.0,
             }
         )
+        self._persist_state()
         logger.info("🔓 Account UNLOCKED — daily drawdown reset to 0%%")
 
     def get_account_health(self) -> AccountHealth:

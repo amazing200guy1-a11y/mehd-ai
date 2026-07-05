@@ -1,63 +1,85 @@
 """
-Mehd AI — FastAPI Application
-==============================
-This is the front door of the entire system. The Flutter app
-(or any HTTP client) talks to these four endpoints.
+Mehd AI — FastAPI Application (Clean Architecture)
+====================================================
+This file does ONE thing: wire the application together.
+
+It creates the FastAPI app, attaches middleware, and includes
+the route files. ALL endpoint logic lives in the routes/ folder.
+
+Before (v1): 1,287 lines — trading, AI routing, marketplace,
+  GDPR, health checks, security headers... all in one file.
+
+After (v2): ~140 lines — just the wiring.
 
 How the pieces connect:
     Flutter App  →  main.py (FastAPI)
-                      ├── /analyze/{symbol}  →  The Den (11 AI agents)
-                      ├── /execute           →  HardRiskKernel → AuditLogger
-                      ├── /account_health    →  HardRiskKernel
-                      └── /health            →  Self-check
-
-Every request is async — FastAPI uses Python's asyncio to handle
-thousands of concurrent connections without blocking.
-CORS is enabled for all origins because the Flutter frontend
-will connect from a different domain.
+                      ├── routes/analysis.py  →  /analyze, /stream
+                      ├── routes/trading.py   →  /execute
+                      ├── routes/den.py       →  /den/*, /drawings/*
+                      ├── routes/account.py   →  /account_health, /constitution
+                      └── routes/admin.py     →  /health, /audit-trail, /backtest
 """
 
 from __future__ import annotations
 
+# CRITICAL: Load .env before ANY module reads os.getenv()
+# Without this, all keys (CAPSULE_SIGNING_SECRET, RISK_INTERNAL_TOKEN, etc.) are empty
+# and the server crashes with RuntimeError on startup.
+from dotenv import load_dotenv
+load_dotenv()
+
+# ── Sentry Crash Monitoring ──────────────────────────────
+# When the server crashes at 3am, you know in 60 seconds.
+# Empty DSN = no-op (safe). Paste a real DSN to activate.
+import os
+import sentry_sdk
+_sentry_dsn = os.getenv("SENTRY_DSN", "")
+if _sentry_dsn:
+    sentry_sdk.init(
+        dsn=_sentry_dsn,
+        traces_sample_rate=0.1,  # 10% of requests traced (performance)
+        profiles_sample_rate=0.1,
+    )
+# ─────────────────────────────────────────────────────────
+
+import asyncio
 import logging
 import time
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
 
-from fastapi import FastAPI, HTTPException, Request, Header, Depends
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from firebase_admin import auth as fb_auth
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from sse_starlette.sse import EventSourceResponse
+from auth import get_current_user
 
-from audit_trail import AuditLogger
-from consensus_engine import AsyncCouncil, generate_drawing_commands, validate_user_level, generate_mock_candles
-from data_streamer import MarketDataStreamer
 from black_swan_monitor import monitor_instance as black_swan
-from models import (
-    AccountHealth,
-    ConsensusResult,
-    Direction,
-    MarketSnapshot,
-    RiskDecision,
-    TradeOrder,
-    ExecutiveBrief,
-    AppConstitution,
-    PostMortemRequest,
-    PostMortemResult,
+from broadcaster import broadcaster
+from auto_execution_worker import auto_execution_worker
+from cleanup_worker import cleanup_worker
+from weekly_scan_worker import weekly_scan_worker
+from position_health_worker import health_worker
+from truth_engine_worker import truth_engine_worker
+from personalization_worker import personalization_worker
+from virtual_stop_worker import virtual_stop_worker
+from state import (
+    audit, den_engine, streamer, risk_client,
+    DEMO_MODE, start_time,
 )
-from risk_engine import HardRiskKernel, ConstitutionManager
-from sovereign_intelligence import sovereign_db
-from pydantic import BaseModel
-from typing import Optional, List
-import asyncio
-import random
+
+# Import all route modules
+from routes.analysis import router as analysis_router, limiter as analysis_limiter
+from routes.trading import router as trading_router
+from routes.den import router as den_router
+from routes.account import router as account_router
+from routes.admin import router as admin_router
+from routes.broadcast import router as broadcast_router
+from routes.payments import router as payments_router
+from auth import auth_router
 
 # ──────────────────────────────────────────────
-#  Logging configuration
+#  Logging
 # ──────────────────────────────────────────────
 
 logging.basicConfig(
@@ -67,105 +89,123 @@ logging.basicConfig(
 )
 logger = logging.getLogger("mehd.main")
 
-# ──────────────────────────────────────────────
-#  Drawing Persistence (models only — endpoints registered after app creation)
-# ──────────────────────────────────────────────
-
-class DrawingData(BaseModel):
-    drawings: List[dict]
-
-class DrawingValidationRequest(BaseModel):
-    symbol: str
-    price: float
-
-limiter = Limiter(key_func=get_remote_address)
-
 
 # ──────────────────────────────────────────────
-#  Global instances — created once at startup
+#  Startup / Shutdown Lifecycle
 # ──────────────────────────────────────────────
 
-risk_kernel = HardRiskKernel()
-den_engine = AsyncCouncil()
-MOCK_FIREBASE_BRIEFS: dict[str, ExecutiveBrief] = {}
-audit = AuditLogger()
-streamer = MarketDataStreamer()
+_risk_task: asyncio.Task | None = None
+_risk_process = None
 
-# Track when the server started (for the /health endpoint)
-_start_time: float = time.time()
-
-# ──────────────────────────────────────────────
-#  FIX 4: Tier System & API Cost Control
-# ──────────────────────────────────────────────
-
-import os as _os
-
-DEMO_MODE = _os.getenv("DEMO_MODE", "true").lower() == "true"
-DAILY_API_BUDGET_USD = float(_os.getenv("DAILY_API_BUDGET_USD", "50"))
-ALERT_THRESHOLD_USD = float(_os.getenv("ALERT_THRESHOLD_USD", "40"))
-AUTO_CACHE_THRESHOLD_USD = float(_os.getenv("AUTO_CACHE_THRESHOLD_USD", "45"))
-
-async def get_current_user(authorization: str = Header(None)) -> str:
-    if DEMO_MODE:
-        return "demo_user"
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+async def _run_risk_microservice():
+    global _risk_process
+    consecutive_errors = 0
     try:
-        token = authorization.split(' ')[1]
-        decoded = fb_auth.verify_id_token(token)
-        return decoded['uid']
-    except Exception:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        while True:
+            logger.info("Starting Risk Microservice on 127.0.0.1:8001...")
+            import sys
+            import subprocess
+            import os
+            
+            minimal_env = {
+                "RISK_INTERNAL_TOKEN": os.environ.get("RISK_INTERNAL_TOKEN", ""),
+                "PATH": os.environ.get("PATH", ""),
+                "PYTHONPATH": os.environ.get("PYTHONPATH", ""),
+                # Windows-critical: Python stdlib (ssl, socket, tempfile) requires these
+                "SYSTEMROOT": os.environ.get("SYSTEMROOT", ""),
+                "VIRTUAL_ENV": os.environ.get("VIRTUAL_ENV", ""),
+                "USERPROFILE": os.environ.get("USERPROFILE", ""),
+            }
+            
+            _risk_process = subprocess.Popen(
+                [sys.executable, "-m", "uvicorn", "risk_microservice:app", "--host", "127.0.0.1", "--port", "8001"],
+                env=minimal_env
+            )
+            boot_time = time.time()
 
-USER_TIERS = {
-    "free": {"analyses_per_day": 5, "models_per_analysis": 3, "full_consensus": False, "paper_only": True},
-    "pro": {"analyses_per_day": 50, "models_per_analysis": 9, "full_consensus": True, "paper_only": False, "price_monthly": 29},
-    "institutional": {"analyses_per_day": 500, "models_per_analysis": 9, "full_consensus": True, "paper_only": False, "consensus_api_calls": 1000, "white_label": True, "price_monthly": 299},
-}
+            # Report healthy once booted
+            from system_health import health_registry
+            await health_registry.report("risk_microservice", "GREEN", "Running on 127.0.0.1:8001")
 
-# In-memory analysis counter (production: Redis/Firebase)
-_analysis_counts: dict[str, int] = {}  # user_id -> count today
-_daily_api_spend_usd: float = 0.0
-_analysis_cache: dict[str, dict] = {}  # snapshot_id -> result
-_last_consensus_time: float = 0.0
-_manual_drawings: dict[str, list[dict]] = {} # symbol -> drawings
+            # Wait for process to exit using asyncio thread to avoid blocking main thread
+            await asyncio.to_thread(_risk_process.wait)
+            
+            uptime = time.time() - boot_time
+            if uptime > 30.0:
+                # Ran for >30s before crashing — treat as transient, reset backoff
+                consecutive_errors = 1
+            else:
+                consecutive_errors += 1
+            sleep_time = min(60.0, 2.0 * (1.5 ** consecutive_errors))
+            logger.critical(f"Risk Microservice CRASHED after {uptime:.0f}s. Restarting in {sleep_time:.1f} seconds...")
 
+            # Report crash to health registry
+            _h_state = "RED" if consecutive_errors >= 3 else "YELLOW"
+            await health_registry.report("risk_microservice", _h_state,
+                f"Crashed after {uptime:.0f}s — restarting in {sleep_time:.0f}s", {
+                    "consecutive_crashes": consecutive_errors,
+                    "last_uptime_s": round(uptime, 1),
+                })
 
-# ──────────────────────────────────────────────
-#  Startup / Shutdown lifecycle
-# ──────────────────────────────────────────────
+            await asyncio.sleep(sleep_time)
+    except asyncio.CancelledError:
+        if _risk_process:
+            _risk_process.terminate()
+        logger.info("Risk Microservice shutdown.")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Runs on startup and shutdown.
-    Startup: verify that critical systems are loaded.
-    Shutdown: log a clean exit.
-    """
+    """Startup checks and graceful shutdown."""
+    
+    # Generate an internal secure token for the Risk Microservice if not already defined
+    if not os.environ.get("RISK_INTERNAL_TOKEN"):
+        import secrets
+        os.environ["RISK_INTERNAL_TOKEN"] = secrets.token_hex(32)
+
+    # Start the Risk Guard Auto-Restarting Daemon (only if running locally)
+    # If RISK_MICROSERVICE_URL points to a remote/different container (like http://risk:8001),
+    # we don't start the subprocess because a dedicated service is running.
+    microservice_url = os.environ.get("RISK_MICROSERVICE_URL", "http://127.0.0.1:8001")
+    if "127.0.0.1" in microservice_url or "localhost" in microservice_url:
+        global _risk_task
+        _risk_task = asyncio.create_task(_run_risk_microservice())
+        await asyncio.sleep(2)  # Give the microservice time to boot
+    else:
+        logger.info(f"Using external/containerized Risk Microservice at {microservice_url}")
+
     # ── STARTUP ──────────────────────────────
     logger.info("=" * 60)
     logger.info("  MEHD AI — Starting up")
     logger.info("=" * 60)
 
-    # Self-check 1: Risk engine loaded?
+    import state
+    await state.load_daily_spend_from_db()
+    logger.info(f"✓ Daily API spend loaded: ${state.daily_api_spend_usd:.2f} / ${state.DAILY_API_BUDGET_USD:.2f}")
+
+    # Self-check 1: Risk engine via Client
     try:
-        health = risk_kernel.get_account_health()
-        logger.info(
-            "✓ Risk engine loaded — balance: $%.2f, locked: %s",
-            health.balance,
-            health.is_locked,
-        )
+        health = await risk_client.get_account_health()
+        logger.info("✓ Risk engine microservice loaded — balance: $%.2f", health.balance)
     except Exception as e:
         logger.critical("✗ Risk engine FAILED to load: %s", e)
         raise RuntimeError(f"Risk engine startup check failed: {e}") from e
 
-    # Self-check 2: Audit trail initialised?
+    # FIX M3: Restore risk kernel state from storage backend (multi-replica aware)
+    try:
+        from risk_engine import HardRiskKernel
+        kernel = HardRiskKernel()
+        await kernel.restore_from_storage()
+        logger.info("✓ Risk kernel state synced from storage backend")
+    except Exception as e:
+        logger.debug("Risk kernel storage restore skipped (non-fatal): %s", e)
+
+    # Self-check 2: Audit trail
     try:
         logger.info("✓ Audit trail initialised — session: %s", audit.session_id)
     except Exception as e:
         logger.error("✗ Audit trail issue (non-fatal): %s", e)
 
-    # Self-check 3: Den models reachable?
+    # Self-check 3: Den models
     try:
         model_status = await den_engine.health_check()
         responding = sum(1 for s in model_status.values() if s == "responding")
@@ -180,19 +220,150 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error("✗ Streamer startup issue (non-fatal): %s", e)
 
-    # Start Black Swan Monitor daemon
-    asyncio.create_task(black_swan.run_daemon())
+    # Start background loops (if not running in decoupled worker mode)
+    if os.environ.get("DECOUPLED_WORKER_MODE", "").lower() == "true":
+        logger.info("ℹ️ Running in DECOUPLED_WORKER_MODE — Background worker daemons bypassed on API server.")
+    else:
+        # Start Black Swan Monitor
+        asyncio.create_task(black_swan.run_daemon())
+
+        # Start the Broadcaster — the Underground Research Daemon
+        # This runs 11 agents continuously in the background for all pairs,
+        # so every user gets instant results instead of waiting 20 seconds.
+        await broadcaster.start()
+        
+        # Start the Autopilot Execution Worker
+        auto_execution_worker.start()
+
+        # Start the Cleanup Worker to handle TTLs
+        cleanup_worker.start()
+
+        # Start the Weekly Scan Worker
+        weekly_scan_worker.start()
+
+        # Start the Position Health Worker
+        health_worker.start()
+
+        # Start the Truth Engine Worker (Scoreboard stats)
+        truth_engine_worker.start()
+
+        # Start the Personalization Worker (Chairman's Voice)
+        personalization_worker.start()
+
+        # Start the Sniper Engine (Virtual Stops)
+        virtual_stop_worker.start()
+
+        # Wire push notifications — fire FCM alerts for high-conviction signals
+        from notification_service import send_high_conviction_alert
+        async def _on_strong_signal(notification: dict):
+            """Called by Broadcaster when a signal exceeds 80% confidence."""
+            await send_high_conviction_alert(
+                symbol=notification.get("symbol", ""),
+                direction=notification.get("direction", ""),
+                confidence=notification.get("confidence", 0),
+                vote_count=notification.get("vote_count", 0),
+            )
+        broadcaster.set_notification_callback(_on_strong_signal)
+
+        logger.info("✓ Broadcaster daemon started — Underground research active")
+
+    # Rebuild payment tier caches from storage
+    # HARDENED: Without this, a restart drops all paying users to 'observer'
+    # and _stripe_to_uid is empty (subscription changes silently fail).
+    from routes.payments import rebuild_tier_caches
+    await rebuild_tier_caches()
+    logger.info("✓ Push notification service wired — high-conviction alerts enabled")
+
+    # ── SECURITY ENVIRONMENT AUDIT ──────────────
+    # Uses the SecretManager which checks GCP Secret Manager first,
+    # then falls back to .env. This is the migration path to a vault.
+    from secrets_manager import secrets
+    _security_warnings = []
+
+    # DEMO_MODE logic is safely handled by state.py (does not bypass auth)
+
+    # Critical secrets — app refuses to start without these
+    try:
+        secrets.require("CAPSULE_SIGNING_SECRET")
+    except RuntimeError as e:
+        logger.critical(str(e))
+        raise
+
+    # SECURITY: ENCRYPTION_MASTER_KEY is required to encrypt broker API keys at rest.
+    # Without it, keys are stored as plaintext in Firestore. This is ONLY allowed in
+    # development. In production (ENVIRONMENT=production), the app MUST have this key.
+    _env = os.getenv("ENVIRONMENT", "development").lower().strip()
+    if not secrets.get("ENCRYPTION_MASTER_KEY"):
+        if _env == "production":
+            logger.critical(
+                "FATAL: ENCRYPTION_MASTER_KEY is not set in production. "
+                "Broker API keys will be stored in PLAIN TEXT. "
+                "Set ENCRYPTION_MASTER_KEY in .env or GCP Secret Manager."
+            )
+            raise RuntimeError("ENCRYPTION_MASTER_KEY required in production.")
+        else:
+            _security_warnings.append(
+                "ENCRYPTION_MASTER_KEY is not set — broker API keys stored in PLAIN TEXT. "
+                "Acceptable in development only. Set before going live."
+            )
+
+    critical_keys = ["GROQ_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"]
+    missing = [k for k in critical_keys if not secrets.get(k)]
+    if missing:
+        _security_warnings.append("Missing API keys: %s — agents will use fallback mode." % ", ".join(missing))
+
+    # Log the secrets backend status (GCP vault vs .env)
+    secret_audit = secrets.audit_status()
+    logger.info("Secrets Backend: %s", secret_audit["backend"])
+
+    if _security_warnings:
+        logger.warning("=" * 60)
+        logger.warning("  SECURITY AUDIT — %d WARNING(S)", len(_security_warnings))
+        logger.warning("=" * 60)
+        for i, w in enumerate(_security_warnings, 1):
+            logger.warning("  [%d] %s", i, w)
+        logger.warning("=" * 60)
+    else:
+        logger.info("✓ Security environment audit passed")
+
+    # ── TRACK RECORD: Log boot event ──────────
+    try:
+        import track_record
+        vault_loaded = os.path.exists(os.path.join(os.path.dirname(__file__), ".prompt_vault.py"))
+        broker_mode = "paper" if DEMO_MODE else "live"
+        track_record.log_system_boot(
+            broker_mode=broker_mode,
+            vault_loaded=vault_loaded,
+            provider=os.getenv("DATA_PROVIDER", "twelvedata"),
+        )
+        stats = track_record.get_stats()
+        logger.info("Track Record: %d trades, %.1f%% win rate, $%.2f saved by risk blocks",
+                    stats["total_trades"], stats["win_rate"], stats["total_money_saved"])
+    except Exception as e:
+        logger.warning("Track record boot failed (non-fatal): %s", e)
 
     logger.info("=" * 60)
     logger.info("  MEHD AI — Ready to protect traders")
     logger.info("=" * 60)
 
-    yield  # ← App is running here
+    yield  # ← App running
 
     # ── SHUTDOWN ─────────────────────────────
     logger.info("MEHD AI — Shutting down gracefully")
+    auto_execution_worker.stop()
+    cleanup_worker.stop()
+    weekly_scan_worker.stop()
+    health_worker.stop()
+    truth_engine_worker.stop()
+    personalization_worker.stop()
+    virtual_stop_worker.stop()
+    broadcaster.stop()
     await streamer.stop()
     black_swan.stop_daemon()
+    
+    # Tear down the isolated Risk Microservice
+    if _risk_task:
+        _risk_task.cancel()
 
 
 # ──────────────────────────────────────────────
@@ -206,734 +377,151 @@ app = FastAPI(
         "Protects traders from losing money through 11-agent voting, "
         "hard-coded safety limits, and permanent audit logging."
     ),
-    version="0.1.0",
+    version="0.2.0",
     lifespan=lifespan,
 )
 
-app.state.limiter = limiter
+# Rate limiter state
+app.state.limiter = analysis_limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# ── CORS — restrict to known frontend origins ──
-_ALLOWED_ORIGINS = [
-    "http://localhost:8080",
-    "http://localhost:3000",
-    "http://127.0.0.1:8080",
-    "http://127.0.0.1:3000",
-    "http://localhost:8005",
-    "http://127.0.0.1:8005",
+# ── CORS ──
+# SECURITY FIX: Dev origins are ONLY included when DEMO_MODE=true.
+# In production, localhost origins are stripped to prevent attackers
+# from exploiting localhost CORS to make authenticated API requests.
+_DEV_ORIGINS = [
+    "http://localhost:8080", "http://localhost:3000",
+    "http://127.0.0.1:8080", "http://127.0.0.1:3000",
+    "http://localhost:8005", "http://127.0.0.1:8005",
 ]
+# Production origins from environment (comma-separated)
+# Example: CORS_ORIGINS=https://mehdai.com,https://app.mehdai.com
+_prod_origins_str = os.getenv("CORS_ORIGINS", "")
+_PROD_ORIGINS = [o.strip() for o in _prod_origins_str.split(",") if o.strip()] if _prod_origins_str else []
+
+if DEMO_MODE:
+    _ALLOWED_ORIGINS = _DEV_ORIGINS + _PROD_ORIGINS
+    logger.info("CORS: Dev mode — localhost origins ENABLED")
+else:
+    _ALLOWED_ORIGINS = _PROD_ORIGINS
+    logger.info("CORS: Production mode — localhost origins STRIPPED (security hardened)")
+
+if _PROD_ORIGINS:
+    logger.info("CORS: Production origins loaded — %s", _PROD_ORIGINS)
+elif not DEMO_MODE:
+    logger.critical("CORS: No production origins set and DEMO_MODE=false! Set CORS_ORIGINS env var.")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept"],
 )
 
 
-# ──────────────────────────────────────────────
-#  Drawing Persistence Endpoints
-# ──────────────────────────────────────────────
+# ── Symbol Injection Guard ──
+# SECURITY: Validates any `symbol` query parameter against VALID_SYMBOLS before
+# the request reaches any route handler. Prevents injection of arbitrary strings
+# into Groq/OANDA API calls, and blocks path traversal / oversized symbol attacks.
+import re as _re
+_SYMBOL_RE = _re.compile(r'^[A-Z0-9]{3,12}$')
 
-@app.get("/drawings/{symbol}", tags=["Drawings"])
-async def get_drawings(symbol: str):
-    """Retrieve manual drawings for a specific symbol."""
-    return {"drawings": _manual_drawings.get(symbol, [])}
-
-@app.post("/drawings/{symbol}", tags=["Drawings"])
-async def save_drawings(symbol: str, data: DrawingData):
-    """Save manual drawings for a specific symbol."""
-    _manual_drawings[symbol] = data.drawings
-    logger.info(f"Saved {len(data.drawings)} drawings for {symbol}")
-    return {"status": "ok", "count": len(data.drawings)}
-
-@app.post("/drawings/validate", tags=["Drawings"])
-async def validate_drawing(req: DrawingValidationRequest):
-    """Validate a user drawing against market structure."""
-    live_snapshot = streamer.get_latest_snapshot(req.symbol)
-    mock_candles = generate_mock_candles(live_snapshot.close)
-    result = validate_user_level(req.price, mock_candles)
-    return result
+@app.middleware("http")
+async def validate_symbol_param(request: Request, call_next):
+    from state import VALID_SYMBOLS
+    raw_symbol = request.query_params.get("symbol")
+    if raw_symbol is not None:
+        clean = raw_symbol.upper().replace("/", "").strip()
+        if not _SYMBOL_RE.match(clean):
+            return __import__('fastapi').responses.JSONResponse(
+                status_code=400,
+                content={"detail": f"Invalid symbol format: '{raw_symbol}'"}
+            )
+        if clean not in VALID_SYMBOLS:
+            return __import__('fastapi').responses.JSONResponse(
+                status_code=400,
+                content={"detail": f"Unsupported symbol: '{clean}'. See /analysis/symbols for valid options."}
+            )
+    return await call_next(request)
 
 
-# ──────────────────────────────────────────────
-#  ENDPOINT 1: GET /analyze/{symbol}
-#  "What do the AI models think about this pair?"
-# ──────────────────────────────────────────────
+# ── Security Headers Middleware ──
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; script-src 'self'; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "img-src 'self' data:; "
+        "connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.firebaseio.com https://*.googleapis.com; "
+        "frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    )
+    return response
 
-@app.get(
-    "/analyze/{symbol}",
-    response_model=ConsensusResult,
-    summary="Analyze a currency pair with 11 AI agents",
-    tags=["Analysis"],
-)
-@limiter.limit("10/minute")
-async def analyze_symbol(request: Request, symbol: str, tier: str = "sovereign", uid: str = Depends(get_current_user)) -> ConsensusResult:
+
+# ── Request Body Size Limit ──
+@app.middleware("http")
+async def limit_request_body(request: Request, call_next):
     """
-    Fires all 11 AI agents to analyze the given currency pair.
-    Returns the consensus result with every model's vote,
-    the majority direction, and whether trading should proceed.
+    HARDENED (VULN-09): Enforces body size limit by checking BOTH the
+    Content-Length header AND the actual body bytes. The header alone
+    is spoofable — an attacker can claim a small body but send a large one.
 
-    In Phase 1, this uses mock data.
-    In Phase 2, this hits real AI APIs.
+    CRITICAL FIX: After reading the body for size validation, we re-inject
+    it via request._receive so downstream handlers (like Stripe webhook
+    signature verification) can read it again. Without this, the body
+    stream is consumed and downstream gets empty bytes.
     """
-    logger.info("=== ANALYZE REQUEST: %s ===", symbol)
+    MAX_BODY_SIZE = 1_048_576  # 1 MB
 
-    # FIX 4: Rate limit check (mock user "default")
-    global _last_consensus_time, _daily_api_spend_usd
-    user_id = "default"
-    tier_config = USER_TIERS.get(tier, USER_TIERS["free"])  # Use the tier param, default to free
-    current_count = _analysis_counts.get(user_id, 0)
-    if current_count >= tier_config["analyses_per_day"]:
-        raise HTTPException(
-            status_code=429,
-            detail=f"Daily analysis limit reached ({tier_config['analyses_per_day']}). Upgrade to Pro for 50/day."
-        )
-
-    VALID_SYMBOLS = [
-        'EUR/USD', 'GBP/USD', 'XAU/USD',
-        'BTC/USD', 'ETH/USD', 'NAS100',
-        'US30', 'GBP/JPY', 'USD/JPY',
-    ]
-    if symbol not in VALID_SYMBOLS:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid symbol"
-        )
-
-
-    # Get the real live market snapshot
-    live_snapshot = streamer.get_latest_snapshot(symbol)
-
-    # FIX 4: Check cache — same snapshot never analyzed twice
-    snap_key = str(live_snapshot.id)
-    if snap_key in _analysis_cache:
-        logger.info("Cache hit for snapshot %s", snap_key)
-        return _analysis_cache[snap_key]
-
-    try:
-        result = await den_engine.analyze(
-            symbol, live_snapshot, tier=tier_config, current_drawdown=risk_kernel.account.daily_drawdown_pct
-        )
-
-        # Generate AI Drawing Commands for the bridge
-        # In a real app, we fetch historical candles from the provider.
-        # For this bridge, we'll generate realistic mock history so the AI can mark levels.
-        from consensus_engine import generate_mock_candles
-        mock_candles = generate_mock_candles(live_snapshot.close)
-        result.drawings = generate_drawing_commands(symbol, result, mock_candles)
-
-        # Upgrade 2: Math Layer pre-check (TITAN, ATLAS, FORGE, THE DON, SENTINEL)
-        math_agent_names = ["TITAN", "ATLAS", "FORGE", "THE DON", "SENTINEL"]
-        math_votes = [v for v in result.votes if v.model_name.upper() in math_agent_names]
-        vetoed, veto_reason = risk_kernel.check_math_veto(math_votes)
-        if vetoed:
-            result.proceed = False
-            result.rejection_reason = "Math Layer Veto — Market unsafe"
-
-        # Log to audit trail
-        audit.log_consensus(symbol, result)
-
-        # FIX 4: Update counters
-        _analysis_counts[user_id] = current_count + 1
-        _daily_api_spend_usd += 0.05  # Estimated ~$0.05 per full 11-agent analysis
-        _last_consensus_time = time.time()
-        _analysis_cache[snap_key] = result
-
-        return result
-
-    except Exception as e:
-        logger.error("Analysis failed for %s: %s", symbol, e)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Analysis failed: {str(e)}",
-        ) from e
-
-
-# ──────────────────────────────────────────────
-#  ENDPOINT 2: GET /stream/{symbol}
-#  "Give me live prices streaming continuously"
-# ──────────────────────────────────────────────
-
-@app.get(
-    "/stream/{symbol}",
-    summary="Live Server-Sent Events price stream",
-    tags=["Streaming"],
-)
-async def stream_prices(symbol: str):
-    """
-    Connects to the background MarketDataStreamer and pushes
-    live prices to the frontend every 100ms via SSE.
-    The Flutter app listens to this to update charting and ticks.
-    """
-    async def event_generator():
+    # Quick reject via header (fast path)
+    if request.headers.get("content-length"):
         try:
-            # Subscribe returns an AsyncGenerator of MarketSnapshots
-            async for snapshot in streamer.subscribe(symbol):
-                # SSE requires data to be a string
-                yield {"data": snapshot.model_dump_json()}
-        except asyncio.CancelledError:
-            # Client disconnected
-            pass
-
-    return EventSourceResponse(event_generator())
-
-
-# ──────────────────────────────────────────────
-#  ENDPOINT 3: POST /execute
-#  "I want to make this trade — am I allowed?"
-# ──────────────────────────────────────────────
-
-@app.post(
-    "/execute",
-    response_model=RiskDecision,
-    summary="Execute a trade (risk kernel runs first)",
-    tags=["Trading"],
-)
-async def execute_trade(order: TradeOrder, uid: str = Depends(get_current_user)) -> RiskDecision:
-    """
-    Submit a trade order. The HardRiskKernel evaluates it FIRST.
-    If ANY risk rule fails, the trade is rejected immediately
-    with a clear reason. No override is possible.
-
-    If approved, the trade and decision are logged to the audit trail.
-    """
-    logger.info(
-        "=== EXECUTE REQUEST: %s %s %.2f lots ===",
-        order.direction.value,
-        order.symbol,
-        order.lot_size,
-    )
-
-    try:
-        # Simulate Broker Execution Latency (150ms - 450ms)
-        latency = random.uniform(0.15, 0.45)
-        await asyncio.sleep(latency)
-
-        # Black Swan Global Check — Immediate Lockout
-        swan_status = black_swan.get_status()
-        if swan_status["swan_level"] >= 2:
-            return RiskDecision(
-                id=f"T_{int(time.time()*1000)}",
-                symbol=order.symbol,
-                approved=False,
-                rejection_reason=f"BLACK SWAN LOCKOUT: {swan_status['swan_threat']}",
-                calculated_lot_size=0,
-            )
-
-        # THE RISK KERNEL ALWAYS RUNS FIRST — NON-NEGOTIABLE
-        # Pass current market price and spread so the kernel can calculate
-        # stop-loss distance and check volatility correctly.
-        live_snapshot = streamer.get_latest_snapshot(order.symbol)
-        decision = risk_kernel.evaluate(
-            order,
-            current_price=live_snapshot.bid,
-            current_spread=live_snapshot.spread,
-        )
-
-        # Log the trade attempt regardless of approval
-        audit.log_trade(order, decision)
-
-        # If approved, hit the Constitution Manager to tick up the daily trades count
-        if decision.approved:
-            ConstitutionManager.increment_daily_trades()
-
-        if not decision.approved:
-            logger.warning(
-                "Trade REJECTED: %s — %s",
-                order.symbol,
-                decision.rejection_reason,
-            )
-            # Log account event if it was a lock
-            if risk_kernel.account.is_locked:
-                audit.log_account_event(
-                    "ACCOUNT_LOCKED",
-                    risk_kernel.get_account_health(),
-                )
-        else:
-            # Generate the mock Firebase Executive Brief
-            current_health = risk_kernel.get_account_health()
-            brief = ExecutiveBrief(
-                trade_id=decision.id,
-                symbol=order.symbol,
-                timestamp=datetime.now(timezone.utc),
-                final_verdict=order.direction.value,
-                consensus_score="N/A",
-                sentiment_layer={},
-                strategy_layer={},
-                math_layer={},
-                risk_verification={
-                    "Lot size": str(decision.calculated_lot_size),
-                    "Max loss": f"${current_health.balance * order.risk_percentage:.2f} ({order.risk_percentage*100:.0f}% of balance)",
-                    "Stop loss": f"{decision.stop_loss} ✓",
-                    "Take profit": f"{decision.take_profit or 'N/A'} ✓",
-                    "Volatility": "Normal ✓"
-                },
-                decision_basis="This trade was not a glitch. It was a calculated decision based on sentiment, technical structure, and mathematical verification. All decisions logged permanently."
-            )
-
-            if order.votes:
-                agree_count = sum(1 for v in order.votes if v.direction == order.direction)
-                total = len(order.votes)
-                pct = int((agree_count / total) * 100) if total > 0 else 0
-                brief.consensus_score = f"{agree_count}/{total} ({pct}%)"
-
-                math_agents = ["TITAN", "ATLAS", "FORGE", "THE DON", "SENTINEL"]
-                sentiment_agents = ["DON", "PHANTOM", "ORACLE"]
-                for v in order.votes:
-                    m_name = v.model_name.upper()
-                    layer = "math_layer" if m_name in math_agents else "sentiment_layer" if m_name in sentiment_agents else "strategy_layer"
-                    getattr(brief, layer)[v.model_name] = f"{v.direction.value} — {v.reasoning}"
-
-            # V10: Cap MOCK_FIREBASE_BRIEFS to prevent unbounded memory growth
-            if len(MOCK_FIREBASE_BRIEFS) > 100:
-                oldest_key = next(iter(MOCK_FIREBASE_BRIEFS))
-                del MOCK_FIREBASE_BRIEFS[oldest_key]
-            MOCK_FIREBASE_BRIEFS[str(decision.id)] = brief
-
-        return decision
-
-    except Exception as e:
-        logger.error("Trade execution failed: %s", e)
-        raise HTTPException(
-            status_code=500,
-            detail="Trade execution failed. Please retry.",
-        ) from e
-
-
-# ──────────────────────────────────────────────
-#  ENDPOINT 4: GET /account_health
-#  "How is my account doing? Am I locked out?"
-# ──────────────────────────────────────────────
-
-@app.get(
-    "/account_health",
-    response_model=AccountHealth,
-    summary="Get current account status",
-    tags=["Account"],
-)
-async def get_account_health() -> AccountHealth:
-    """
-    Returns the real-time account health snapshot.
-    Shows balance, equity, drawdown, and lock status.
-    The Flutter frontend polls this to update the UI.
-    """
-    return risk_kernel.get_account_health()
-
-@app.get(
-    "/audit-trail",
-    response_model=List[dict],
-    summary="Get recent trades and their risk decisions",
-    tags=["Audit"],
-)
-async def get_audit_trail(limit: int = 50):
-    """
-    Returns the most recent trades from the immutable audit log.
-    Used by the frontend History and Journey screens.
-    """
-    try:
-        logs = audit.get_recent_logs(limit=limit)
-        return logs
-    except Exception as e:
-        logger.error("Error fetching audit trail: %s", e)
-        raise HTTPException(status_code=500, detail="Could not read audit trail")
-
-@app.post(
-    "/den/audit",
-    response_model=PostMortemResult,
-    summary="The Auditor reviews a closed trade and extracts Mistake DNA.",
-    tags=["The Den"],
-)
-async def perform_audit(request: PostMortemRequest):
-    """
-    Called when a trader closes a position. The Auditor (Claude) brutally analyzes
-    the outcome to assign a Mistake DNA and propose Constitution Rules to prevent it
-    from happening again.
-    """
-    logger.info("THE AUDITOR is reviewing trade: %s", request.trade_id)
-    try:
-        # V2: TheDen was never imported — using DenRouter mock fallback
-        result_dict = {
-            "mistake_dna": "Under Review",
-            "analysis": f"The Auditor is analyzing trade {request.trade_id} on {request.symbol}. "
-                        f"Direction: {request.direction.value}, PnL: ${request.pnl:.2f}. "
-                        f"Full post-mortem pending deep model analysis.",
-            "suggested_rule": None,
-        }
-        return PostMortemResult(**result_dict)
-    except Exception as e:
-        logger.error("Auditor failed: %s", e)
-        raise HTTPException(status_code=500, detail="The Auditor encountered an error.")
-
-# ──────────────────────────────────────────────
-#  The Trader's Constitution Endpoints
-# ──────────────────────────────────────────────
-
-@app.get(
-    "/constitution",
-    response_model=AppConstitution,
-    summary="Get the trader's current rules and limits",
-    tags=["Governance"],
-)
-async def get_constitution():
-    """Returns the current AppConstitution, including daily trade counts."""
-    return ConstitutionManager.load()
-
-@app.post(
-    "/constitution",
-    response_model=AppConstitution,
-    summary="Update the trader's rules",
-    tags=["Governance"],
-)
-@limiter.limit("3/minute")
-async def update_constitution(request: Request, const: AppConstitution):
-    """Saves a new AppConstitution to disk. The Risk Kernel enforces this immediately."""
-    ConstitutionManager.save(const)
-    return const
-
-
-# ──────────────────────────────────────────────
-#  ENDPOINT 5: GET /health
-#  "Is the system alive and working?"
-# ──────────────────────────────────────────────
-
-import os
-
-def check_key(key_name: str) -> str:
-    val = os.getenv(key_name)
-    if val and len(val) > 10:
-        return "active"
-    return "missing key"
-
-@app.get("/health")
-async def health_check():
-    model_status = {
-        # The 9 API agents
-        "grok": check_key("GROQ_API_KEY"),
-        "perplexity": check_key("PERPLEXITY_API_KEY"),
-        "gemini": check_key("GEMINI_API_KEY"),
-        "claude": check_key("ANTHROPIC_API_KEY"),
-        "gpt-4": check_key("OPENAI_API_KEY"),
-        "llama": check_key("GROQ_API_KEY"),
-        "deepseek": check_key("DEEPSEEK_API_KEY"),
-        "openai-o3": check_key("OPENAI_API_KEY"),
-        "codestral": check_key("MISTRAL_API_KEY"),
-        # The 2 logic agents (always active)
-        "THE_DON_chairman": "active_always",
-        "SENTINEL_guard": "active_always",
-    }
-
-    active_count = sum(
-        1 for v in model_status.values()
-        if v not in ["missing key"]
-    )
-
-    return {
-        "status": "degraded" if active_count < 5 else "healthy",
-        "total_agents": 11,
-        "active_agents": active_count,
-        "api_agents": 9,
-        "logic_agents": 2,
-        "risk_engine": "loaded",
-        "model_status": model_status,
-        "note": "Add API keys to activate agents",
-        "timestamp": datetime.now().isoformat()
-    }
-
-
-@app.get("/den/brief/{trade_id}", tags=["Den"], response_model=ExecutiveBrief)
-async def get_executive_brief(trade_id: str):
-    if trade_id in MOCK_FIREBASE_BRIEFS:
-        return MOCK_FIREBASE_BRIEFS[trade_id]
-    raise HTTPException(status_code=404, detail="Brief not found")
-
-# ──────────────────────────────────────────────
-#  ENDPOINT 6: THE DEN ROUTER (Phase 8)
-# ──────────────────────────────────────────────
-
-class DenRequest(BaseModel):
-    query: str
-    symbol: Optional[str] = None
-
-class ShadowReport(BaseModel):
-    total_signals: int
-    win_rate: float
-    return_vs_market: float
-    best_performing_room: str
-    worst_performing_pair: str
-    certified_alpha: bool
-
-class MarketplaceConfig(BaseModel):
-    id: str
-    creator: str
-    name: str
-    win_rate: float
-    return_vs_market: float
-    certified_alpha: bool
-    followers: int
-    subscription_fee: float
-
-MOCK_MARKETPLACE: list[MarketplaceConfig] = [
-    MarketplaceConfig(
-        id="mk1",
-        creator="0xTitan",
-        name="Macro Event Driven (NFP Specialist)",
-        win_rate=82.4,
-        return_vs_market=24.1,
-        certified_alpha=True,
-        followers=1420,
-        subscription_fee=50.0
-    ),
-    MarketplaceConfig(
-        id="mk2",
-        creator="QuantZ",
-        name="London Session Breakouts",
-        win_rate=76.8,
-        return_vs_market=18.5,
-        certified_alpha=True,
-        followers=890,
-        subscription_fee=25.0
-    ),
-    MarketplaceConfig(
-        id="mk3",
-        creator="RetailSlayer",
-        name="Pure Sentiment Contrarian",
-        win_rate=68.2,
-        return_vs_market=11.2,
-        certified_alpha=False,
-        followers=420,
-        subscription_fee=10.0
-    ),
-]
-
-class DenRouter:
-    TILT_WORDS = ["scared", "revenge", "angry", "frustrated", "desperate", "recover", "loss"]
-
-    @classmethod
-    async def route_question(cls, query: str):
-        # Fast classification call mock
-        q_lower = query.lower()
-        if "news" in q_lower or "sentiment" in q_lower or "event" in q_lower:
-            return await cls.research(query)
-        elif "risk" in q_lower or "setup" in q_lower or "structure" in q_lower:
-            return await cls.strategy(query)
-        else:
-            return await cls.math(query)
-
-    @classmethod
-    async def research(cls, query: str):
-        return {
-            "layer": "The Underworld",
-            "models": ["DON", "PHANTOM", "ORACLE"],
-            "response": "Scanning global macro data and social sentiment. No black swan events detected. Sentiment is heavily bullish on USD based on recent central bank speak."
-        }
-    
-    @classmethod
-    async def strategy(cls, query: str):
-        return {
-            "layer": "The Empire",
-            "models": ["CAESAR", "SAGE", "GUARDIAN"],
-            "response": "Analyzing market structure. Liquidity resting below 1.0850. Waiting for a sweep before entering long. FVG fill acts as premium entry."
-        }
-
-    @classmethod
-    async def math(cls, query: str):
-        return {
-            "layer": "Olympus",
-            "models": ["TITAN", "ATLAS", "FORGE"],
-            "response": "Running Monte Carlo simulations. 87% probability of mean reversion within the next 4 hours. Standard deviation strictly aligns with the chosen entry coordinate."
-        }
-
-    @classmethod
-    async def vibe(cls, query: str):
-        q_lower = query.lower()
-        for w in cls.TILT_WORDS:
-            if w in q_lower:
-                return {
-                    "text": (
-                        "I sense frustration. The market is not running away from you, but your capital might. "
-                        "Revenge trading is the fastest path to zero.\n\n"
-                        "Remember: Capital is a seed, not a sacrifice.\n\n"
-                        "Let's step back. I am locking live execution for this session. We can review the charts in Paper Trading mode until the storm passes."
-                    ),
-                    "is_emotional": True,
-                    "consensus": None
-                }
-        
-        return {
-            "text": "Hunting all 28 major pairs...\n\nEUR/USD has the highest confluence. The fundamental narrative matches the technical Fibonacci retracement. Here is the safest setup right now.",
-            "is_emotional": False,
-            "consensus": {
-                "final_direction": "BUY",
-                "consensus_percentage": 88,
-                "proceed": True,
-                "rejection_reason": None,
-                "votes": []
-            }
-        }
-
-@app.post("/den/research", tags=["The Den"])
-async def den_research(req: DenRequest):
-    return await DenRouter.research(req.query)
-
-@app.post("/den/strategy", tags=["The Den"])
-async def den_strategy(req: DenRequest):
-    return await DenRouter.strategy(req.query)
-
-@app.post("/den/math", tags=["The Den"])
-async def den_math(req: DenRequest):
-    return await DenRouter.math(req.query)
-
-@app.post("/den/vibe", tags=["The Den"])
-async def den_vibe(req: DenRequest):
-    return await DenRouter.vibe(req.query)
-
-@app.post("/den/ask", tags=["The Den"])
-async def den_ask(req: DenRequest):
-    return await DenRouter.route_question(req.query)
-
-@app.get("/den/journey", tags=["The Den"])
-async def den_journey():
-    return {
-        "status": "active",
-        "current_week": 3,
-        "phase": "Survival & Preservation",
-        "protection_score": 92,
-        "mistake_dna": [
-            {"trait": "Revenge Trading", "severity": 0.8},
-            {"trait": "Session Ignorance", "severity": 0.6},
-            {"trait": "Over-Leveraging", "severity": 0.9}
-        ]
-    }
-
-@app.get("/den/report", tags=["The Den"])
-async def den_report():
-    return {
-        "report": "Weekly Den Report: Protected capital effectively. Avoided 2 high-risk setups during NFP. HardRisk kernel correctly intervened once on Thursday."
-    }
-
-@app.post("/den/shadow", tags=["The Den"], response_model=ShadowReport)
-async def activate_shadow_mode():
-    await asyncio.sleep(2)
-    return ShadowReport(
-        total_signals=42,
-        win_rate=78.5,
-        return_vs_market=14.2,
-        best_performing_room="Strategy Room",
-        worst_performing_pair="GBP/JPY",
-        certified_alpha=True
-    )
-
-@app.get("/marketplace/leaderboard", tags=["Marketplace"], response_model=list[MarketplaceConfig])
-async def get_marketplace_leaderboard():
-    return sorted(MOCK_MARKETPLACE, key=lambda x: x.win_rate, reverse=True)
-
-@app.post("/marketplace/subscribe/{config_id}", tags=["Marketplace"])
-async def subscribe_to_config(config_id: str):
-    # Simulate applying config
-    await asyncio.sleep(1)
-    return {"status": "success", "message": f"Successfully applied config {config_id} to your session. Creator gets 20% revenue share."}
-
-# ──────────────────────────────────────────────
-#  UPGRADE D: Sovereign Intelligence
-# ──────────────────────────────────────────────
-
-class AlphaSnapshotRequest(BaseModel):
-    trade_id: str
-    symbol: str
-    direction: str
-    confidence_score: float
-    profit: float
-
-@app.post("/den/sovereign-log", tags=["Data Moat"])
-async def log_alpha_snapshot(req: AlphaSnapshotRequest):
-    sovereign_db.log_alpha_snapshot(
-        trade_id=req.trade_id,
-        symbol=req.symbol,
-        direction=req.direction,
-        confidence=req.confidence_score,
-        profit=req.profit,
-    )
-    return {"status": "Alpha Snapshot secured", "intelligence_level": sovereign_db.get_intelligence_level()}
-
-# ──────────────────────────────────────────────
-#  UPGRADE F: Self-Correction Layer
-# ──────────────────────────────────────────────
-
-from post_mortem_agent import post_mortem
-
-class PostMortemLossRequest(BaseModel):
-    symbol: str
-    direction: str
-    snapshot_dump: str
-    original_consensus: float
-
-@app.post("/den/post-mortem", tags=["Self-Correction"])
-async def trigger_post_mortem(req: PostMortemLossRequest):
-    new_rule = await post_mortem.analyze_loss(
-        symbol=req.symbol,
-        direction=req.direction,
-        snapshot_dump=req.snapshot_dump,
-        original_consensus=req.original_consensus
-    )
-    return {"status": "Constitution amended", "new_rule": new_rule}
-
-@app.get("/den/sovereign-status", tags=["Data Moat"])
-async def get_sovereign_status():
-    return {
-        "intelligence_level": sovereign_db.get_intelligence_level(),
-        "total_snapshots": sovereign_db.get_total_snapshots(),
-        "pattern_report": sovereign_db.get_pattern_report()
-    }
-
-# ──────────────────────────────────────────────
-#  UPGRADE E: Consensus as a Service
-# ──────────────────────────────────────────────
-
-class ValidationRequest(BaseModel):
-    api_key: str
-    symbol: str
-    proposed_direction: str
-
-class ValidationResponse(BaseModel):
-    is_approved: bool
-    confidence: float
-    message: str
-
-@app.post("/api/consensus-validate", tags=["B2B API"], response_model=ValidationResponse)
-async def validate_external_trade(req: ValidationRequest):
-    """
-    Hedge funds hit this endpoint to ask 'Should we take this trade?'
-    """
-    b2b_api_key = _os.getenv("MEHD_B2B_API_KEY", "")
-    if not b2b_api_key or req.api_key != b2b_api_key:
-        raise HTTPException(status_code=401, detail="Invalid API Key")
-        
-    # Simulate a deep deep consensus lookup
-    await asyncio.sleep(1.5)
-    
-    # Mocking standard approval for 75%+ confidence requirement
-    is_safe = True
-    conf = 88.5
-    if "JPY" in req.symbol:
-        is_safe = False
-        conf = 45.0
-        
-    return ValidationResponse(
-        is_approved=is_safe,
-        confidence=conf,
-        message="Trade aligns with Den Consensus" if is_safe else "Den vetoes this trade due to divergent quant models."
-    )
-
-class LicenseRequest(BaseModel):
-    tier: str
-
-@app.post("/api/license-request", tags=["B2B API"])
-async def request_license(req: LicenseRequest):
-    """
-    Simulates a high-ticket B2B sales inquiry.
-    """
-    logger.info("New Institutional Licensing Request received for tier: %s", req.tier)
-    await asyncio.sleep(1)
-    return {"status": "Application received. Account executive will be in touch."}
-
+            content_length = int(request.headers["content-length"])
+            if content_length > MAX_BODY_SIZE:
+                raise HTTPException(status_code=413, detail="Request body too large")
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid Content-Length header")
+
+    # For endpoints that consume the body, we also enforce at the byte level.
+    # This catches chunked transfer encoding and spoofed Content-Length headers.
+    # Note: For streaming endpoints (SSE), the body is typically empty so this is safe.
+    if request.method in ("POST", "PUT", "PATCH"):
+        body = await request.body()
+        if len(body) > MAX_BODY_SIZE:
+            raise HTTPException(status_code=413, detail="Request body too large")
+
+        # Re-inject the body so downstream handlers can read it again.
+        # Without this, request.body() returns empty bytes on second call.
+        async def receive():
+            return {"type": "http.request", "body": body}
+        request._receive = receive
+
+    return await call_next(request)
+
+
+# ── Register All Routers ──
+app.include_router(analysis_router)
+app.include_router(trading_router)
+app.include_router(den_router)
+app.include_router(account_router)
+app.include_router(admin_router)
+app.include_router(broadcast_router)
+app.include_router(payments_router)
+app.include_router(auth_router)
+
+# ── Track Record Stats Endpoint ──
+@app.get("/track-record")
+@analysis_limiter.limit("30/minute")
+async def get_track_record(request: Request, uid: str = Depends(get_current_user)):
+    """Returns the cumulative track record stats — win rate, saves, etc."""
+    import track_record
+    return track_record.get_stats()

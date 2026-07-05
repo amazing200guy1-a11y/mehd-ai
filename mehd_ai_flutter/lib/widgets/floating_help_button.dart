@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
-import 'package:mehd_ai_flutter/screens/help/support_screen.dart';
+import 'package:mehd_ai_flutter/screens/help/about_screen.dart';
 
 class FloatingHelpButton extends StatelessWidget {
   const FloatingHelpButton({super.key});
@@ -22,7 +22,7 @@ class FloatingHelpButton extends StatelessWidget {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const SupportScreen()),
+            MaterialPageRoute(builder: (_) => const AboutScreen()),
           );
         },
         child: const Icon(Icons.question_mark, color: MehdAiTheme.textSecondary, size: 20),

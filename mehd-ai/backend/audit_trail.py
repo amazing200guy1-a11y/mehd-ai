@@ -25,7 +25,7 @@ import json
 import logging
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any, Optional
 
@@ -136,8 +136,10 @@ class AuditLogger:
         """
         model_versions = [vote.model_name for vote in result.votes]
 
+        now = datetime.now(timezone.utc)
         document = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": now.isoformat(),
+            "expires_at": (now + timedelta(hours=24)).isoformat(),
             "session_id": self.session_id,
             "model_versions": model_versions,
             "symbol": symbol,
@@ -358,3 +360,36 @@ class AuditLogger:
             logger.info("All fallback entries flushed — fallback file removed")
 
         self._pending_fallback_entries = remaining
+
+    def get_recent_logs(self, limit: int = 50) -> list[dict]:
+        """
+        Returns the most recent audit log entries.
+        Reads from Firestore if available, otherwise from the fallback file.
+        """
+        # Try Firestore first
+        if self._firestore_available and _firestore_client is not None:
+            try:
+                docs = (
+                    _firestore_client.collection("trade_logs")
+                    .order_by("timestamp", direction="DESCENDING")
+                    .limit(limit)
+                    .stream()
+                )
+                return [doc.to_dict() for doc in docs]
+            except Exception as e:
+                logger.warning("Firestore read failed: %s — using fallback", e)
+
+        # Fallback: read from local file
+        if FALLBACK_LOG_PATH.exists():
+            try:
+                entries = json.loads(FALLBACK_LOG_PATH.read_text(encoding="utf-8"))
+                trade_entries = [
+                    e["document"]
+                    for e in entries
+                    if e.get("target_collection") == "trade_logs"
+                ]
+                return trade_entries[-limit:]
+            except Exception as e:
+                logger.error("Failed to read fallback log: %s", e)
+
+        return []

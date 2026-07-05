@@ -12,6 +12,7 @@ import 'package:mehd_ai_flutter/models/market_snapshot.dart';
 import 'package:mehd_ai_flutter/models/trade.dart';
 import 'package:mehd_ai_flutter/core/input_validator.dart';
 import 'package:mehd_ai_flutter/core/performance_tracker.dart';
+import 'package:mehd_ai_flutter/services/settings_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TradingController extends ChangeNotifier {
@@ -40,8 +41,8 @@ class TradingController extends ChangeNotifier {
     _loadLegalStatus();
   }
 
-  // == SHADOW EXECUTION ENGINE ==
-  void executeShadowTrade(String symbol, String direction, double entryPrice) {
+  // == SANDBOX EXECUTION ENGINE ==
+  void executeSandboxTrade(String symbol, String direction, double entryPrice) {
     final ticketId = "TRD-\${math.Random().nextInt(9999).toString().padLeft(4, '0')}";
     activePositions.add({
       "id": ticketId,
@@ -95,14 +96,14 @@ class TradingController extends ChangeNotifier {
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
-    _paperMode = prefs.getBool('paperMode') ?? true;
+    _paperMode = prefs.getBool('paper') ?? true; // FIX H2: aligned key with SettingsService
     notifyListeners();
   }
 
   Future<void> _loadLegalStatus() async {
     final prefs = await SharedPreferences.getInstance();
     legalAccepted = prefs.getBool('legal_accepted') ?? false;
-    _paperMode = prefs.getBool('paperMode') ?? true;
+    _paperMode = prefs.getBool('paper') ?? true; // FIX H2: aligned key with SettingsService
     notifyListeners();
   }
 
@@ -179,10 +180,12 @@ class TradingController extends ChangeNotifier {
       return;
     }
 
-    // FIX: Dynamic Lot Calculation (1% Risk)
-    // Formula: LotSize = (Equity * 0.01) / (StopLossDistanceInPips * PipValue)
-    // Assume 1 pip = $10 for 1.0 lot (Standard). 
-    final double equity = context.read<AccountHealth?>()?.equity ?? 10000.0;
+    // FIX C1: AccountHealth is not registered in the Provider tree.
+    // Use SettingsService.accountBalance instead — it's the same source of truth.
+    final double equity = context.read<SettingsService>().accountBalance;
+    
+    // Read risk % from the global settings (the manual calculator state)
+    final double riskPercent = context.read<SettingsService>().riskPerTrade;
     
     // Default stop loss if not provided
     final double stopLoss = (consensus.finalDirection == 'BUY' ? latestSnapshot.bid - 0.0050 : latestSnapshot.ask + 0.0050);
@@ -190,10 +193,10 @@ class TradingController extends ChangeNotifier {
     final double slDistance = (latestSnapshot.bid - stopLoss).abs();
     final double slPips = slDistance * (latestSnapshot.symbol.contains('JPY') ? 100 : 10000);
     
-    // Calculate lot size to risk exactly 1% of equity
-    // RiskAmount = Equity * 0.01
+    // Calculate lot size to risk exactly the user's set percentage of equity
+    // RiskAmount = Equity * (riskPercent / 100)
     // LotSize = RiskAmount / (slPips * 10) [assuming $10/pip for 1.0 lot]
-    double calculatedLot = (equity * 0.01) / (math.max(slPips, 5.0) * 10);
+    double calculatedLot = (equity * (riskPercent / 100)) / (math.max(slPips, 5.0) * 10);
     final lotSize = calculatedLot.clamp(0.01, 100.0);
 
     final validationError = InputValidator.validateTradeOrder(

@@ -8,7 +8,9 @@ import 'package:mehd_ai_flutter/screens/broker_screen.dart';
 import 'package:mehd_ai_flutter/services/language_service.dart';
 import 'package:mehd_ai_flutter/services/settings_service.dart';
 import 'package:mehd_ai_flutter/screens/help/about_screen.dart';
-import 'package:mehd_ai_flutter/screens/licensing_screen.dart';
+import 'package:mehd_ai_flutter/screens/den/tutorial_blueprint_screen.dart';
+import 'package:mehd_ai_flutter/screens/constitution_screen.dart';
+import 'package:mehd_ai_flutter/screens/compliance_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -134,17 +136,55 @@ class SettingsScreen extends StatelessWidget {
               title: const Text('Default Lot Size', style: TextStyle(color: Color(0xFFDDDDDD), fontSize: 13)),
               trailing: const Text('1.00', style: TextStyle(color: Color(0xFF666666), fontSize: 11)),
             ),
-            SwitchListTile(
-              title: const Text('Auto Stop-Loss', style: TextStyle(color: Color(0xFFDDDDDD), fontSize: 13)),
-              subtitle: const Text('Den sets SL automatically', style: TextStyle(color: Color(0xFF666666), fontSize: 11)),
-              value: settings.autoStopLoss,
-              secondary: const Icon(Icons.shield_outlined, color: Color(0xFF888888)),
-              activeColor: const Color(0xFF58A6FF),
-              inactiveThumbColor: const Color(0xFF444444),
-              inactiveTrackColor: const Color(0xFF111111),
-              onChanged: settings.setAutoStopLoss,
-            ),
+              SwitchListTile(
+                title: const Text('Auto Stop-Loss', style: TextStyle(color: Color(0xFFDDDDDD), fontSize: 13)),
+                subtitle: const Text('Den sets SL automatically', style: TextStyle(color: Color(0xFF666666), fontSize: 11)),
+                value: settings.autoStopLoss,
+                secondary: const Icon(Icons.shield_outlined, color: Color(0xFF888888)),
+                activeColor: const Color(0xFF58A6FF),
+                inactiveThumbColor: const Color(0xFF444444),
+                inactiveTrackColor: const Color(0xFF111111),
+                onChanged: settings.setAutoStopLoss,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Minimum Conviction Threshold', style: TextStyle(color: Color(0xFFDDDDDD), fontSize: 13)),
+                        Text('${settings.convictionThreshold.toInt()}%', style: const TextStyle(color: Color(0xFF58A6FF), fontSize: 13, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    const Text('Agent consensus required to broadcast trade', style: TextStyle(color: Color(0xFF666666), fontSize: 11)),
+                    SliderTheme(
+                      data: SliderThemeData(
+                        activeTrackColor: const Color(0xFF58A6FF),
+                        inactiveTrackColor: const Color(0xFF111111),
+                        thumbColor: const Color(0xFF58A6FF),
+                        overlayColor: const Color(0xFF58A6FF).withOpacity(0.2),
+                        trackHeight: 4.0,
+                      ),
+                      child: Slider(
+                        value: settings.convictionThreshold,
+                        min: 50,
+                        max: 100,
+                        divisions: 50,
+                        onChanged: settings.setConvictionThreshold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             
+            const Divider(color: Color(0xFF111111), height: 32),
+            
+            _buildSectionTitle('RISK MANAGEMENT'),
+            _GlobalRiskSlider(settings: settings),
+
             const Divider(color: Color(0xFF111111), height: 32),
             
             // Notifications
@@ -225,12 +265,12 @@ class SettingsScreen extends StatelessWidget {
               onChanged: settings.setShowAgentNames,
             ),
             SwitchListTile(
-              title: const Text('Shadow Mode', style: TextStyle(color: Color(0xFF888888), fontSize: 13)),
+              title: const Text('Sandbox Mode', style: TextStyle(color: Color(0xFF888888), fontSize: 13)),
               subtitle: const Text('Your trades invisible to others', style: TextStyle(color: Color(0xFF444444), fontSize: 10)),
-              value: settings.shadowMode,
+              value: settings.sandboxMode,
               secondary: const Icon(Icons.nightlight_outlined, color: Color(0xFF888888)),
               activeColor: const Color(0xFF58A6FF),
-              onChanged: settings.setShadowMode,
+              onChanged: settings.setSandboxMode,
             ),
 
             const Divider(color: Color(0xFF111111), height: 32),
@@ -239,27 +279,58 @@ class SettingsScreen extends StatelessWidget {
             _buildSectionTitle('ABOUT'),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
+              child: _build3DSettingsCard(
+                context,
+                'About Mehd AI',
+                'v1.0.0 — The Den',
+                Icons.info_rounded,
+                const [Color(0xFF1A2030), Color(0xFF0F1520)],
+                Colors.white70,
+                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutScreen())),
+              ),
+            ),
+
+            const Divider(color: Color(0xFF111111), height: 32),
+
+            // Tutorial & Legal
+            _buildSectionTitle('TUTORIALS & LEGAL'),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
                 children: [
-                  Expanded(child: _build3DSettingsCard(
+                  Row(
+                    children: [
+                      Expanded(child: _build3DSettingsCard(
+                        context,
+                        'Tutorial\nBlueprint',
+                        'CyberSpace walkthrough',
+                        Icons.school_rounded,
+                        const [Color(0xFF0A2040), Color(0xFF051020)],
+                        const Color(0xFF00D1FF),
+                        () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TutorialBlueprintScreen())),
+                      )),
+                      const SizedBox(width: 12),
+                      Expanded(child: _build3DSettingsCard(
+                        context,
+                        'Holy Trinity\nConstitution',
+                        'The Den\'s laws',
+                        Icons.menu_book_rounded,
+                        const [Color(0xFF1A2A3A), Color(0xFF0D1520)],
+                        MehdAiTheme.blue,
+                        () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ConstitutionScreen())),
+                      )),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _build3DSettingsCard(
                     context,
-                    'About\nMehd AI',
-                    'v1.0.0 — The Den',
-                    Icons.info_rounded,
-                    const [Color(0xFF1A2030), Color(0xFF0F1520)],
-                    Colors.white70,
-                    () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutScreen())),
-                  )),
-                  const SizedBox(width: 12),
-                  Expanded(child: _build3DSettingsCard(
-                    context,
-                    'Enterprise\nLicensing',
-                    'White-label access',
-                    Icons.business_center_rounded,
-                    const [Color(0xFF3A2A10), Color(0xFF1F1508)],
-                    MehdAiTheme.gold,
-                    () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LicensingScreen())),
-                  )),
+                    'Compliance & Risk Protocol',
+                    'Institutional safety standards',
+                    Icons.gavel_rounded,
+                    const [Color(0xFF2A2A1A), Color(0xFF15150D)],
+                    const Color(0xFFD29922),
+                    () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ComplianceScreen())),
+                  ),
                 ],
               ),
             ),
@@ -322,7 +393,8 @@ class SettingsScreen extends StatelessWidget {
                       onPressed: () async {
                         await FirebaseAuth.instance.signOut();
                         if (context.mounted) {
-                          Navigator.pushNamedAndRemoveUntil(context, '/auth', (route) => false);
+                          // FIX C2: '/auth' was not a registered route. Correct route is '/login'.
+                          Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
                         }
                       },
                       child: const Text('SIGN OUT', style: TextStyle(color: Color(0xFFFF3B3B)))),
@@ -486,12 +558,12 @@ class SettingsScreen extends StatelessWidget {
           Text('LIVE TRADING',
             style: TextStyle(color: Color(0xFFFF3B3B), fontSize: 14, letterSpacing: 2, fontWeight: FontWeight.bold)),
         ]),
-        content: const Text(
+        content: Text(
           'You are enabling LIVE trading.\n\n'
           'Real money. Real consequences.\n'
-          'The Den enforces 1% risk always.\n'
+          'Your current risk is locked at ${settings.riskPerTrade.toStringAsFixed(1)}% per trade.\n'
           'Kill-switch at 3% drawdown.',
-          style: TextStyle(color: Color(0xFF666666), fontSize: 12, height: 1.7),
+          style: const TextStyle(color: Color(0xFF666666), fontSize: 12, height: 1.7),
         ),
         actions: [
           TextButton(
@@ -544,5 +616,121 @@ class SettingsScreen extends StatelessWidget {
         ),
       );
     }
+  }
+}
+
+class _GlobalRiskSlider extends StatefulWidget {
+  final SettingsService settings;
+  const _GlobalRiskSlider({required this.settings});
+
+  @override
+  State<_GlobalRiskSlider> createState() => _GlobalRiskSliderState();
+}
+
+class _GlobalRiskSliderState extends State<_GlobalRiskSlider> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.settings.riskPerTrade.toStringAsFixed(2));
+  }
+
+  @override
+  void didUpdateWidget(_GlobalRiskSlider oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.settings.riskPerTrade != widget.settings.riskPerTrade) {
+      if (double.tryParse(_controller.text) != widget.settings.riskPerTrade) {
+        _controller.text = widget.settings.riskPerTrade.toStringAsFixed(2);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Color _getRiskColor(double risk) {
+    if (risk > 7.0) return const Color(0xFFFF3B3B); // Red
+    if (risk > 3.0) return const Color(0xFFD29922); // Yellow
+    return const Color(0xFF58A6FF); // Blue
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final risk = widget.settings.riskPerTrade;
+    final color = _getRiskColor(risk);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Global Risk Protocol', style: TextStyle(color: Color(0xFFDDDDDD), fontSize: 13, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text(
+                    risk > 7.0 ? 'Aggressive exposure' : risk > 3.0 ? 'Moderate exposure' : 'Conservative exposure',
+                    style: TextStyle(color: color, fontSize: 10),
+                  ),
+                ],
+              ),
+              SizedBox(
+                width: 60,
+                child: TextField(
+                  controller: _controller,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.bold),
+                  decoration: InputDecoration(
+                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                    filled: true,
+                    fillColor: color.withOpacity(0.1),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  onSubmitted: (val) {
+                    final newRisk = double.tryParse(val);
+                    if (newRisk != null && newRisk >= 0.1 && newRisk <= 10.0) {
+                      widget.settings.setRiskPerTrade(newRisk);
+                    } else {
+                      _controller.text = widget.settings.riskPerTrade.toStringAsFixed(2);
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SliderTheme(
+            data: SliderThemeData(
+              activeTrackColor: color,
+              inactiveTrackColor: color.withOpacity(0.1),
+              thumbColor: color,
+              overlayColor: color.withOpacity(0.2),
+              trackHeight: 4.0,
+            ),
+            child: Slider(
+              value: risk,
+              min: 0.1,
+              max: 10.0,
+              divisions: 99,
+              onChanged: (val) {
+                widget.settings.setRiskPerTrade(val);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

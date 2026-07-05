@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mehd_ai_flutter/core/theme.dart';
 
 /// THE DEN IDENTITY — MEHD AI Proprietary Agent Mapping
 /// Maps backend model IDs to Mehd AI's branded 11-agent architecture.
@@ -24,55 +23,55 @@ class AgentIdentity {
 
 class DenIdentity {
   static const agents = {
-    // ---- THE UNDERWORLD (Intelligence Layer) ----
+    // ---- THE RESEARCH (Intelligence Layer) ----
     'don': AgentIdentity(
       id: 'don',
       displayName: 'DON',
-      layer: 'THE UNDERWORLD',
+      layer: 'THE RESEARCH',
       personality: 'Street Intelligence Agent',
-      nodeColor: Color(0xFF6A0DAD), // Dark purple
+      nodeColor: Color(0xFF5C7A99), // Muted slate-blue
       icon: Icons.public,
     ),
     'phantom': AgentIdentity(
       id: 'phantom',
       displayName: 'PHANTOM',
-      layer: 'THE UNDERWORLD',
+      layer: 'THE RESEARCH',
       personality: 'Verification & Stealth Agent',
-      nodeColor: Color(0xFF6A0DAD), // Dark purple
+      nodeColor: Color(0xFF5C7A99), // Muted slate-blue
       icon: Icons.library_books,
     ),
     'oracle': AgentIdentity(
       id: 'oracle',
       displayName: 'ORACLE',
-      layer: 'THE UNDERWORLD',
+      layer: 'THE RESEARCH',
       personality: 'Prediction & Vision Agent',
-      nodeColor: Color(0xFF6A0DAD), // Dark purple
+      nodeColor: Color(0xFF5C7A99), // Muted slate-blue
       icon: Icons.auto_graph,
     ),
 
-    // ---- THE EMPIRE (Strategy Layer) ----
+    // ---- THE STRATEGY (Strategy Layer) ----
     'caesar': AgentIdentity(
       id: 'caesar',
       displayName: 'CAESAR',
-      layer: 'THE EMPIRE',
+      layer: 'THE STRATEGY',
       personality: 'Chief Strategy Agent',
-      nodeColor: MehdAiTheme.gold, // Deep gold
+      nodeColor: Color(0xFF8A9BB0), // Muted silver-slate
       icon: Icons.bolt,
     ),
     'sage': AgentIdentity(
       id: 'sage',
       displayName: 'SAGE',
-      layer: 'THE EMPIRE',
+      layer: 'THE STRATEGY',
       personality: 'Risk & Wisdom Agent',
-      nodeColor: MehdAiTheme.gold, // Deep gold
+      nodeColor: Color(0xFF8A9BB0), // Muted silver-slate
       icon: Icons.psychology,
     ),
     'guardian': AgentIdentity(
       id: 'guardian',
       displayName: 'GUARDIAN',
-      layer: 'THE EMPIRE',
+      layer: 'THE STRATEGY',
       personality: 'Capital Protection Agent',
-      nodeColor: MehdAiTheme.gold, // Deep gold
+      nodeColor: Color(0xFF8A9BB0), // Muted silver-slate
       icon: Icons.all_inclusive,
     ),
 
@@ -82,7 +81,7 @@ class DenIdentity {
       displayName: 'TITAN',
       layer: 'OLYMPUS',
       personality: 'Backtesting & Power Agent',
-      nodeColor: MehdAiTheme.blue, // Electric blue
+      nodeColor: Color(0xFF4DA8A0), // Dim teal-cyan
       icon: Icons.radar,
     ),
     'atlas': AgentIdentity(
@@ -90,7 +89,7 @@ class DenIdentity {
       displayName: 'ATLAS',
       layer: 'OLYMPUS',
       personality: 'Quantitative Calculation Agent',
-      nodeColor: MehdAiTheme.blue, // Electric blue
+      nodeColor: Color(0xFF4DA8A0), // Dim teal-cyan
       icon: Icons.hub,
     ),
     'forge': AgentIdentity(
@@ -98,7 +97,7 @@ class DenIdentity {
       displayName: 'FORGE',
       layer: 'OLYMPUS',
       personality: 'Execution & Code Agent',
-      nodeColor: MehdAiTheme.blue, // Electric blue
+      nodeColor: Color(0xFF4DA8A0), // Dim teal-cyan
       icon: Icons.data_object,
     ),
 
@@ -108,7 +107,7 @@ class DenIdentity {
       displayName: 'THE DON',
       layer: 'SUPREME',
       personality: 'Supreme Aggregator',
-      nodeColor: Colors.white,
+      nodeColor: Color(0xFFC8D6E5), // Soft white-blue
       icon: Icons.account_balance,
     ),
     'sentinel': AgentIdentity(
@@ -116,7 +115,7 @@ class DenIdentity {
       displayName: 'SENTINEL',
       layer: 'GUARDIAN',
       personality: 'Anti-Hallucination Guardian',
-      nodeColor: Colors.redAccent,
+      nodeColor: Color(0xFFB08D57), // Muted amber
       icon: Icons.remove_red_eye,
     ),
     'vanguard': AgentIdentity(
@@ -124,7 +123,7 @@ class DenIdentity {
       displayName: 'VANGUARD',
       layer: 'OLYMPUS',
       personality: 'Forward Reconnaissance Agent',
-      nodeColor: MehdAiTheme.blue,
+      nodeColor: Color(0xFF4DA8A0), // Dim teal-cyan
       icon: Icons.explore,
     ),
   };

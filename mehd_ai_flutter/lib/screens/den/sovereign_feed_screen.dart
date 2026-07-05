@@ -70,6 +70,11 @@ class _SovereignFeedScreenState extends State<SovereignFeedScreen> with SingleTi
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: MehdAiTheme.bgPrimary,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       body: Stack(
         children: [
           // Background ambient glows
@@ -94,15 +99,34 @@ class _SovereignFeedScreenState extends State<SovereignFeedScreen> with SingleTi
                   _buildHeader(),
                   const SizedBox(height: 24),
                   
-                  // Top Row Metrics
-                  Row(
-                    children: [
-                      Expanded(flex: 2, child: _buildCounterCard()),
-                      const SizedBox(width: 16),
-                      Expanded(child: _buildStatusCard("SENTINEL", "ACTIVE", MehdAiTheme.green)),
-                      const SizedBox(width: 16),
-                      Expanded(child: _buildStatusCard("AUDITOR", "SYNCING", MehdAiTheme.gold)),
-                    ],
+                  // Top Row Metrics — responsive
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      if (constraints.maxWidth < 500) {
+                        return Column(
+                          children: [
+                            _buildCounterCard(),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(child: _buildStatusCard("SENTINEL", "ACTIVE", MehdAiTheme.green)),
+                                const SizedBox(width: 12),
+                                Expanded(child: _buildStatusCard("AUDITOR", "SYNCING", MehdAiTheme.gold)),
+                              ],
+                            ),
+                          ],
+                        );
+                      }
+                      return Row(
+                        children: [
+                          Expanded(flex: 2, child: _buildCounterCard()),
+                          const SizedBox(width: 16),
+                          Expanded(child: _buildStatusCard("SENTINEL", "ACTIVE", MehdAiTheme.green)),
+                          const SizedBox(width: 16),
+                          Expanded(child: _buildStatusCard("AUDITOR", "SYNCING", MehdAiTheme.gold)),
+                        ],
+                      );
+                    },
                   ),
                   
                   const SizedBox(height: 24),

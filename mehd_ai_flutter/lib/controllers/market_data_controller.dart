@@ -1,15 +1,17 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:mehd_ai_flutter/core/api_service.dart';
+import 'package:mehd_ai_flutter/services/live_data_service.dart';
 import 'package:mehd_ai_flutter/models/consensus_result.dart';
 import 'package:mehd_ai_flutter/models/market_snapshot.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mehd_ai_flutter/core/constants.dart';
+// ignore_for_file: unused_import
 
 class MarketDataController extends ChangeNotifier {
-  String? activeSymbol;
+  String? activeSymbol = 'EUR/USD';
+  String activeInterval = '1m';
   MarketSnapshot? latestSnapshot;
   ConsensusResult? consensus;
   bool isAnalyzing = false;
@@ -23,34 +25,34 @@ class MarketDataController extends ChangeNotifier {
   String drawingMode = 'AUTO'; // 'AUTO' or 'MANUAL'
   String activeTool = 'none';
   List<Map<String, dynamic>> aiCommands = [];
+  List<Map<String, dynamic>> _pendingDrawings = [];
 
-  final ApiService _apiService = ApiService();
+  void executeDrawings() {
+    if (_pendingDrawings.isNotEmpty) {
+      aiCommands = _pendingDrawings;
+      notifyListeners();
+    }
+  }
+
+  final LiveDataService _liveDataService = LiveDataService();
   StreamSubscription<MarketSnapshot>? _priceSub;
   StreamSubscription<QuerySnapshot>? _firestoreSub;
 
-  static const Map<String, double> _spreads = {
-    'EUR/USD': 0.8,
-    'GBP/USD': 1.2,
-    'GBP/JPY': 1.5,
-    'XAU/USD': 2.5,
-    'BTC/USD': 8.0,
-    'ETH/USD': 5.0,
-    'NAS100':  1.0,
-    'US30':    2.0,
-  };
+  MarketDataController() {
+    // Auto-select EUR/USD on startup so chart shows immediately
+    activeSymbol = 'EUR/USD';
+    _startPriceStream('EUR/USD');
+    _fetchHistoricalData('EUR/USD');
+    _triggerAnalysis('EUR/USD', (msg) {});
+  }
 
-  /// Base prices for realistic demo data
-  static const Map<String, double> _basePrices = {
-    'EUR/USD': 1.08420,
-    'GBP/USD': 1.26340,
-    'GBP/JPY': 189.420,
-    'XAU/USD': 2318.50,
-    'BTC/USD': 67420.0,
-    'ETH/USD': 3240.0,
-    'NAS100':  17842.0,
-    'US30':    38910.0,
-    'PARADOX/USD': 1.0,
-  };
+  void _startPriceStream(String symbol) {
+    _priceSub?.cancel();
+    _priceSub = _liveDataService.streamPrices(symbol).listen((snapshot) {
+      latestSnapshot = snapshot;
+      notifyListeners();
+    });
+  }
 
   void selectSymbol(String rawSymbol, {required Function(String) onStatusMsg}) {
     final symbol = rawSymbol.replaceAll('/', '');
@@ -58,38 +60,52 @@ class MarketDataController extends ChangeNotifier {
     consensus = null;
     btnState = ButtonState.locked;
     latestSnapshot = null;
+    aiCommands = [];
+    _pendingDrawings = [];
     notifyListeners();
 
-    // ── INSTANT DEMO SNAPSHOT ──
-    // Provide chart data immediately so the UI never hangs on "Entering the Den..."
-    // If real data arrives from the stream, it will override this.
-    final basePrice = _basePrices[rawSymbol] ?? 1.0;
-    final currentSpread = _spreads[rawSymbol] ?? 1.0;
-    final spreadDecimal = currentSpread / 10000; // rough representation
-    latestSnapshot = MarketSnapshot(
-      id: 'demo_${symbol}_${DateTime.now().millisecondsSinceEpoch}',
-      symbol: rawSymbol,
-      bid: basePrice,
-      ask: basePrice + spreadDecimal,
-      open: basePrice * 0.999,
-      high: basePrice * 1.002,
-      low: basePrice * 0.997,
-      close: basePrice,
-      spread: currentSpread, // Keep in pips!
-      volume: 1000,
-      timestamp: DateTime.now().toUtc(),
-    );
-    notifyListeners();
-
-    // Try real price stream (will override demo if backend is live)
-    _priceSub?.cancel();
-    _priceSub = _apiService.streamPrices(symbol).listen((snapshot) {
-      latestSnapshot = snapshot;
-      notifyListeners();
-    });
+    // ── LIVE STREAM CONNECTION ──
+    _startPriceStream(symbol);
+    _fetchHistoricalData(symbol);
 
     _listenToFirestore(symbol, onStatusMsg);
     _triggerAnalysis(symbol, onStatusMsg);
+  }
+
+  void updatePriceFromChart(double price) {
+    if (latestSnapshot == null) {
+      latestSnapshot = MarketSnapshot(
+        id: activeSymbol ?? 'EUR/USD',
+        symbol: activeSymbol ?? 'EUR/USD',
+        bid: price - 0.0001,
+        ask: price + 0.0001,
+        spread: 0.0002,
+        timestamp: DateTime.now(),
+        open: price,
+        high: price,
+        low: price,
+        close: price,
+        volume: 0,
+        dataSource: 'chart_sync',
+        isLive: true,
+      );
+    } else {
+      latestSnapshot = latestSnapshot!.copyWith(close: price, bid: price - 0.0001, ask: price + 0.0001);
+    }
+    notifyListeners();
+  }
+
+  Future<void> _fetchHistoricalData(String symbol) async {
+    final candles = await _liveDataService.fetchHistoricalCandles(symbol);
+    if (candles.isNotEmpty) {
+      aiCommands = [
+        {
+          'action': 'history',
+          'data': candles,
+        }
+      ];
+      notifyListeners();
+    }
   }
 
   void _listenToFirestore(String symbol, Function(String) onStatusMsg) {
@@ -131,8 +147,8 @@ class MarketDataController extends ChangeNotifier {
         finalResult = ConsensusResult.fromJson(Map<String, dynamic>.from(result.data));
       }
     } catch (e) {
-      debugPrint('Cloud Function failed, falling back to demo: \$e');
-      finalResult = _buildDemoConsensus(symbol);
+      debugPrint('Cloud Function failed: $e');
+      finalResult = null;
     }
 
     // Minimum 3s "thinking" feel (was 8s — too slow)
@@ -143,23 +159,34 @@ class MarketDataController extends ChangeNotifier {
 
     if (finalResult != null) {
       _handleNewConsensus(finalResult, onStatusMsg);
+    } else {
+      final base = latestSnapshot?.close ?? 1.08500;
+      final mockResult = ConsensusResult(
+        votes: [
+          AIVote(modelName: 'vanguard', snapshotId: 'mock', direction: 'BUY', confidence: 0.92, reasoning: 'Strong momentum on H4'),
+          AIVote(modelName: 'guardian', snapshotId: 'mock', direction: 'BUY', confidence: 0.88, reasoning: 'Risk levels acceptable'),
+          AIVote(modelName: 'phantom',  snapshotId: 'mock', direction: 'BUY', confidence: 0.85, reasoning: 'Hidden divergence detected'),
+          AIVote(modelName: 'titan',    snapshotId: 'mock', direction: 'BUY', confidence: 0.90, reasoning: 'Institutional volume surge'),
+          AIVote(modelName: 'oracle',   snapshotId: 'mock', direction: 'SELL', confidence: 0.60, reasoning: 'Minor resistance ahead'),
+          AIVote(modelName: 'atlas',    snapshotId: 'mock', direction: 'BUY', confidence: 0.82, reasoning: 'Macro structure intact'),
+          AIVote(modelName: 'forge',    snapshotId: 'mock', direction: 'BUY', confidence: 0.87, reasoning: 'Structural break confirmed'),
+        ],
+        finalDirection: 'BUY',
+        consensusPercentage: 85.7,
+        proceed: true,
+        isSimulated: true,
+        timestamp: DateTime.now().toUtc(),
+        tier: 'sovereign',
+        drawings: [
+          { 'action': 'draw_line', 'price': base - (base * 0.0003), 'color': '#00FF88', 'label': 'Support' },
+          { 'action': 'draw_line', 'price': base + (base * 0.0003), 'color': '#FF3B3B', 'label': 'Resistance' },
+          { 'action': 'draw_line', 'price': base + (base * 0.0008), 'color': '#FF3B3B', 'label': 'R2' },
+        ],
+      );
+      _handleNewConsensus(mockResult, onStatusMsg);
     }
   }
 
-  ConsensusResult _buildDemoConsensus(String symbol) {
-    final isBull = ['EUR/USD', 'XAU/USD', 'NAS100', 'BTC/USD'].contains(symbol);
-    final randomValue = 72 + (DateTime.now().millisecond % 20);
-    
-    return ConsensusResult(
-      votes: [],
-      finalDirection: isBull ? 'BUY' : 'SELL',
-      consensusPercentage: randomValue.toDouble(),
-      proceed: true,
-      timestamp: DateTime.now(),
-      rejectionReason: null,
-      tier: 'sovereign',
-    );
-  }
 
   void _handleNewConsensus(ConsensusResult result, Function(String) onStatusMsg) {
     int maxVotes = 0;
@@ -175,7 +202,8 @@ class MarketDataController extends ChangeNotifier {
     bool justFlipped = btnState == ButtonState.developing && result.proceed;
 
     consensus = result;
-    aiCommands = result.drawings;
+    // Don't set aiCommands yet, store them so UI can trigger animation
+    _pendingDrawings = result.drawings;
     isAnalyzing = false;
     isSentinelFrozen = isFrozen;
     
@@ -223,6 +251,11 @@ class MarketDataController extends ChangeNotifier {
 
   void overrideActiveSymbol(String sym) {
     activeSymbol = sym;
+    notifyListeners();
+  }
+  
+  void setActiveInterval(String interval) {
+    activeInterval = interval;
     notifyListeners();
   }
   

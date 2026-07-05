@@ -3,8 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
 import 'package:mehd_ai_flutter/screens/terms_screen.dart';
 import 'package:mehd_ai_flutter/screens/privacy_screen.dart';
-import 'package:mehd_ai_flutter/screens/den_glossary.dart';
-import 'package:mehd_ai_flutter/screens/licensing_screen.dart';
 
 
 class AboutScreen extends StatelessWidget {
@@ -66,9 +64,9 @@ class AboutScreen extends StatelessWidget {
               // Architecture Tree Text
               Column(
                 children: [
-                  Text('THE UNDERWORLD', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.textSecondary, letterSpacing: 2)),
+                  Text('THE RESEARCH', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.textSecondary, letterSpacing: 2)),
                   Container(width: 2, height: 16, color: MehdAiTheme.borderColor, margin: const EdgeInsets.symmetric(vertical: 8)),
-                  Text('THE EMPIRE', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.blue, letterSpacing: 2)),
+                  Text('THE STRATEGY', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.blue, letterSpacing: 2)),
                   Container(width: 2, height: 16, color: MehdAiTheme.borderColor, margin: const EdgeInsets.symmetric(vertical: 8)),
                   Text('OLYMPUS', style: MehdAiTheme.terminalStyle.copyWith(color: MehdAiTheme.gold, letterSpacing: 2)),
                   Container(width: 2, height: 16, color: MehdAiTheme.borderColor, margin: const EdgeInsets.symmetric(vertical: 8)),
@@ -84,10 +82,6 @@ class AboutScreen extends StatelessWidget {
                   _buildFooterLink('Terms of Service', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TermsScreen()))),
                   const SizedBox(width: 24),
                   _buildFooterLink('Privacy Policy', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyScreen()))),
-                  const SizedBox(width: 24),
-                  _buildFooterLink('Den Glossary', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DenGlossary()))),
-                  const SizedBox(width: 24),
-                  _buildFooterLink('Enterprise Licensing', color: MehdAiTheme.gold, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LicensingScreen()))),
                   const SizedBox(width: 24),
                   _buildFooterLink('Rate Mehd AI', color: MehdAiTheme.blue, onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(

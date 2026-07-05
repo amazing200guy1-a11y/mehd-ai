@@ -51,11 +51,10 @@ class UserService {
     }
   }
 
-  /// Updates risk settings — ENFORCES 1% MAXIMUM
-  /// Even if someone tries to send 5.0 through the API, we clamp it.
+  /// Updates risk settings — allows 0.1% to 10.0% per trade
   Future<void> updateRiskSettings(String userId, double riskPercent) async {
-    // Triple-enforced cap: UI slider + this service + Firestore rules
-    final clampedRisk = riskPercent.clamp(0.1, 1.0);
+    // Clamp to a reasonable range: minimum 0.1%, maximum 10%
+    final clampedRisk = riskPercent.clamp(0.1, 10.0);
 
     try {
       await _firestore.collection('users').doc(userId).update({

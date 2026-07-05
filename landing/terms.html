@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Service — Mehd AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;600;700&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .legal { padding: 140px 0 80px; position: relative; z-index: 1; }
+        .legal h1 { font-family: var(--font-heading); font-size: 36px; font-weight: 800; margin-bottom: 8px; }
+        .legal .legal-date { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-bottom: 40px; display: block; }
+        .legal h2 { font-family: var(--font-heading); font-size: 20px; font-weight: 700; margin: 40px 0 12px; color: var(--blue); }
+        .legal p, .legal li { font-size: 14px; color: var(--text-dim); line-height: 1.9; margin-bottom: 12px; }
+        .legal ul { padding-left: 20px; margin-bottom: 16px; }
+        .legal ul li { list-style: disc; margin-bottom: 6px; }
+        .legal strong { color: var(--text); }
+        .legal-back { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 12px; color: var(--text-dim); margin-bottom: 32px; }
+        .legal-back:hover { color: var(--blue); }
+    </style>
+</head>
+<body>
+    <canvas id="particle-canvas"></canvas>
+    <div class="grid-overlay"></div>
+
+    <nav class="nav nav--scrolled">
+        <div class="nav__container">
+            <a href="index.html" class="nav__logo"><img src="mehd_logo.png" alt="Mehd AI" class="nav__logo-img"><span>MEHD AI</span></a>
+            <a href="index.html" class="btn btn--glass btn--sm">← Back</a>
+        </div>
+    </nav>
+
+    <section class="legal">
+        <div class="container">
+            <a href="index.html" class="legal-back">← Back to Home</a>
+            <h1>Terms of Service</h1>
+            <span class="legal-date">Last updated: April 2026</span>
+
+            <h2>1. Acceptance of Terms</h2>
+            <p>By accessing and using Mehd AI ("the Platform"), you agree to be bound by these Terms of Service. If you do not agree, do not use the Platform.</p>
+
+            <h2>2. Description of Service</h2>
+            <p>Mehd AI is a decision-support tool that uses 11 independent AI agents to analyze forex trading opportunities and provide consensus-based risk assessments. <strong>Mehd AI does not execute trades autonomously, manage funds, or guarantee profits.</strong></p>
+
+            <h2>3. Eligibility</h2>
+            <p>You must be at least 18 years old and legally able to enter into a binding agreement in your jurisdiction to use Mehd AI. You must have a valid brokerage account with a licensed broker to connect to the Platform.</p>
+
+            <h2>4. Subscription and Payments</h2>
+            <ul>
+                <li>Access to Mehd AI requires a paid subscription.</li>
+                <li>Subscriptions are billed monthly through our secure payment processor.</li>
+                <li>You may cancel your subscription at any time. Cancellation takes effect at the end of the current billing period.</li>
+                <li>No refunds are provided for partial months of service.</li>
+            </ul>
+
+            <h2>5. Risk Disclaimer</h2>
+            <p><strong>Trading forex involves significant risk of loss and is not suitable for all investors.</strong> Past performance of the AI consensus engine does not guarantee future results. You should not trade with money you cannot afford to lose. Mehd AI provides decision-support only and does not constitute financial advice.</p>
+
+            <h2>6. User Responsibilities</h2>
+            <ul>
+                <li>You are solely responsible for all trading decisions made using the Platform.</li>
+                <li>You must maintain the security of your account credentials.</li>
+                <li>You must not attempt to reverse-engineer, copy, or redistribute the AI engine or its algorithms.</li>
+                <li>You must not use the Platform for any unlawful purpose.</li>
+            </ul>
+
+            <h2>7. Intellectual Property</h2>
+            <p>All AI models, agent architectures, consensus algorithms, risk kernels, and related intellectual property are the exclusive property of Mehd AI. Unauthorized reproduction, distribution, or reverse engineering is strictly prohibited and will result in immediate account termination and legal action.</p>
+
+            <h2>8. Limitation of Liability</h2>
+            <p>Mehd AI shall not be liable for any trading losses, indirect damages, or consequential damages arising from use of the Platform. Our total liability is limited to the amount you have paid for the service in the most recent 12-month period.</p>
+
+            <h2>9. Service Availability</h2>
+            <p>We strive for 99.9% uptime but do not guarantee uninterrupted service. The Platform may be temporarily unavailable for maintenance, updates, or circumstances beyond our control.</p>
+
+            <h2>10. Account Termination</h2>
+            <p>We reserve the right to suspend or terminate accounts that violate these Terms, engage in fraudulent activity, or attempt to manipulate or circumvent the Platform's risk controls.</p>
+
+            <h2>11. Changes to Terms</h2>
+            <p>We may update these Terms periodically. Continued use of the Platform after changes constitutes acceptance of the revised Terms.</p>
+
+            <h2>12. Governing Law</h2>
+            <p>These Terms are governed by applicable international trade law and the laws of the jurisdiction where Mehd AI operates.</p>
+
+            <h2>13. Contact</h2>
+            <p>For questions about these Terms: <strong>legal@mehdai.com</strong></p>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer__bottom">
+                <p class="mono-sm">&copy; 2026 Mehd AI. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
