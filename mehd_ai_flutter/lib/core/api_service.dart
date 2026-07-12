@@ -11,6 +11,7 @@ import 'package:mehd_ai_flutter/models/market_snapshot.dart';
 import 'package:mehd_ai_flutter/models/executive_brief.dart';
 import 'package:mehd_ai_flutter/models/manual_drawing.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:mehd_ai_flutter/core/pinned_http_client.dart';
 
 /// FILE 3 — api_service.dart
 ///
@@ -29,7 +30,7 @@ class _CacheEntry {
 }
 
 class ApiService {
-  final http.Client _client = http.Client();
+  final http.Client _client = createPinnedClient();
   static final Map<String, _CacheEntry> _cache = {};
 
   Future<String?> _getAuthToken() async {

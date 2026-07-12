@@ -11,6 +11,7 @@ import 'package:mehd_ai_flutter/screens/help/about_screen.dart';
 import 'package:mehd_ai_flutter/screens/den/tutorial_blueprint_screen.dart';
 import 'package:mehd_ai_flutter/screens/constitution_screen.dart';
 import 'package:mehd_ai_flutter/screens/compliance_screen.dart';
+import 'package:mehd_ai_flutter/screens/security_screen.dart';
 import 'package:mehd_ai_flutter/services/payment_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -366,14 +367,28 @@ class SettingsScreen extends StatelessWidget {
             _buildSectionTitle('BROKER CONNECTION'),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _build3DSettingsCard(
-                context,
-                'Connect Broker',
-                'Manage your API integrations',
-                Icons.account_balance_rounded,
-                const [Color(0xFF142840), Color(0xFF0B1825)],
-                MehdAiTheme.blue,
-                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BrokerScreen())),
+              child: Column(
+                children: [
+                  _build3DSettingsCard(
+                    context,
+                    'Connect Broker',
+                    'Manage your API integrations',
+                    Icons.account_balance_rounded,
+                    const [Color(0xFF142840), Color(0xFF0B1825)],
+                    MehdAiTheme.blue,
+                    () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BrokerScreen())),
+                  ),
+                  const SizedBox(height: 12),
+                  _build3DSettingsCard(
+                    context,
+                    'Security Promise & Manifesto',
+                    'Unbreakable anti-broker defenses',
+                    Icons.security_rounded,
+                    const [Color(0xFF0F2C24), Color(0xFF071B16)],
+                    const Color(0xFF00FF88),
+                    () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityScreen())),
+                  ),
+                ],
               ),
             ),
             

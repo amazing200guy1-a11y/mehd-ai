@@ -79,7 +79,7 @@ from routes.payments import router as payments_router
 from auth import auth_router
 
 # ──────────────────────────────────────────────
-#  Logging
+#  Logging & Audit Log Setup
 # ──────────────────────────────────────────────
 
 logging.basicConfig(
@@ -88,6 +88,22 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger("mehd.main")
+
+# Layer 1: Establish Audit Logging directory and Rotating Audit Handler
+import os
+from logging.handlers import RotatingFileHandler
+
+os.makedirs("logs", exist_ok=True)
+audit_logger = logging.getLogger("mehd.audit")
+audit_logger.setLevel(logging.INFO)
+audit_logger.propagate = False  # Keep audit logs segregated from standard stdout
+
+_audit_handler = RotatingFileHandler("logs/audit.log", maxBytes=10*1024*1024, backupCount=5, encoding="utf-8")
+_audit_handler.setFormatter(logging.Formatter(
+    fmt="%(asctime)s │ %(levelname)-8s │ %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+))
+audit_logger.addHandler(_audit_handler)
 
 
 # ──────────────────────────────────────────────
@@ -284,7 +300,10 @@ async def lifespan(app: FastAPI):
 
     # Critical secrets — app refuses to start without these
     try:
-        secrets.require("CAPSULE_SIGNING_SECRET")
+        capsule_secret = secrets.require("CAPSULE_SIGNING_SECRET")
+        if len(capsule_secret) < 32 and not DEMO_MODE:
+            logger.critical("FATAL: CAPSULE_SIGNING_SECRET is too weak. Must be at least 32 characters in production.")
+            raise RuntimeError("Weak CAPSULE_SIGNING_SECRET")
     except RuntimeError as e:
         logger.critical(str(e))
         raise
@@ -293,8 +312,9 @@ async def lifespan(app: FastAPI):
     # Without it, keys are stored as plaintext in Firestore. This is ONLY allowed in
     # development. In production (ENVIRONMENT=production), the app MUST have this key.
     _env = os.getenv("ENVIRONMENT", "development").lower().strip()
-    if not secrets.get("ENCRYPTION_MASTER_KEY"):
-        if _env == "production":
+    encryption_key = secrets.get("ENCRYPTION_MASTER_KEY")
+    if not encryption_key:
+        if _env == "production" or not DEMO_MODE:
             logger.critical(
                 "FATAL: ENCRYPTION_MASTER_KEY is not set in production. "
                 "Broker API keys will be stored in PLAIN TEXT. "
@@ -306,6 +326,9 @@ async def lifespan(app: FastAPI):
                 "ENCRYPTION_MASTER_KEY is not set — broker API keys stored in PLAIN TEXT. "
                 "Acceptable in development only. Set before going live."
             )
+    elif len(encryption_key) < 32 and (_env == "production" or not DEMO_MODE):
+        logger.critical("FATAL: ENCRYPTION_MASTER_KEY is too weak. Must be at least 32 characters in production.")
+        raise RuntimeError("Weak ENCRYPTION_MASTER_KEY")
 
     critical_keys = ["GROQ_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"]
     missing = [k for k in critical_keys if not secrets.get(k)]
@@ -465,6 +488,89 @@ async def add_security_headers(request: Request, call_next):
         "frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
     return response
+
+
+# ── Suspicious Request Fingerprinting Middleware ──
+from collections import defaultdict
+import threading
+
+_ip_requests = defaultdict(list)
+_banned_ips = {}  # IP -> ban_expires_timestamp
+_ip_lock = threading.Lock()
+
+@app.middleware("http")
+async def bot_fingerprint_middleware(request: Request, call_next):
+    from auth import get_real_ip
+    client_ip = get_real_ip(request)
+    
+    # Exclude localhost/internal health check loop from bans
+    if client_ip in ("127.0.0.1", "localhost", "::1"):
+        return await call_next(request)
+        
+    now = time.time()
+    
+    with _ip_lock:
+        ban_expires = _banned_ips.get(client_ip, 0)
+        if ban_expires > now:
+            retry_after = int(ban_expires - now)
+            return __import__('fastapi').responses.JSONResponse(
+                status_code=429,
+                content={"detail": "Too many requests. Temporary ban in effect."},
+                headers={"Retry-After": str(retry_after)}
+            )
+        elif ban_expires > 0:
+            del _banned_ips[client_ip]
+            _ip_requests[client_ip] = []
+
+        _ip_requests[client_ip].append(now)
+        _ip_requests[client_ip] = [t for t in _ip_requests[client_ip] if now - t <= 60]
+        
+        if len(_ip_requests[client_ip]) > 50:
+            _banned_ips[client_ip] = now + 900  # 15 minutes
+            logger.warning("SUSPICIOUS_BOT_DETECTED: IP %s sent %d requests in 60s. Banned for 15m.", client_ip, len(_ip_requests[client_ip]))
+            return __import__('fastapi').responses.JSONResponse(
+                status_code=429,
+                content={"detail": "Suspicious request velocity detected. IP banned for 15 minutes."},
+                headers={"Retry-After": "900"}
+            )
+            
+    return await call_next(request)
+
+
+# ── Audit Logging Middleware ──
+@app.middleware("http")
+async def audit_log_middleware(request: Request, call_next):
+    from auth import get_real_ip, get_uid_rate_key
+    
+    client_ip = get_real_ip(request)
+    user_agent = request.headers.get("user-agent", "unknown")
+    
+    user_key = get_uid_rate_key(request)
+    user_id = user_key.replace("uid:", "") if user_key.startswith("uid:") else "guest"
+    
+    start_time_ms = time.time()
+    try:
+        response = await call_next(request)
+        status_code = response.status_code
+        return response
+    except Exception as e:
+        status_code = 500
+        raise e
+    finally:
+        duration_ms = int((time.time() - start_time_ms) * 1000)
+        path = request.url.path
+        level = "HIGH_PRIORITY" if any(x in path for x in ["/auth", "/trading", "/payments", "/admin"]) else "INFO"
+        
+        audit_msg = (
+            f"ip={client_ip} │ user_id={user_id} │ "
+            f"method={request.method} │ path={path} │ status={status_code} │ "
+            f"duration={duration_ms}ms │ ua={user_agent}"
+        )
+        
+        if level == "HIGH_PRIORITY":
+            audit_logger.warning(audit_msg)
+        else:
+            audit_logger.info(audit_msg)
 
 
 # ── Request Body Size Limit ──
