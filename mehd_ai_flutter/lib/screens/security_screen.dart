@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:mehd_ai_flutter/core/theme.dart';
 
@@ -115,19 +114,15 @@ class SecurityScreen extends StatelessWidget {
                   border: Border.all(color: Colors.white.withOpacity(0.05)),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Column(
-                  children: const [
-                    Text(
-                      '"Mehd AI is not just software. It is a tool for retail traders to reclaim control. Our security design ensures this power remains entirely yours and can never be weaponized against you by brokers or market manipulators."',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0xFF6688AA),
-                        fontSize: 11,
-                        fontStyle: FontStyle.italic,
-                        height: 1.6,
-                      ),
-                    ),
-                  ],
+                child: const Text(
+                  '"Mehd AI is not just software. It is a tool for retail traders to reclaim control. Our security design ensures this power remains entirely yours and can never be weaponized against you by brokers or market manipulators."',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF6688AA),
+                    fontSize: 11,
+                    fontStyle: FontStyle.italic,
+                    height: 1.6,
+                  ),
                 ),
               ),
               
@@ -144,47 +139,44 @@ class SecurityScreen extends StatelessWidget {
     required String title,
     required String description,
   }) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: const Color(0xFF020810).withOpacity(0.4),
-          border: Border.all(color: Colors.white.withOpacity(0.05)),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: const Color(0xFF00FF88), size: 24),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Color(0xFF00FF88),
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                    ),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF020810).withOpacity(0.4),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: const Color(0xFF00FF88), size: 24),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Color(0xFF00FF88),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    description,
-                    style: const TextStyle(
-                      color: Color(0xFF999999),
-                      fontSize: 11,
-                      height: 1.5,
-                    ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  description,
+                  style: const TextStyle(
+                    color: Color(0xFF999999),
+                    fontSize: 11,
+                    height: 1.5,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

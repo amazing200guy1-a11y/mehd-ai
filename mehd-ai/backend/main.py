@@ -45,7 +45,9 @@ if _sentry_dsn:
 import asyncio
 import logging
 import time
+from collections import defaultdict
 from contextlib import asynccontextmanager
+from logging.handlers import RotatingFileHandler
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -90,9 +92,6 @@ logging.basicConfig(
 logger = logging.getLogger("mehd.main")
 
 # Layer 1: Establish Audit Logging directory and Rotating Audit Handler
-import os
-from logging.handlers import RotatingFileHandler
-
 os.makedirs("logs", exist_ok=True)
 audit_logger = logging.getLogger("mehd.audit")
 audit_logger.setLevel(logging.INFO)
@@ -301,12 +300,12 @@ async def lifespan(app: FastAPI):
     # Critical secrets — app refuses to start without these
     try:
         capsule_secret = secrets.require("CAPSULE_SIGNING_SECRET")
-        if len(capsule_secret) < 32 and not DEMO_MODE:
-            logger.critical("FATAL: CAPSULE_SIGNING_SECRET is too weak. Must be at least 32 characters in production.")
-            raise RuntimeError("Weak CAPSULE_SIGNING_SECRET")
     except RuntimeError as e:
         logger.critical(str(e))
         raise
+    if len(capsule_secret) < 32 and not DEMO_MODE:
+        logger.critical("FATAL: CAPSULE_SIGNING_SECRET is too weak. Must be at least 32 characters in production.")
+        raise RuntimeError("Weak CAPSULE_SIGNING_SECRET")
 
     # SECURITY: ENCRYPTION_MASTER_KEY is required to encrypt broker API keys at rest.
     # Without it, keys are stored as plaintext in Firestore. This is ONLY allowed in
@@ -491,12 +490,17 @@ async def add_security_headers(request: Request, call_next):
 
 
 # ── Suspicious Request Fingerprinting Middleware ──
-from collections import defaultdict
-import threading
+# asyncio.Lock must be created lazily (after the event loop starts) so we
+# initialise it on first use rather than at module import time.
+_ip_requests: defaultdict = defaultdict(list)
+_banned_ips: dict = {}   # IP -> ban_expires_timestamp
+_ip_lock: asyncio.Lock | None = None
 
-_ip_requests = defaultdict(list)
-_banned_ips = {}  # IP -> ban_expires_timestamp
-_ip_lock = threading.Lock()
+def _get_ip_lock() -> asyncio.Lock:
+    global _ip_lock
+    if _ip_lock is None:
+        _ip_lock = asyncio.Lock()
+    return _ip_lock
 
 @app.middleware("http")
 async def bot_fingerprint_middleware(request: Request, call_next):
@@ -509,7 +513,7 @@ async def bot_fingerprint_middleware(request: Request, call_next):
         
     now = time.time()
     
-    with _ip_lock:
+    async with _get_ip_lock():
         ban_expires = _banned_ips.get(client_ip, 0)
         if ban_expires > now:
             retry_after = int(ban_expires - now)
