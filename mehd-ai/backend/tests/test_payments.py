@@ -1,14 +1,14 @@
 """
 Mehd AI — Payment System Tests
 =================================
-Tests for the Stripe payment integration.
-Covers: tier config, graceful degradation when Stripe is not configured,
-tier management, and pricing tiers endpoint.
-
-UPDATED: 4-tier model: Observer (free), Core ($29.99), Precision ($59.99),
-Institutional ($99.99). Legacy aliases (scout/guardian/operative) supported.
+Tests for the Paddle + Paystack dual-gateway payment integration.
+Covers: tier config, tier management, signature verification,
+legacy aliases, and pricing structure integrity.
 """
 
+import hashlib
+import hmac
+import json
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 import sys
@@ -22,7 +22,8 @@ from routes.payments import (
     get_tier_config,
     get_user_tier,
     set_user_tier,
-    _is_configured,
+    _verify_paddle_signature,
+    _verify_paystack_signature,
     _user_tiers,
     _LEGACY_TIER_ALIASES,
 )
@@ -151,17 +152,78 @@ class TestTierManagement:
 
 
 # ──────────────────────────────────────────────
-#  Stripe Configuration Tests
+#  Paddle Signature Verification Tests
 # ──────────────────────────────────────────────
 
-class TestStripeConfig:
-    def test_not_configured_without_key(self):
-        with patch("routes.payments.STRIPE_SECRET_KEY", ""):
-            assert _is_configured() is False
+class TestPaddleSignature:
+    def _make_sig(self, secret: str, ts: int, body: str) -> str:
+        signed = f"{ts}:{body}"
+        h = hmac.new(secret.encode(), signed.encode(), hashlib.sha256).hexdigest()
+        return f"ts={ts};h1={h}"
 
-    def test_configured_with_key(self):
-        with patch("routes.payments.STRIPE_SECRET_KEY", "sk_test_123456"):
-            assert _is_configured() is True
+    def test_valid_signature_accepted(self):
+        secret = "paddle_test_secret_123"
+        ts = int(__import__('time').time())
+        body = json.dumps({"event_type": "subscription.created"})
+        sig = self._make_sig(secret, ts, body)
+        with patch("routes.payments.PADDLE_WEBHOOK_SECRET", secret):
+            assert _verify_paddle_signature(body.encode(), sig) is True
+
+    def test_invalid_signature_rejected(self):
+        secret = "paddle_test_secret_123"
+        ts = int(__import__('time').time())
+        body = json.dumps({"event_type": "subscription.created"})
+        with patch("routes.payments.PADDLE_WEBHOOK_SECRET", secret):
+            assert _verify_paddle_signature(body.encode(), "ts={ts};h1=bad_sig") is False
+
+    def test_missing_secret_rejected(self):
+        body = b'{"event_type": "subscription.created"}'
+        with patch("routes.payments.PADDLE_WEBHOOK_SECRET", ""):
+            assert _verify_paddle_signature(body, "ts=1;h1=anything") is False
+
+    def test_old_timestamp_rejected(self):
+        """Replay attack guard: events older than 5 minutes are rejected."""
+        secret = "paddle_test_secret_123"
+        old_ts = int(__import__('time').time()) - 400  # 6+ minutes old
+        body = json.dumps({"event_type": "subscription.created"})
+        sig = self._make_sig(secret, old_ts, body)
+        with patch("routes.payments.PADDLE_WEBHOOK_SECRET", secret):
+            assert _verify_paddle_signature(body.encode(), sig) is False
+
+
+# ──────────────────────────────────────────────
+#  Paystack Signature Verification Tests
+# ──────────────────────────────────────────────
+
+class TestPaystackSignature:
+    def _make_sig(self, secret: str, body: bytes) -> str:
+        return hmac.new(secret.encode(), body, hashlib.sha512).hexdigest()
+
+    def test_valid_signature_accepted(self):
+        secret = "sk_test_paystack_123"
+        body = json.dumps({"event": "subscription.create"}).encode()
+        sig = self._make_sig(secret, body)
+        with patch("routes.payments.PAYSTACK_SECRET_KEY", secret):
+            assert _verify_paystack_signature(body, sig) is True
+
+    def test_invalid_signature_rejected(self):
+        secret = "sk_test_paystack_123"
+        body = json.dumps({"event": "subscription.create"}).encode()
+        with patch("routes.payments.PAYSTACK_SECRET_KEY", secret):
+            assert _verify_paystack_signature(body, "bad_signature") is False
+
+    def test_missing_secret_rejected(self):
+        body = b'{"event": "subscription.create"}'
+        with patch("routes.payments.PAYSTACK_SECRET_KEY", ""):
+            assert _verify_paystack_signature(body, "anything") is False
+
+    def test_tampered_body_rejected(self):
+        secret = "sk_test_paystack_123"
+        original_body = json.dumps({"event": "subscription.create", "tier": "core"}).encode()
+        tampered_body = json.dumps({"event": "subscription.create", "tier": "institutional"}).encode()
+        sig = self._make_sig(secret, original_body)
+        with patch("routes.payments.PAYSTACK_SECRET_KEY", secret):
+            assert _verify_paystack_signature(tampered_body, sig) is False
 
 
 # ──────────────────────────────────────────────

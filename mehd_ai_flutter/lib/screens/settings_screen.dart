@@ -11,12 +11,58 @@ import 'package:mehd_ai_flutter/screens/help/about_screen.dart';
 import 'package:mehd_ai_flutter/screens/den/tutorial_blueprint_screen.dart';
 import 'package:mehd_ai_flutter/screens/constitution_screen.dart';
 import 'package:mehd_ai_flutter/screens/compliance_screen.dart';
+import 'package:mehd_ai_flutter/services/payment_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
+  Color _getTierColor(String tier) {
+    switch (tier.toLowerCase()) {
+      case 'core':
+        return MehdAiTheme.blue;
+      case 'precision':
+        return const Color(0xFFBB00FF);
+      case 'institutional':
+        return MehdAiTheme.gold;
+      case 'tiger':
+        return const Color(0xFFFF3B3B);
+      default:
+        return const Color(0xFF888888);
+    }
+  }
+
+  String _getTierName(String tier) {
+    switch (tier.toLowerCase()) {
+      case 'core':
+        return 'CORE TRADER';
+      case 'precision':
+        return 'PRECISION TRADER';
+      case 'institutional':
+        return 'INSTITUTIONAL';
+      case 'tiger':
+        return 'TIGER MODE';
+      default:
+        return 'OBSERVER';
+    }
+  }
+
+  String _getTierPrice(String tier) {
+    switch (tier.toLowerCase()) {
+      case 'core':        return '29.99';
+      case 'precision':   return '59.99';
+      case 'institutional': return '99.99';
+      default:            return '0';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final payment = context.watch<PaymentService>();
+    final tier = payment.currentTier;
+    final tierColor = _getTierColor(tier);
+    final tierName = _getTierName(tier);
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -52,12 +98,12 @@ class SettingsScreen extends StatelessWidget {
                         shape: BoxShape.circle,
                         color: const Color(0xFF020810),
                         border: Border.all(
-                          color: const Color(0xFF58A6FF).withOpacity(0.4),
+                          color: tierColor.withOpacity(0.4),
                           width: 2)),
                       child: Center(
                         child: Text(initials,
-                          style: const TextStyle(
-                            color: Color(0xFF58A6FF),
+                          style: TextStyle(
+                            color: tierColor,
                             fontSize: 24,
                             fontWeight: FontWeight.bold)))),
                   ),
@@ -78,12 +124,13 @@ class SettingsScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: const Color(0xFF020810),
                       border: Border.all(
-                        color: const Color(0xFF58A6FF).withOpacity(0.3)),
+                        color: tierColor.withOpacity(0.3)),
                       borderRadius: BorderRadius.circular(20)),
-                    child: const Text('CIVILIAN',
+                    child: Text(tierName,
                       style: TextStyle(
-                        color: Color(0xFF58A6FF),
+                        color: tierColor,
                         fontSize: 10,
+                        fontWeight: FontWeight.bold,
                         letterSpacing: 1.5))),
                 ]);
               },
@@ -211,6 +258,110 @@ class SettingsScreen extends StatelessWidget {
             
             const Divider(color: Color(0xFF111111), height: 32),
             
+            // Subscription & Billing
+            _buildSectionTitle('SUBSCRIPTION & BILLING'),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Consumer<PaymentService>(
+                builder: (ctx, payment, _) {
+                  final tier = payment.currentTier;
+                  final tierColor = _getTierColor(tier);
+                  final tierName = _getTierName(tier);
+                  final isObserver = tier == 'observer' && !payment.isOnTrial;
+                  final portalUrl = payment.portalUrl ?? 'https://mehdai.com/#pricing';
+
+                  return Column(
+                    children: [
+                      // Trial banner
+                      if (payment.isOnTrial) ...[
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: MehdAiTheme.gold.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: MehdAiTheme.gold.withOpacity(0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.star_rounded, color: MehdAiTheme.gold, size: 18),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('FREE TRIAL ACTIVE',
+                                      style: TextStyle(color: MehdAiTheme.gold, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                                    Text('${payment.trialDaysRemaining} day${payment.trialDaysRemaining == 1 ? '' : 's'} remaining — Institutional access',
+                                      style: const TextStyle(color: Color(0xFF888888), fontSize: 10)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+
+                      // Current plan card
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: tierColor.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: tierColor.withOpacity(0.2)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('CURRENT PLAN', style: TextStyle(color: tierColor.withOpacity(0.6), fontSize: 9, letterSpacing: 1.5, fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 4),
+                                Text(tierName, style: TextStyle(color: tierColor, fontSize: 14, fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                            Text(
+                              isObserver ? 'FREE' : '\$${_getTierPrice(tier)}/mo',
+                              style: TextStyle(color: tierColor, fontSize: 13, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Manage billing button
+                      _build3DSettingsCard(
+                        context,
+                        isObserver ? 'Upgrade Account' : 'Manage Billing',
+                        isObserver ? 'View plans on the Mehd AI website' : 'Update payment method or cancel',
+                        isObserver ? Icons.rocket_launch_rounded : Icons.credit_card_rounded,
+                        isObserver
+                          ? const [Color(0xFF0A2040), Color(0xFF051020)]
+                          : const [Color(0xFF1A2030), Color(0xFF0F1520)],
+                        isObserver ? MehdAiTheme.blue : tierColor,
+                        () async {
+                          final uri = Uri.parse(portalUrl);
+                          if (await canLaunchUrl(uri)) {
+                            await launchUrl(uri, mode: LaunchMode.externalApplication);
+                          } else {
+                            if (ctx.mounted) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                const SnackBar(content: Text('Could not open billing page. Visit mehdai.com'))
+                              );
+                            }
+                          }
+                        },
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+
+            const Divider(color: Color(0xFF111111), height: 32),
+
             // Broker Connection
             _buildSectionTitle('BROKER CONNECTION'),
             Padding(

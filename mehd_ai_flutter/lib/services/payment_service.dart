@@ -13,6 +13,7 @@ class PaymentService extends ChangeNotifier {
   int _tokensUsedToday = 0;
   int _analysesUsedToday = 0;
   final bool _isLoading = false;
+  String? _portalUrl; // Billing management URL (Paddle or pricing page)
 
   /// VULN-FIX: Auto-fetch tier on construction so users never see stale data.
   /// Firebase auth state listener ensures we fetch as soon as the user is logged in.
@@ -63,6 +64,7 @@ class PaymentService extends ChangeNotifier {
   int get tokensUsedToday => _tokensUsedToday;
   int get analysesUsedToday => _analysesUsedToday;
   bool get isLoading => _isLoading;
+  String? get portalUrl => _portalUrl;
 
   // Trial getters
   bool get isOnTrial => _isOnTrial;
@@ -86,12 +88,12 @@ class PaymentService extends ChangeNotifier {
   }
 
   /// Activate the 3-day free Institutional trial.
-  /// Called automatically on first login — no credit card needed.
-  /// This builds Mistake DNA + trade history the user can't abandon.
-  Future<void> activateTrial() async {
-    if (Firebase.apps.isEmpty) return;
+  /// Returns a status string: 'success', 'already_active', or the error details
+  /// (e.g., if phone is missing or duplicate).
+  Future<String> activateTrial() async {
+    if (Firebase.apps.isEmpty) return 'Firebase not initialized';
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    if (user == null) return 'User not authenticated';
 
     try {
       final token = await user.getIdToken();
@@ -106,14 +108,20 @@ class PaymentService extends ChangeNotifier {
         },
       ).timeout(const Duration(seconds: 15));
 
+      final data = jsonDecode(response.body);
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
         debugPrint('🔥 TRIAL: ${data['message']}');
         // Refresh status to pick up new tier
         await fetchStatus();
+        return data['status'] ?? 'success';
+      } else {
+        final String errorDetail = data['detail'] ?? 'Failed to activate trial';
+        debugPrint('Trial activation rejected: $errorDetail');
+        return errorDetail;
       }
     } catch (e) {
       debugPrint('Trial activation error: $e');
+      return 'Network error: $e';
     }
   }
 
@@ -141,6 +149,7 @@ class PaymentService extends ChangeNotifier {
         _isOnTrial = data['is_trial'] ?? false;
         _trialDaysRemaining = data['trial_days_remaining'] ?? 0;
         _trialTier = data['trial_tier'];
+        _portalUrl = data['portal_url'];
         // VULN-FIX: Cache tier in ENCRYPTED secure storage (not plain-text SharedPreferences).
         // SharedPreferences is stored as plain XML on Android — a rooted device can edit it.
         // FlutterSecureStorage uses Android Keystore / iOS Keychain — tamper-proof.

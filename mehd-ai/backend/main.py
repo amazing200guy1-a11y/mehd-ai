@@ -267,12 +267,12 @@ async def lifespan(app: FastAPI):
 
         logger.info("✓ Broadcaster daemon started — Underground research active")
 
-    # Rebuild payment tier caches from storage
-    # HARDENED: Without this, a restart drops all paying users to 'observer'
-    # and _stripe_to_uid is empty (subscription changes silently fail).
+    # Rebuild payment tier caches from storage on startup
+    # HARDENED: Without this, a restart drops all paying users to 'observer'.
+    # Rebuilds from Firestore for both Paddle and Paystack subscribers.
     from routes.payments import rebuild_tier_caches
     await rebuild_tier_caches()
-    logger.info("✓ Push notification service wired — high-conviction alerts enabled")
+    logger.info("✓ Tier caches rebuilt — Paddle & Paystack subscribers restored")
 
     # ── SECURITY ENVIRONMENT AUDIT ──────────────
     # Uses the SecretManager which checks GCP Secret Manager first,
