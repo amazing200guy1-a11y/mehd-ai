@@ -144,8 +144,48 @@ class _BrokerConnectScreenState extends State<BrokerConnectScreen> {
                 'Choose how you want to trade',
                 style: MehdAiTheme.labelStyle.copyWith(fontSize: 14),
               ),
+              const SizedBox(height: 16),
 
-              const SizedBox(height: 28),
+              // SaaS Security Notice: Protect user withdrawals
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: MehdAiTheme.blue.withOpacity(0.05),
+                  border: Border.all(color: MehdAiTheme.blue.withOpacity(0.2)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.security, color: MehdAiTheme.blue, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "WITHDRAWAL SAFETY ASSURANCE",
+                            style: MehdAiTheme.headingStyle.copyWith(
+                              color: MehdAiTheme.blue,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            "For your absolute safety, ensure your API key on Oanda/Exness is configured as 'Trade Only'. Do NOT enable 'Withdrawal' access. Mehd AI will never request, nor does it require, withdrawal access to your funds.",
+                            style: MehdAiTheme.labelStyle.copyWith(color: const Color(0xFF88A8D8), fontSize: 11, height: 1.5),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
 
               // ── ERROR ────────────────────────────────────
               if (_connectionError != null) ...[

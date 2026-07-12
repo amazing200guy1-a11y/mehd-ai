@@ -618,6 +618,45 @@ class _BrokerScreenState extends State<BrokerScreen> {
                           ],
                         ),
                         
+                        // SaaS Security Notice: Protect user withdrawals
+                        Container(
+                          margin: const EdgeInsets.only(top: 16, bottom: 8),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF58A6FF).withOpacity(0.05),
+                            border: Border.all(color: const Color(0xFF58A6FF).withOpacity(0.2)),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.security, color: Color(0xFF58A6FF), size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      "WITHDRAWAL SAFETY ASSURANCE",
+                                      style: TextStyle(
+                                        color: Color(0xFF58A6FF),
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.2,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    const Text(
+                                      "For your absolute safety, ensure your API key on Oanda/Exness is configured as 'Trade Only'. Do NOT enable 'Withdrawal' access. Mehd AI will never request, nor does it require, withdrawal access to your funds.",
+                                      style: TextStyle(color: Color(0xFF88A8D8), fontSize: 11, height: 1.5),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        
                         if (broker.warningMessage.isNotEmpty)
                           Container(
                             margin: const EdgeInsets.only(top: 16, bottom: 8),
